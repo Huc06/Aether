@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { CanvasNode, PositionExitRoute } from '../../types';
-import { ExposureGridTreatment } from './ExposureGridShader';
-import { CameraMonitor } from './CameraMonitor';
-import { MorphTabs } from '../morph/MorphTabs';
+import { 
+  ExposureGridRenderer, 
+  ExposureGridTreatment 
+} from './ExposureGridShader';
 import { 
   Camera, 
   Eye, 
@@ -15,10 +16,11 @@ import {
   Zap, 
   Sliders, 
   LayoutGrid, 
-  Sparkles,
-  Layers,
-  ChevronRight,
-  Filter
+  Sparkles, 
+  Layers, 
+  ChevronRight, 
+  ExternalLink,
+  X
 } from 'lucide-react';
 
 interface ExposureGridFeedProps {
@@ -36,10 +38,16 @@ export const ExposureGridFeed: React.FC<ExposureGridFeedProps> = ({
 }) => {
   const [treatment, setTreatment] = useState<ExposureGridTreatment>('chroma');
   const [gridCols, setGridCols] = useState<number>(3);
-  const [focusedCamId, setFocusedCamId] = useState<string | null>(null);
-  const [feedFilter, setFeedFilter] = useState<'all' | 'active' | 'nosignal'>('all');
+  const [gridRows, setGridRows] = useState<number>(3);
+  const [selectedCellNode, setSelectedCellNode] = useState<CanvasNode | null>(null);
   const [timeString, setTimeString] = useState<string>('');
   const [reconnectingIds, setReconnectingIds] = useState<string[]>([]);
+
+  // Offscreen composite canvas that feeds SolaceUI shader
+  const compositeCanvasRef = useRef<HTMLCanvasElement>(document.createElement('canvas'));
+  const animFrameRef = useRef<number>(0);
+  const torusAngleRef = useRef<number>(0);
+  const noiseTimeRef = useRef<number>(0);
 
   // Live UTC Clock
   useEffect(() => {
@@ -52,87 +60,270 @@ export const ExposureGridFeed: React.FC<ExposureGridFeedProps> = ({
     return () => clearInterval(timer);
   }, []);
 
-  // Keyboard Shortcuts: 1..9 to Focus CAMs, Esc to un-focus
-  useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-
-      const num = parseInt(e.key, 10);
-      if (num >= 1 && num <= nodes.length) {
-        setFocusedCamId(nodes[num - 1].id);
-      } else if (e.key === 'Escape') {
-        setFocusedCamId(null);
-      }
-    };
-    window.addEventListener('keydown', handleKey);
-    return () => window.removeEventListener('keydown', handleKey);
-  }, [nodes]);
-
   const handleReconnect = (id: string) => {
     setReconnectingIds(prev => [...prev, id]);
     setTimeout(() => {
       setReconnectingIds(prev => prev.filter(item => item !== id));
-    }, 1600);
+    }, 1800);
   };
 
   const activeCount = nodes.filter(n => n.riskLevel !== 'critical' || reconnectingIds.includes(n.id)).length;
   const noSignalCount = nodes.filter(n => n.riskLevel === 'critical' && !reconnectingIds.includes(n.id)).length;
 
-  const filteredNodes = nodes.filter(node => {
-    const isNoSignal = node.riskLevel === 'critical' && !reconnectingIds.includes(node.id);
-    if (feedFilter === 'active') return !isNoSignal;
-    if (feedFilter === 'nosignal') return isNoSignal;
-    return true;
-  });
+  // Render multi-camera feeds onto the offscreen composite canvas
+  useEffect(() => {
+    const compositeCanvas = compositeCanvasRef.current;
+    compositeCanvas.width = 1920;
+    compositeCanvas.height = 1080;
+    const ctx = compositeCanvas.getContext('2d');
+    if (!ctx) return;
 
-  const displayNodes = focusedCamId
-    ? nodes.filter(n => n.id === focusedCamId)
-    : filteredNodes;
+    let lastTime = performance.now();
 
-  const feedTabs = [
-    { id: 'all' as const, label: 'All Feeds', badge: nodes.length },
-    { id: 'active' as const, label: 'Streaming (60 FPS)', badge: activeCount },
-    { id: 'nosignal' as const, label: 'No Signal / Alerts', badge: noSignalCount > 0 ? noSignalCount : undefined }
-  ];
+    const renderComposite = (time: number) => {
+      const dt = Math.min((time - lastTime) / 1000, 0.1);
+      lastTime = time;
+      torusAngleRef.current += dt * 1.5;
+      noiseTimeRef.current += dt * 8;
+
+      const w = compositeCanvas.width;
+      const h = compositeCanvas.height;
+
+      // Clear composite background
+      ctx.fillStyle = '#060910';
+      ctx.fillRect(0, 0, w, h);
+
+      const cols = gridCols;
+      const rows = gridRows;
+      const cellW = w / cols;
+      const cellH = h / rows;
+
+      // Render each camera node into its grid cell
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const index = r * cols + c;
+          const node = nodes[index % nodes.length];
+          const cellX = c * cellW;
+          const cellY = r * cellH;
+
+          ctx.save();
+          ctx.beginPath();
+          ctx.rect(cellX, cellY, cellW, cellH);
+          ctx.clip();
+
+          const isNoSignal = node.riskLevel === 'critical' && !reconnectingIds.includes(node.id);
+          const camTag = String(index + 1).padStart(2, '0');
+
+          if (isNoSignal) {
+            // ── NO SIGNAL GLITCH CAMERA CELL ──
+            ctx.fillStyle = '#0a0305';
+            ctx.fillRect(cellX, cellY, cellW, cellH);
+
+            // SMPTE Color Bars at top
+            const barH = 22;
+            const barColors = ['#c0c0c0', '#c0c000', '#00c0c0', '#00c000', '#c000c0', '#c00000', '#0000c0'];
+            const barW = cellW / barColors.length;
+            barColors.forEach((color, bi) => {
+              ctx.fillStyle = color;
+              ctx.fillRect(cellX + bi * barW, cellY, barW, barH);
+            });
+
+            // TV Static Noise generator
+            const noiseW = Math.floor(cellW / 4);
+            const noiseH = Math.floor(cellH / 4);
+            const imgData = ctx.createImageData(noiseW, noiseH);
+            const data = imgData.data;
+            for (let i = 0; i < data.length; i += 4) {
+              const gray = Math.floor(Math.random() * 255);
+              data[i] = gray;
+              data[i + 1] = gray;
+              data[i + 2] = gray;
+              data[i + 3] = 90;
+            }
+            ctx.putImageData(imgData, cellX / 4, (cellY + barH) / 4);
+            // Re-scale noise
+            ctx.drawImage(compositeCanvas, cellX / 4, (cellY + barH) / 4, noiseW, noiseH, cellX, cellY + barH, cellW, cellH - barH);
+
+            // Flashing Red Alert Badge
+            ctx.fillStyle = 'rgba(239, 68, 68, 0.85)';
+            ctx.fillRect(cellX + 20, cellY + cellH / 2 - 30, cellW - 40, 48);
+            ctx.font = "800 18px 'JetBrains Mono', monospace";
+            ctx.fillStyle = '#ffffff';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('⚠️ NO SIGNAL // ORACLE DESYNC', cellX + cellW / 2, cellY + cellH / 2 - 6);
+
+            ctx.font = "700 14px 'JetBrains Mono', monospace";
+            ctx.fillStyle = '#fecaca';
+            ctx.fillText(`CAM-${camTag}: ${node.title.toUpperCase()}`, cellX + cellW / 2, cellY + cellH / 2 + 35);
+            ctx.fillText(`LIQ DISTANCE: -${node.liquidationDistancePct?.toFixed(1) || '8.3'}%`, cellX + cellW / 2, cellY + cellH / 2 + 55);
+
+          } else {
+            // ── ACTIVE SURVEILLANCE FEED CELL ──
+            // Dark gradient card background
+            const grad = ctx.createLinearGradient(cellX, cellY, cellX, cellY + cellH);
+            grad.addColorStop(0, '#0a101d');
+            grad.addColorStop(1, '#050810');
+            ctx.fillStyle = grad;
+            ctx.fillRect(cellX, cellY, cellW, cellH);
+
+            // CRT Scanlines
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+            for (let sy = cellY; sy < cellY + cellH; sy += 4) {
+              ctx.fillRect(cellX, sy, cellW, 1.5);
+            }
+
+            // Top CCTV Metadata Header
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+            ctx.fillRect(cellX, cellY, cellW, 36);
+
+            // Blinking REC Red Dot
+            ctx.fillStyle = '#ef4444';
+            ctx.beginPath();
+            ctx.arc(cellX + 24, cellY + 18, 5, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.font = "800 12px 'JetBrains Mono', monospace";
+            ctx.fillStyle = '#f87171';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('REC', cellX + 36, cellY + 18);
+
+            ctx.font = "700 12px 'JetBrains Mono', monospace";
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText(`CAM-${camTag} [${node.chain.toUpperCase()} // ${node.app.toUpperCase()}]`, cellX + 75, cellY + 18);
+
+            ctx.font = "600 11px 'JetBrains Mono', monospace";
+            ctx.fillStyle = '#38bdf8';
+            ctx.textAlign = 'right';
+            ctx.fillText('60 FPS  1/120s', cellX + cellW - 20, cellY + 18);
+
+            // Middle Asset Metrics & Visuals
+            const pad = 24;
+            const contentY = cellY + 55;
+
+            ctx.textAlign = 'left';
+            ctx.font = "800 24px 'JetBrains Mono', monospace";
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText(`$${node.valueUsd.toLocaleString()}`, cellX + pad, contentY + 20);
+
+            if (node.pnl24hUsd !== undefined) {
+              const pnlPos = node.pnl24hUsd >= 0;
+              ctx.font = "700 13px 'JetBrains Mono', monospace";
+              ctx.fillStyle = pnlPos ? '#4ade80' : '#f87171';
+              ctx.textAlign = 'right';
+              ctx.fillText(
+                `${pnlPos ? '+' : ''}$${Math.abs(node.pnl24hUsd).toLocaleString()} (${pnlPos ? '+' : ''}${node.pnlPercent}%)`,
+                cellX + cellW - pad,
+                contentY + 20
+              );
+            }
+
+            // Asset Title & Category
+            ctx.textAlign = 'left';
+            ctx.font = "700 14px 'JetBrains Mono', monospace";
+            ctx.fillStyle = '#e2e8f0';
+            ctx.fillText(`${node.icon}  ${node.title}`, cellX + pad, contentY + 55);
+
+            // Telemetry Box
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+            ctx.roundRect(cellX + pad, contentY + 80, cellW - pad * 2, 70, 8);
+            ctx.fill();
+
+            // Telemetry Keys
+            ctx.font = "600 11px 'JetBrains Mono', monospace";
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillText('NET YIELD (APY):', cellX + pad + 14, contentY + 105);
+            ctx.fillStyle = '#4ade80';
+            ctx.fillText(`${node.apy !== undefined ? node.apy + '%' : '18.4%'}`, cellX + pad + 140, contentY + 105);
+
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillText('HEALTH FACTOR:', cellX + pad + 14, contentY + 130);
+            ctx.fillStyle = node.healthFactor && node.healthFactor < 1.3 ? '#f59e0b' : '#38bdf8';
+            ctx.fillText(`${node.healthFactor ? node.healthFactor.toFixed(2) : '2.85 [SAFE]'}`, cellX + pad + 140, contentY + 130);
+
+            // Sub-second Live Waveform Animation
+            const waveY = contentY + 175;
+            ctx.strokeStyle = '#06b6d4';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            for (let wx = cellX + pad; wx < cellX + cellW - pad; wx += 6) {
+              const relX = (wx - cellX) * 0.08;
+              const wy = waveY + Math.sin(relX + torusAngleRef.current * 3 + index) * 12;
+              if (wx === cellX + pad) ctx.moveTo(wx, wy);
+              else ctx.lineTo(wx, wy);
+            }
+            ctx.stroke();
+
+            // Bottom Status Bar
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+            ctx.fillRect(cellX, cellY + cellH - 30, cellW, 30);
+            ctx.font = "700 10px 'JetBrains Mono', monospace";
+            ctx.fillStyle = '#4ade80';
+            ctx.textAlign = 'left';
+            ctx.fillText('● ORACLE STREAM: LOCKED', cellX + pad, cellY + cellH - 10);
+            ctx.fillStyle = '#94a3b8';
+            ctx.textAlign = 'right';
+            ctx.fillText(`${node.chain.toUpperCase()} NETWORK &bull; LATENCY 14ms`, cellX + cellW - pad, cellY + cellH - 10);
+          }
+
+          ctx.restore();
+        }
+      }
+
+      animFrameRef.current = requestAnimationFrame(renderComposite);
+    };
+
+    animFrameRef.current = requestAnimationFrame(renderComposite);
+    return () => cancelAnimationFrame(animFrameRef.current);
+  }, [nodes, gridCols, gridRows, reconnectingIds]);
+
+  const handleCellClick = (col: number, row: number) => {
+    const index = row * gridCols + col;
+    if (index < nodes.length) {
+      const node = nodes[index];
+      setSelectedCellNode(node);
+    }
+  };
 
   return (
-    <div className="absolute inset-0 z-30 pt-20 px-4 md:px-8 pb-8 overflow-y-auto bg-[#04070c] text-slate-200 font-mono select-none animate-morph-rise flex flex-col items-center">
-      <div className="w-full max-w-7xl flex flex-col gap-4">
+    <div className="absolute inset-0 z-30 pt-20 px-4 md:px-8 pb-6 overflow-hidden bg-[#04070c] text-slate-200 font-mono select-none animate-morph-rise flex flex-col items-center">
+      <div className="w-full max-w-7xl h-full flex flex-col gap-3">
         {/* Surveillance Control Header */}
-        <div className="glass-panel p-4 rounded-2xl border border-white/10 flex flex-wrap items-center justify-between gap-4 shadow-2xl bg-slate-950/95 backdrop-blur-xl">
+        <div className="glass-panel p-3.5 rounded-2xl border border-white/10 flex flex-wrap items-center justify-between gap-4 shadow-2xl bg-slate-950/95 backdrop-blur-xl shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-3 h-3 rounded-full bg-rose-500 animate-ping" />
             <div className="flex flex-col">
               <div className="flex items-center gap-2">
                 <span className="font-extrabold text-sm text-white tracking-wider">
-                  CCTV SURVEILLANCE ROOM // EXPOSURE GRID
+                  SOLACE-UI EXPOSURE GRID // CCTV MATRIX
                 </span>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/40 animate-pulse">
-                  ● LIVE REC
+                  ● 9-CAM STREAM
                 </span>
               </div>
               <span className="text-[10px] text-slate-400 font-mono">
-                {activeCount} FEEDS STREAMING &bull; {noSignalCount} NO SIGNAL WARNINGS &bull; {timeString}
+                {activeCount} FEEDS STREAMING &bull; {noSignalCount} NO SIGNAL &bull; {timeString}
               </span>
             </div>
           </div>
 
-          {/* Camera Controls & Shader Treatments */}
+          {/* SolaceUI Shader Controls */}
           <div className="flex flex-wrap items-center gap-2 text-xs">
             {/* Treatment Selector */}
             <div className="inline-flex p-1 rounded-xl bg-black/60 border border-white/10">
               <button
                 onClick={() => setTreatment('chroma')}
-                className={`px-2.5 py-1 rounded-lg font-bold transition-all ${
+                className={`px-3 py-1.5 rounded-lg font-bold transition-all ${
                   treatment === 'chroma' ? 'bg-amber-500 text-black shadow' : 'text-slate-400 hover:text-white'
                 }`}
-                title="Chroma Optical Separation"
+                title="Photographic Ink Separation (Chroma)"
               >
-                Chroma
+                Chroma Ink
               </button>
               <button
                 onClick={() => setTreatment('exposure')}
-                className={`px-2.5 py-1 rounded-lg font-bold transition-all ${
+                className={`px-3 py-1.5 rounded-lg font-bold transition-all ${
                   treatment === 'exposure' ? 'bg-amber-500 text-black shadow' : 'text-slate-400 hover:text-white'
                 }`}
                 title="Dynamic Exposure Shifts"
@@ -141,7 +332,7 @@ export const ExposureGridFeed: React.FC<ExposureGridFeedProps> = ({
               </button>
               <button
                 onClick={() => setTreatment('monochrome')}
-                className={`px-2.5 py-1 rounded-lg font-bold transition-all ${
+                className={`px-3 py-1.5 rounded-lg font-bold transition-all ${
                   treatment === 'monochrome' ? 'bg-emerald-500 text-black shadow' : 'text-slate-400 hover:text-white'
                 }`}
                 title="Night-Vision CCTV Monochrome"
@@ -151,82 +342,105 @@ export const ExposureGridFeed: React.FC<ExposureGridFeedProps> = ({
             </div>
 
             {/* Grid Density */}
-            <div className="inline-flex p-1 rounded-xl bg-black/60 border border-white/10 hidden sm:flex">
+            <div className="inline-flex p-1 rounded-xl bg-black/60 border border-white/10">
               <button
                 onClick={() => {
-                  setFocusedCamId(null);
                   setGridCols(2);
+                  setGridRows(2);
                 }}
-                className={`px-2.5 py-1 rounded-lg text-xs font-bold ${
-                  gridCols === 2 && !focusedCamId ? 'bg-white/20 text-white' : 'text-slate-400 hover:text-white'
+                className={`px-2.5 py-1 rounded text-xs font-bold ${
+                  gridCols === 2 ? 'bg-white/20 text-white' : 'text-slate-400 hover:text-white'
                 }`}
               >
                 2x2
               </button>
               <button
                 onClick={() => {
-                  setFocusedCamId(null);
                   setGridCols(3);
+                  setGridRows(3);
                 }}
-                className={`px-2.5 py-1 rounded-lg text-xs font-bold ${
-                  gridCols === 3 && !focusedCamId ? 'bg-white/20 text-white' : 'text-slate-400 hover:text-white'
+                className={`px-2.5 py-1 rounded text-xs font-bold ${
+                  gridCols === 3 ? 'bg-white/20 text-white' : 'text-slate-400 hover:text-white'
                 }`}
               >
                 3x3
               </button>
             </div>
-
-            {focusedCamId && (
-              <button
-                onClick={() => setFocusedCamId(null)}
-                className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-black font-extrabold flex items-center gap-1 shadow"
-              >
-                <Minimize2 className="w-3.5 h-3.5" />
-                <span>Show All CAMs (Esc)</span>
-              </button>
-            )}
           </div>
         </div>
 
-        {/* Filter Tabs Bar */}
-        <div className="flex items-center justify-between">
-          <MorphTabs
-            tabs={feedTabs}
-            activeTab={feedFilter}
-            onChange={setFeedFilter}
+        {/* The Exact SolaceUI WebGL Exposure Grid Viewport */}
+        <div className="flex-1 w-full rounded-2xl overflow-hidden border border-cyan-500/30 shadow-2xl relative bg-black">
+          <ExposureGridRenderer
+            sourceCanvas={compositeCanvasRef.current}
+            treatment={treatment}
+            columns={gridCols}
+            rows={gridRows}
+            onCellClick={handleCellClick}
+            className="w-full h-full block cursor-crosshair"
           />
-          
-          <span className="text-[10px] text-slate-500 font-mono hidden md:inline">
-            Press keys 1..{nodes.length} to focus specific CAM &bull; Esc to reset
-          </span>
+
+          {/* Prompt Tip */}
+          <div className="absolute bottom-3 left-4 pointer-events-none text-[10px] text-cyan-300/80 font-mono bg-black/70 px-3 py-1 rounded-md border border-cyan-500/30">
+            💡 <strong>SolaceUI Interaction:</strong> Hover pointer to zoom &amp; trigger photographic ink separation &bull; Click any cell to inspect position
+          </div>
         </div>
 
-        {/* Multi-Camera Feeds Matrix */}
-        <div 
-          className={`grid gap-4 transition-all ${
-            focusedCamId 
-              ? 'grid-cols-1' 
-              : gridCols === 2 
-              ? 'grid-cols-1 md:grid-cols-2' 
-              : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
-          }`}
-        >
-          {displayNodes.map((node, index) => (
-            <CameraMonitor
-              key={node.id}
-              node={node}
-              camIndex={nodes.findIndex(n => n.id === node.id)}
-              treatment={treatment}
-              timeString={timeString}
-              isFocused={focusedCamId === node.id}
-              onToggleFocus={() => setFocusedCamId(focusedCamId === node.id ? null : node.id)}
-              onInspect={() => onInspectNode(node)}
-              onGlideOnCanvas={() => onFocusNodeOnCanvas(node)}
-              onEmergencyKill={onEmergencyKill}
-              onReconnect={() => handleReconnect(node.id)}
-            />
-          ))}
-        </div>
+        {/* Selected Cell Node Action Drawer */}
+        {selectedCellNode && (
+          <div className="glass-panel p-4 rounded-xl border border-amber-500/50 flex items-center justify-between gap-4 animate-in slide-in-from-bottom-3 duration-150 bg-slate-950/95">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">{selectedCellNode.icon}</span>
+              <div className="flex flex-col">
+                <div className="flex items-center gap-2">
+                  <span className="font-extrabold text-white text-sm">
+                    {selectedCellNode.title}
+                  </span>
+                  <span className="px-2 py-0.2 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                    {selectedCellNode.chain}
+                  </span>
+                </div>
+                <span className="text-xs text-slate-400 font-mono">
+                  Value: ${selectedCellNode.valueUsd.toLocaleString()} &bull; {selectedCellNode.strategy}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => onFocusNodeOnCanvas(selectedCellNode)}
+                className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-amber-500/20 hover:text-amber-300 text-slate-200 border border-white/10 text-xs font-bold flex items-center gap-1.5"
+              >
+                <span>Glide on Canvas</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+
+              <button
+                onClick={() => onInspectNode(selectedCellNode)}
+                className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-xs"
+              >
+                Inspect Detail
+              </button>
+
+              {selectedCellNode.riskLevel === 'critical' && selectedCellNode.exitRoutes && (
+                <button
+                  onClick={() => onEmergencyKill(selectedCellNode, selectedCellNode.exitRoutes![0])}
+                  className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-xs flex items-center gap-1 shadow-lg shadow-rose-600/40"
+                >
+                  <Zap className="w-3.5 h-3.5 fill-white" />
+                  <span>⚡ Kill Switch</span>
+                </button>
+              )}
+
+              <button
+                onClick={() => setSelectedCellNode(null)}
+                className="p-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-slate-400 hover:text-white"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
