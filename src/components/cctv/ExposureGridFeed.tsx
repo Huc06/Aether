@@ -287,34 +287,32 @@ export const ExposureGridFeed: React.FC<ExposureGridFeedProps> = ({
   };
 
   return (
-    <div className="absolute inset-0 z-30 pt-20 px-4 md:px-8 pb-6 overflow-hidden bg-[#04070c] text-slate-200 font-mono select-none animate-morph-rise flex flex-col items-center">
-      <div className="w-full max-w-7xl h-full flex flex-col gap-3">
-        {/* Surveillance Control Header */}
-        <div className="glass-panel p-3.5 rounded-2xl border border-white/10 flex flex-wrap items-center justify-between gap-4 shadow-2xl bg-slate-950/95 backdrop-blur-xl shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-3 h-3 rounded-full bg-rose-500 animate-ping" />
-            <div className="flex flex-col">
-              <div className="flex items-center gap-2">
-                <span className="font-extrabold text-sm text-white tracking-wider">
-                  SOLACE-UI EXPOSURE GRID // CCTV MATRIX
-                </span>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/40 animate-pulse">
-                  ● 9-CAM STREAM
-                </span>
-              </div>
-              <span className="text-[10px] text-slate-400 font-mono">
-                {activeCount} FEEDS STREAMING &bull; {noSignalCount} NO SIGNAL &bull; {timeString}
+    <div className="absolute inset-0 z-30 pt-[84px] md:pt-[92px] px-4 md:px-8 pb-5 overflow-hidden bg-[#04070c] text-slate-200 font-mono select-none animate-morph-rise flex flex-col items-center">
+      <div className="w-full max-w-7xl h-full flex flex-col gap-2.5">
+        {/* Surveillance Control Sub-Header */}
+        <div className="glass-panel px-4 py-2 rounded-xl border border-white/10 flex flex-wrap items-center justify-between gap-3 shadow-xl bg-slate-950/90 backdrop-blur-xl shrink-0">
+          <div className="flex items-center gap-2.5">
+            <div className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping" />
+            <div className="flex items-center gap-2">
+              <span className="font-extrabold text-xs text-white tracking-wider">
+                CCTV MATRIX STREAM
+              </span>
+              <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-300 border border-rose-500/40">
+                ● {gridCols * gridRows}-CAM
               </span>
             </div>
+            <span className="text-[10px] text-slate-400 font-mono hidden sm:inline">
+              &bull; {activeCount} Online &bull; {noSignalCount} No Signal &bull; {timeString}
+            </span>
           </div>
 
           {/* SolaceUI Shader Controls */}
-          <div className="flex flex-wrap items-center gap-2 text-xs">
+          <div className="flex items-center gap-2 text-xs">
             {/* Treatment Selector */}
-            <div className="inline-flex p-1 rounded-xl bg-black/60 border border-white/10">
+            <div className="inline-flex p-0.5 rounded-lg bg-black/60 border border-white/10">
               <button
                 onClick={() => setTreatment('chroma')}
-                className={`px-3 py-1.5 rounded-lg font-bold transition-all ${
+                className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all ${
                   treatment === 'chroma' ? 'bg-amber-500 text-black shadow' : 'text-slate-400 hover:text-white'
                 }`}
                 title="Photographic Ink Separation (Chroma)"
@@ -323,7 +321,7 @@ export const ExposureGridFeed: React.FC<ExposureGridFeedProps> = ({
               </button>
               <button
                 onClick={() => setTreatment('exposure')}
-                className={`px-3 py-1.5 rounded-lg font-bold transition-all ${
+                className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all ${
                   treatment === 'exposure' ? 'bg-amber-500 text-black shadow' : 'text-slate-400 hover:text-white'
                 }`}
                 title="Dynamic Exposure Shifts"
@@ -332,7 +330,7 @@ export const ExposureGridFeed: React.FC<ExposureGridFeedProps> = ({
               </button>
               <button
                 onClick={() => setTreatment('monochrome')}
-                className={`px-3 py-1.5 rounded-lg font-bold transition-all ${
+                className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all ${
                   treatment === 'monochrome' ? 'bg-emerald-500 text-black shadow' : 'text-slate-400 hover:text-white'
                 }`}
                 title="Night-Vision CCTV Monochrome"
@@ -342,13 +340,13 @@ export const ExposureGridFeed: React.FC<ExposureGridFeedProps> = ({
             </div>
 
             {/* Grid Density */}
-            <div className="inline-flex p-1 rounded-xl bg-black/60 border border-white/10">
+            <div className="inline-flex p-0.5 rounded-lg bg-black/60 border border-white/10">
               <button
                 onClick={() => {
                   setGridCols(2);
                   setGridRows(2);
                 }}
-                className={`px-2.5 py-1 rounded text-xs font-bold ${
+                className={`px-2 py-1 rounded-md text-[11px] font-bold ${
                   gridCols === 2 ? 'bg-white/20 text-white' : 'text-slate-400 hover:text-white'
                 }`}
               >
@@ -359,7 +357,7 @@ export const ExposureGridFeed: React.FC<ExposureGridFeedProps> = ({
                   setGridCols(3);
                   setGridRows(3);
                 }}
-                className={`px-2.5 py-1 rounded text-xs font-bold ${
+                className={`px-2 py-1 rounded-md text-[11px] font-bold ${
                   gridCols === 3 ? 'bg-white/20 text-white' : 'text-slate-400 hover:text-white'
                 }`}
               >
@@ -370,7 +368,7 @@ export const ExposureGridFeed: React.FC<ExposureGridFeedProps> = ({
         </div>
 
         {/* The Exact SolaceUI WebGL Exposure Grid Viewport */}
-        <div className="flex-1 w-full rounded-2xl overflow-hidden border border-cyan-500/30 shadow-2xl relative bg-black">
+        <div className="flex-1 min-h-0 w-full rounded-2xl overflow-hidden border border-cyan-500/30 shadow-2xl relative bg-black">
           <ExposureGridRenderer
             sourceCanvas={compositeCanvasRef.current}
             treatment={treatment}

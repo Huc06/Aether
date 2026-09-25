@@ -94,7 +94,7 @@ export const ListSwitcher: React.FC<ListSwitcherProps> = ({
   ];
 
   return (
-    <div className="absolute inset-0 z-30 pt-20 px-4 md:px-8 pb-8 overflow-y-auto bg-[#07090e]/95 backdrop-blur-2xl flex flex-col items-center animate-morph-rise select-none">
+    <div className="absolute inset-0 z-30 pt-[84px] md:pt-[92px] px-4 md:px-8 pb-8 overflow-y-auto bg-[#07090e]/95 backdrop-blur-2xl flex flex-col items-center animate-morph-rise select-none">
       <div className="w-full max-w-6xl flex flex-col gap-5">
         {/* Workspace Control Bar */}
         <div className="glass-panel p-4 rounded-2xl border border-white/10 flex flex-wrap items-center justify-between gap-4 shadow-2xl">
