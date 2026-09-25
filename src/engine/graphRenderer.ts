@@ -432,6 +432,19 @@ export class GraphRenderer {
         ctx.fillText(`Collateral: ${node.collateralAsset}`, x + pad, lineY);
         lineY += rowH;
       }
+
+      // Nansen Smart Money Signal Indicator
+      if (node.smartMoneyNetflow24h !== undefined && sc > 0.35) {
+        const isPositive = node.smartMoneyNetflow24h >= 0;
+        ctx.font = `700 ${Math.max(7, Math.floor(9 * sc))}px 'JetBrains Mono', monospace`;
+        ctx.fillStyle = isPositive ? '#10b981' : '#f43f5e';
+        ctx.textAlign = 'left';
+        const smText = isPositive
+          ? `🟢 SM Inflow: +$${Math.round(node.smartMoneyNetflow24h).toLocaleString()}${node.smartMoneyTraderCount ? ` (${node.smartMoneyTraderCount} traders)` : ''}`
+          : `🔴 SM Outflow: -$${Math.abs(Math.round(node.smartMoneyNetflow24h)).toLocaleString()}`;
+        ctx.fillText(smText, x + pad, lineY);
+        lineY += rowH;
+      }
     } else if (node.type === 'wallet') {
       ctx.font = `500 ${Math.max(8, Math.floor(10 * sc))}px 'JetBrains Mono', monospace`;
       ctx.fillStyle = '#94a3b8';
@@ -440,6 +453,13 @@ export class GraphRenderer {
       lineY += rowH;
       ctx.fillText(`Role: ${node.strategy || 'Treasury Vault'}`, x + pad, lineY);
       lineY += rowH;
+
+      if (node.nansenLabel && sc > 0.35) {
+        ctx.font = `700 ${Math.max(7, Math.floor(9 * sc))}px 'JetBrains Mono', monospace`;
+        ctx.fillStyle = '#38bdf8';
+        ctx.fillText(`💎 ${node.nansenLabel}`, x + pad, lineY);
+        lineY += rowH;
+      }
     }
 
     // Emergency Badge for Critical Nodes

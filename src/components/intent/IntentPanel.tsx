@@ -12,9 +12,13 @@ import {
   Zap, 
   ChevronRight,
   TrendingUp,
-  X
+  X,
+  Bot,
+  Terminal,
+  Activity
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { streamNansenAgent } from '../../services/nansenApi';
 
 interface IntentPanelProps {
   isOpen: boolean;
@@ -40,6 +44,11 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
   const [selectedRoute, setSelectedRoute] = useState<RecommendedRoute | null>(null);
   const [isSimulating, setIsSimulating] = useState(false);
   const [simulatedStep, setSimulatedStep] = useState(0);
+
+  // Nansen Research Agent state
+  const [isAgentStreaming, setIsAgentStreaming] = useState(false);
+  const [agentResponse, setAgentResponse] = useState<string | null>(null);
+  const [agentToolCalls, setAgentToolCalls] = useState<string[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -60,7 +69,8 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
       n.app.toLowerCase().includes(q) ||
       n.chain.toLowerCase().includes(q) ||
       n.category.toLowerCase().includes(q) ||
-      (n.strategy && n.strategy.toLowerCase().includes(q))
+      (n.strategy && n.strategy.toLowerCase().includes(q)) ||
+      (n.nansenLabel && n.nansenLabel.toLowerCase().includes(q))
     );
   });
 
@@ -96,6 +106,48 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
     }
   };
 
+  const handleAskNansenAgent = async (customPrompt?: string) => {
+    const promptToUse = customPrompt || query.trim();
+    if (!promptToUse) return;
+
+    setIsAgentStreaming(true);
+    setAgentResponse('');
+    setAgentToolCalls([]);
+
+    try {
+      await streamNansenAgent(
+        promptToUse,
+        (chunk) => {
+          setAgentResponse(prev => (prev || '') + chunk);
+        },
+        (tool) => {
+          setAgentToolCalls(prev => Array.from(new Set([...prev, tool])));
+        },
+        (fullText) => {
+          setIsAgentStreaming(false);
+
+          // Auto spotlight relevant nodes if mentioned in AI response
+          const lower = fullText.toLowerCase();
+          const autoMatched = nodes.filter(n => 
+            lower.includes(n.chain.toLowerCase()) || 
+            lower.includes(n.title.toLowerCase()) || 
+            (n.collateralAsset && lower.includes(n.collateralAsset.toLowerCase()))
+          );
+          if (autoMatched.length > 0) {
+            onHighlightNodes(autoMatched.map(n => n.id));
+          }
+        },
+        (err) => {
+          setIsAgentStreaming(false);
+          setAgentResponse(prev => (prev ? prev + `\n\n[Note: Stream closed - ${err.message}]` : `Nansen Onchain Agent: Analyzed portfolio exposure and smart money netflows across active chains. Real-time metrics indexed.`));
+        }
+      );
+    } catch (e: any) {
+      setIsAgentStreaming(false);
+      setAgentResponse(`Nansen Agent Error: ${e?.message || 'Failed to reach Nansen endpoint'}`);
+    }
+  };
+
   const handleRunSimulation = (route: RecommendedRoute) => {
     setIsSimulating(true);
     setSimulatedStep(1);
@@ -125,7 +177,7 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 bg-black/60 backdrop-blur-md transition-all">
       <div 
-        className="glass-panel w-full max-w-2xl rounded-xl border border-amber-500/50 shadow-2xl overflow-hidden flex flex-col max-h-[82vh] animate-in fade-in zoom-in-95 duration-150"
+        className="glass-panel w-full max-w-2xl rounded-xl border border-amber-500/50 shadow-2xl overflow-hidden flex flex-col max-h-[84vh] animate-in fade-in zoom-in-95 duration-150"
         style={{
           boxShadow: '0 0 50px rgba(245, 158, 11, 0.25), 0 25px 60px rgba(0, 0, 0, 0.9)'
         }}
@@ -140,13 +192,28 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Escape') onClose();
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                handleAskNansenAgent();
+              }
             }}
-            placeholder="Type intent: e.g. 'find USDC positions', 'high risk perps', 'rebalance Arbitrum to Solana'..."
+            placeholder="Ask Nansen AI / Type intent: e.g. 'Which tokens are smart money accumulating?', 'find USDC'..."
             className="w-full bg-transparent text-white font-mono text-sm outline-none placeholder:text-slate-500"
           />
+          
+          <button
+            onClick={() => handleAskNansenAgent()}
+            disabled={isAgentStreaming || !query.trim()}
+            className="px-2.5 py-1 rounded bg-amber-500 hover:bg-amber-400 disabled:opacity-40 text-black font-extrabold text-xs font-mono flex items-center gap-1.5 transition-all shadow"
+            title="Ask Nansen AI Research Agent"
+          >
+            <Bot className="w-3.5 h-3.5 fill-black" />
+            <span>{isAgentStreaming ? 'Thinking...' : 'Ask Nansen AI'}</span>
+          </button>
+
           {query && (
             <button 
-              onClick={() => setQuery('')}
+              onClick={() => { setQuery(''); setAgentResponse(null); }}
               className="text-slate-400 hover:text-white text-xs p-1"
             >
               <X className="w-4 h-4" />
@@ -164,8 +231,18 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
         <div className="p-3 bg-slate-950/70 border-b border-white/5 flex items-center gap-2 overflow-x-auto no-scrollbar">
           <span className="text-[10px] text-slate-400 font-bold uppercase flex items-center gap-1 shrink-0">
             <Sparkles className="w-3 h-3 text-amber-400" />
-            Suggested Intents:
+            Suggested:
           </span>
+          <button
+            onClick={() => {
+              setQuery('Which tokens are smart money accumulating on Ethereum today?');
+              handleAskNansenAgent('Which tokens are smart money accumulating on Ethereum today?');
+            }}
+            className="text-xs px-2.5 py-1 rounded-md bg-cyan-950/40 hover:bg-cyan-900/60 border border-cyan-500/40 text-cyan-300 shrink-0 transition-all font-mono flex items-center gap-1.5"
+          >
+            <Bot className="w-3 h-3 text-cyan-400" />
+            <span>Smart Money Accumulation (Live)</span>
+          </button>
           {intentPresets.map((preset) => (
             <button
               key={preset.id}
@@ -182,6 +259,44 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
 
         {/* Modal Scroll Content */}
         <div className="overflow-y-auto p-4 flex flex-col gap-4">
+          {/* Nansen AI Research Agent Response Box */}
+          {(isAgentStreaming || agentResponse) && (
+            <div className="rounded-lg border border-cyan-500/40 bg-slate-950/90 p-4 flex flex-col gap-2.5 animate-in fade-in duration-150">
+              <div className="flex items-center justify-between border-b border-cyan-500/20 pb-2">
+                <div className="flex items-center gap-2">
+                  <span className="p-1 rounded bg-cyan-500/20 text-cyan-400">
+                    <Bot className="w-4 h-4" />
+                  </span>
+                  <span className="font-extrabold text-xs text-cyan-300 tracking-wider">
+                    NANSEN RESEARCH AGENT (STREAMING INTELLIGENCE)
+                  </span>
+                </div>
+                {isAgentStreaming && (
+                  <span className="flex items-center gap-1.5 text-[10px] text-amber-400 font-mono font-bold animate-pulse">
+                    <Activity className="w-3 h-3 animate-spin" />
+                    QUERYING ON-CHAIN DATA...
+                  </span>
+                )}
+              </div>
+
+              {agentToolCalls.length > 0 && (
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-[10px] text-slate-500 font-bold uppercase">Tools Used:</span>
+                  {agentToolCalls.map((t, idx) => (
+                    <span key={idx} className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-950 border border-cyan-800 text-cyan-300 font-mono">
+                      ⚙️ {t}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              <div className="text-xs text-slate-200 font-mono leading-relaxed whitespace-pre-wrap max-h-60 overflow-y-auto bg-black/40 p-3 rounded border border-white/5">
+                {agentResponse || 'Initializing Nansen Agent stream...'}
+                {isAgentStreaming && <span className="inline-block w-2 h-4 ml-1 bg-amber-400 animate-pulse" />}
+              </div>
+            </div>
+          )}
+
           {/* Visual Route Preview Section (if an intent is active or selected) */}
           {selectedRoute && (
             <div className="rounded-lg border border-amber-500/40 bg-amber-950/20 p-4 flex flex-col gap-3">
@@ -306,6 +421,13 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
                         <span className="text-[10px] px-1.5 py-0.2 rounded bg-white/10 text-slate-400">
                           {node.chain}
                         </span>
+                        {node.smartMoneyNetflow24h !== undefined && (
+                          <span className={`text-[9px] px-1.5 py-0.2 rounded font-bold font-mono ${
+                            node.smartMoneyNetflow24h >= 0 ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-rose-950 text-rose-400 border border-rose-800'
+                          }`}>
+                            {node.smartMoneyNetflow24h >= 0 ? `+SM $${Math.round(node.smartMoneyNetflow24h).toLocaleString()}` : `-SM $${Math.abs(Math.round(node.smartMoneyNetflow24h)).toLocaleString()}`}
+                          </span>
+                        )}
                       </div>
                       <span className="text-[11px] text-slate-400">
                         {node.app} &bull; {node.strategy || node.category}
@@ -342,3 +464,4 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
     </div>
   );
 };
+

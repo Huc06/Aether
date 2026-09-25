@@ -14,7 +14,9 @@ import { SpawnWindowModal } from './components/hud/SpawnWindowModal';
 import { RecentWindowsOverlay } from './components/hud/RecentWindowsOverlay';
 import { LiveTuner } from './components/hud/LiveTuner';
 import { HelpModal } from './components/hud/HelpModal';
+import { NansenModal } from './components/hud/NansenModal';
 import { Toast } from './components/hud/Toast';
+import { buildNansenSpatialGraph, PRESET_ENTITIES } from './services/nansenApi';
 
 export const App: React.FC = () => {
   // Application Data & State
@@ -55,6 +57,7 @@ export const App: React.FC = () => {
   const [isOverview, setIsOverview] = useState(false);
   const [isIntentOpen, setIsIntentOpen] = useState(false);
   const [isSpawnOpen, setIsSpawnOpen] = useState(false);
+  const [isNansenOpen, setIsNansenOpen] = useState(false);
   const [isTunerOpen, setIsTunerOpen] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [isAltTabOpen, setIsAltTabOpen] = useState(false);
@@ -150,6 +153,28 @@ export const App: React.FC = () => {
     setNodes(prev => [...prev, newNode]);
     focusNode(newNode.id, true);
     showToast(`Spawned window: ${newNode.title}`);
+  }, [recordHistory, focusNode, showToast]);
+
+  // Load Nansen Entity & Build Dynamic Spatial Graph
+  const handleLoadNansenEntity = useCallback(async (entity: typeof PRESET_ENTITIES[0]) => {
+    recordHistory();
+    showToast(`Indexing on-chain data for ${entity.label}...`);
+    try {
+      const { nodes: newNodes, wires: newWires } = await buildNansenSpatialGraph(entity);
+      if (newNodes.length > 0) {
+        setNodes(newNodes);
+        setWires(newWires);
+        focusNode(newNodes[0].id, true);
+        cameraRef.current.state.x = newNodes[0].x;
+        cameraRef.current.state.y = newNodes[0].y;
+        cameraRef.current.state.targetX = newNodes[0].x;
+        cameraRef.current.state.targetY = newNodes[0].y;
+        showToast(`✓ Generated live spatial graph for ${entity.label}`);
+      }
+    } catch (e: any) {
+      console.error('Failed to load Nansen graph:', e);
+      showToast(`Error loading Nansen data: ${e?.message || 'Unknown error'}`);
+    }
   }, [recordHistory, focusNode, showToast]);
 
   // Toggle Fill Screen (Super+T)
@@ -449,6 +474,7 @@ export const App: React.FC = () => {
       if (e.key === 'Escape') {
         setIsIntentOpen(false);
         setIsSpawnOpen(false);
+        setIsNansenOpen(false);
         setIsTunerOpen(false);
         setIsHelpOpen(false);
         setSelectedNode(null);
@@ -742,6 +768,7 @@ export const App: React.FC = () => {
         onToggleOverview={() => toggleOverviewMode()}
         onSmartArrange={handleSmartArrange}
         onOpenSpawn={() => setIsSpawnOpen(true)}
+        onOpenNansen={() => setIsNansenOpen(true)}
         onOpenTuner={() => setIsTunerOpen(true)}
         onOpenHelp={() => setIsHelpOpen(true)}
         onFilterRisk={handleFilterRisk}
@@ -827,6 +854,14 @@ export const App: React.FC = () => {
         onClose={() => setIsTunerOpen(false)}
         config={config}
         onChangeConfig={setConfig}
+        onShowToast={showToast}
+      />
+
+      {/* Nansen Intelligence & Profiler Modal */}
+      <NansenModal
+        isOpen={isNansenOpen}
+        onClose={() => setIsNansenOpen(false)}
+        onLoadEntity={handleLoadNansenEntity}
         onShowToast={showToast}
       />
 

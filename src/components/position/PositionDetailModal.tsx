@@ -181,12 +181,20 @@ export const PositionDetailModal: React.FC<PositionDetailModalProps> = ({
               </div>
             </div>
 
-            {/* Smart contract & Oracle verification */}
+            {/* Smart contract, Nansen Intelligence & Oracle verification */}
             <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-white/5 text-[11px] text-slate-400">
               <div className="flex items-center gap-1.5">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Audited by: <strong className="text-slate-300">{node.auditedBy?.join(', ') || 'Top Tier Auditors'}</strong></span>
+                <span>Audited: <strong className="text-slate-300">{node.auditedBy?.join(', ') || 'Top Tier Audited'}</strong></span>
               </div>
+              {node.smartMoneyNetflow24h !== undefined && (
+                <div className="flex items-center gap-1.5">
+                  <Activity className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>Nansen SM 24h: <strong className={node.smartMoneyNetflow24h >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
+                    {node.smartMoneyNetflow24h >= 0 ? '+' : ''}${Math.round(node.smartMoneyNetflow24h).toLocaleString()}
+                  </strong></span>
+                </div>
+              )}
               <div className="flex items-center gap-1.5">
                 <Activity className="w-3.5 h-3.5 text-cyan-400" />
                 <span>Oracle: <strong className="text-slate-300">{node.oracleProvider || 'Chainlink / Pyth Feeds'}</strong></span>

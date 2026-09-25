@@ -87,6 +87,14 @@ export interface CanvasNode {
   auditedBy?: string[];
   oracleProvider?: string;
   exitRoutes?: PositionExitRoute[];
+
+  // Nansen Onchain Intelligence Signals
+  nansenLabel?: string;
+  smartMoneyNetflow24h?: number;
+  smartMoneyTraderCount?: number;
+  nansenDivergence?: 'accumulating' | 'distributing' | 'neutral';
+  relationType?: string;
+  transactionHash?: string;
 }
 
 export interface WireConnection {

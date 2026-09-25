@@ -2,6 +2,7 @@ import React from 'react';
 import { LensConfig, CanvasNode } from '../../types';
 import { PortfolioViewMode } from '../morph/ListSwitcher';
 import { NumberFlip } from '../morph/NumberFlip';
+import { getApiCallCount } from '../../services/nansenApi';
 import { 
   LayoutGrid, 
   Sliders, 
@@ -13,7 +14,8 @@ import {
   PlusCircle, 
   Orbit, 
   List as ListIcon,
-  Camera
+  Camera,
+  Database
 } from 'lucide-react';
 
 interface TopBarProps {
@@ -28,6 +30,7 @@ interface TopBarProps {
   onOpenTuner: () => void;
   onOpenHelp: () => void;
   onFilterRisk: () => void;
+  onOpenNansen: () => void;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
@@ -41,13 +44,15 @@ export const TopBar: React.FC<TopBarProps> = ({
   onOpenSpawn,
   onOpenTuner,
   onOpenHelp,
-  onFilterRisk
+  onFilterRisk,
+  onOpenNansen
 }) => {
   // Aggregate portfolio metrics
   const totalValue = nodes.reduce((sum, n) => sum + n.valueUsd, 0);
   const totalPnl = nodes.reduce((sum, n) => sum + (n.pnl24hUsd || 0), 0);
   const pnlPercent = totalValue > 0 ? (totalPnl / (totalValue - totalPnl)) * 100 : 0;
   const criticalCount = nodes.filter(n => n.riskLevel === 'critical' || n.riskLevel === 'high').length;
+  const callCount = getApiCallCount();
 
   return (
     <header className="absolute top-4 left-4 right-4 z-40 flex items-center justify-between pointer-events-none select-none">
@@ -73,6 +78,26 @@ export const TopBar: React.FC<TopBarProps> = ({
             </span>
           </div>
         </div>
+
+        {/* Nansen Intelligence & API Call Qualification Tracker */}
+        <button
+          onClick={onOpenNansen}
+          className="glass-badge rounded-lg px-3 py-1.5 hidden xl:flex items-center gap-2 border border-cyan-500/40 hover:border-cyan-400 text-xs shadow-lg transition-all group"
+          title="Nansen Meridian Buildathon API Intelligence & Entity Switcher"
+        >
+          <Database className="w-3.5 h-3.5 text-cyan-400 group-hover:animate-bounce" />
+          <div className="flex flex-col text-left">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] text-cyan-300 font-bold uppercase tracking-wider">NANSEN API</span>
+              <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">
+                {callCount >= 1000 ? 'QUALIFIED' : `${callCount}/1k`}
+              </span>
+            </div>
+            <span className="text-[10px] text-slate-400 font-mono">
+              {callCount.toLocaleString()} Calls &bull; Profiler Live
+            </span>
+          </div>
+        </button>
 
         {/* Global Net PnL & Exposure Card with NumberFlip */}
         <div className="glass-badge rounded-lg px-4 py-2 hidden lg:flex items-center gap-5 border border-white/10 shadow-lg text-xs">
@@ -173,6 +198,15 @@ export const TopBar: React.FC<TopBarProps> = ({
             <span>{criticalCount} ALERT</span>
           </button>
         )}
+
+        <button
+          onClick={onOpenNansen}
+          className="glass-badge flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-cyan-300 hover:text-white hover:border-cyan-500/60 border border-white/10 shadow-lg transition-all"
+          title="Open Nansen Onchain Intelligence & Profiler Graph"
+        >
+          <Database className="w-3.5 h-3.5 text-cyan-400" />
+          <span className="hidden sm:inline">Nansen</span>
+        </button>
 
         <button
           onClick={onToggleOverview}
