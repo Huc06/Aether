@@ -12,7 +12,8 @@ import {
   Search, 
   PlusCircle, 
   Orbit, 
-  List as ListIcon 
+  List as ListIcon,
+  Camera
 } from 'lucide-react';
 
 interface TopBarProps {
@@ -148,6 +149,17 @@ export const TopBar: React.FC<TopBarProps> = ({
           >
             <ListIcon className="w-3.5 h-3.5" />
             <span className="hidden md:inline">List</span>
+          </button>
+
+          <button
+            onClick={() => onChangeViewMode('exposure-grid')}
+            className={`px-2.5 py-1 rounded text-xs font-bold flex items-center gap-1 transition-all ${
+              viewMode === 'exposure-grid' ? 'bg-rose-500 text-white shadow shadow-rose-500/40' : 'text-slate-400 hover:text-white'
+            }`}
+            title="CCTV Surveillance Exposure Grid"
+          >
+            <Camera className="w-3.5 h-3.5 text-rose-300" />
+            <span className="hidden md:inline">CCTV</span>
           </button>
         </div>
 

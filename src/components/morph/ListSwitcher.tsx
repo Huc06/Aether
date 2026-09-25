@@ -6,6 +6,7 @@ import {
   LayoutGrid, 
   List as ListIcon, 
   Orbit, 
+  Camera,
   Search, 
   ArrowUpRight, 
   ShieldAlert, 
@@ -20,7 +21,7 @@ import {
   Activity
 } from 'lucide-react';
 
-export type PortfolioViewMode = 'canvas' | 'cards' | 'list';
+export type PortfolioViewMode = 'canvas' | 'cards' | 'list' | 'exposure-grid';
 
 interface ListSwitcherProps {
   nodes: CanvasNode[];
@@ -131,6 +132,17 @@ export const ListSwitcher: React.FC<ListSwitcherProps> = ({
               >
                 <ListIcon className="w-3.5 h-3.5" />
                 <span>Compact List</span>
+              </button>
+
+              <button
+                onClick={() => onChangeViewMode('exposure-grid')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold flex items-center gap-1.5 transition-all ${
+                  viewMode === 'exposure-grid' ? 'bg-rose-500 text-white shadow shadow-rose-500/30' : 'text-slate-400 hover:text-white'
+                }`}
+                title="CCTV Surveillance Exposure Grid"
+              >
+                <Camera className="w-3.5 h-3.5" />
+                <span>CCTV Feed</span>
               </button>
             </div>
           </div>

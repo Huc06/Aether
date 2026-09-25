@@ -7,6 +7,7 @@ import { GraphRenderer } from './engine/graphRenderer';
 import { TopBar } from './components/hud/TopBar';
 import { DynamicIsland } from './components/morph/DynamicIsland';
 import { ListSwitcher, PortfolioViewMode } from './components/morph/ListSwitcher';
+import { ExposureGridFeed } from './components/cctv/ExposureGridFeed';
 import { IntentPanel } from './components/intent/IntentPanel';
 import { PositionDetailModal } from './components/position/PositionDetailModal';
 import { SpawnWindowModal } from './components/hud/SpawnWindowModal';
@@ -761,7 +762,7 @@ export const App: React.FC = () => {
       )}
 
       {/* Morph UI: List Switcher (Morphing Cards Grid & Dense List View) */}
-      {viewMode !== 'canvas' && (
+      {(viewMode === 'cards' || viewMode === 'list') && (
         <ListSwitcher
           nodes={nodes}
           viewMode={viewMode}
@@ -771,6 +772,19 @@ export const App: React.FC = () => {
             handleFocusNode(node, false);
           }}
           onInspectNode={(node) => setSelectedNode(node)}
+          onEmergencyKill={handleKillSwitch}
+        />
+      )}
+
+      {/* CCTV Surveillance: SolaceUI Exposure Grid Mode */}
+      {viewMode === 'exposure-grid' && (
+        <ExposureGridFeed
+          nodes={nodes}
+          onInspectNode={(node) => setSelectedNode(node)}
+          onFocusNodeOnCanvas={(node) => {
+            setViewMode('canvas');
+            handleFocusNode(node, false);
+          }}
           onEmergencyKill={handleKillSwitch}
         />
       )}
