@@ -1,0 +1,162 @@
+/* ─────────────────────────────────────────────────────────────
+   Morph UI — Core ViewTransition & Motion Stylesheet
+   ───────────────────────────────────────────────────────────── */
+
+:root {
+  --vt-move: 380ms;
+  --vt-slow: 480ms;
+  --vt-enter: 210ms;
+  --vt-exit: 150ms;
+  --vt-enter-delay: 90ms;
+  --vt-ease: cubic-bezier(0.32, 0.72, 0, 1);
+  --vt-ease-out: cubic-bezier(0.33, 1, 0.68, 1);
+  --vt-bounce: linear(0, 0.22 8%, 0.6 18%, 0.94 30%, 1.07 40%, 1.05 48%, 1 60%, 0.99 74%, 1);
+}
+
+::view-transition {
+  pointer-events: none;
+}
+
+/* ── Motion Groups ───────────────────────────────────────────── */
+
+::view-transition-group(.vt-move),
+::view-transition-group(.vt-morph),
+::view-transition-group(.vt-fade),
+::view-transition-group(.vt-roll) {
+  animation-duration: var(--vt-move, 380ms);
+  animation-timing-function: var(--vt-ease, cubic-bezier(0.32, 0.72, 0, 1));
+}
+
+::view-transition-image-pair(.vt-morph) {
+  animation: var(--vt-move, 380ms) var(--vt-ease, cubic-bezier(0.32, 0.72, 0, 1)) vt-via-blur;
+}
+
+::view-transition-old(.vt-fade) {
+  animation: var(--vt-exit, 150ms) var(--vt-ease-out, cubic-bezier(0.33, 1, 0.68, 1)) both vt-fade-out;
+}
+
+::view-transition-new(.vt-fade) {
+  animation: var(--vt-enter, 210ms) var(--vt-ease-out, cubic-bezier(0.33, 1, 0.68, 1))
+    var(--vt-enter-delay, 90ms) both vt-fade;
+}
+
+::view-transition-group(.vt-slow) {
+  animation-duration: var(--vt-slow, 480ms);
+}
+
+::view-transition-group(.vt-spring) {
+  animation-timing-function: var(--vt-bounce);
+}
+
+/* ── Roll & Digits ───────────────────────────────────────────── */
+
+::view-transition-group(.vt-roll) {
+  animation-duration: var(--vt-enter, 210ms);
+}
+::view-transition-old(.vt-roll) {
+  animation: var(--vt-exit, 150ms) var(--vt-ease-out, cubic-bezier(0.33, 1, 0.68, 1)) both vt-roll-out;
+}
+::view-transition-new(.vt-roll) {
+  animation: var(--vt-enter, 210ms) var(--vt-ease, cubic-bezier(0.32, 0.72, 0, 1)) both vt-roll-in;
+}
+::view-transition-old(.vt-roll.vt-forward),
+::view-transition-new(.vt-roll.vt-back) {
+  --vt-offset: -1em;
+}
+::view-transition-new(.vt-roll.vt-forward),
+::view-transition-old(.vt-roll.vt-back) {
+  --vt-offset: 1em;
+}
+
+@keyframes vt-roll-out {
+  to {
+    transform: translateY(var(--vt-offset, -1em));
+    opacity: 0;
+  }
+}
+@keyframes vt-roll-in {
+  from {
+    transform: translateY(var(--vt-offset, 1em));
+    opacity: 0;
+  }
+}
+
+/* ── Fallback CSS Animations for Browsers without full ViewTransition ── */
+
+.morph-card {
+  transition: all 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.morph-pill {
+  transition: all 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.morph-badge {
+  transition: transform 0.25s ease, background-color 0.25s ease, color 0.25s ease;
+}
+
+.digit-roll-up {
+  animation: rollUp 0.3s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
+.digit-roll-down {
+  animation: rollDown 0.3s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
+@keyframes rollUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes rollDown {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes vt-fade {
+  from {
+    opacity: 0;
+    filter: blur(3px);
+  }
+}
+@keyframes vt-fade-out {
+  to {
+    opacity: 0;
+    filter: blur(3px);
+  }
+}
+@keyframes vt-via-blur {
+  30% {
+    filter: blur(3px);
+  }
+}
+
+/* Presence */
+@keyframes vt-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+.animate-morph-rise {
+  animation: vt-rise 0.35s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
