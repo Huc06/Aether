@@ -90,11 +90,11 @@ export const ListSwitcher: React.FC<ListSwitcherProps> = ({
   );
 
   const chainTabs = [
-    { id: 'all', label: 'All Chains', badge: nodes.length },
-    { id: 'solana', label: 'Solana', badge: nodes.filter((n) => n.chain === 'Solana').length },
-    { id: 'arbitrum', label: 'Arbitrum', badge: nodes.filter((n) => n.chain === 'Arbitrum').length },
-    { id: 'ethereum', label: 'Ethereum', badge: nodes.filter((n) => n.chain === 'Ethereum').length },
-    { id: 'hyperliquid', label: 'Hyperliquid', badge: nodes.filter((n) => n.chain === 'Hyperliquid').length },
+    { id: 'all', label: 'All Chains', tone: 'default' as const, badge: nodes.length },
+    { id: 'solana', label: 'Solana', tone: 'solana' as const, badge: nodes.filter((n) => n.chain === 'Solana').length },
+    { id: 'arbitrum', label: 'Arbitrum', tone: 'arbitrum' as const, badge: nodes.filter((n) => n.chain === 'Arbitrum').length },
+    { id: 'ethereum', label: 'Ethereum', tone: 'ethereum' as const, badge: nodes.filter((n) => n.chain === 'Ethereum').length },
+    { id: 'hyperliquid', label: 'Hyperliquid', tone: 'hyperliquid' as const, badge: nodes.filter((n) => n.chain === 'Hyperliquid').length },
   ];
 
   const riskTabs = [
@@ -248,7 +248,7 @@ export const ListSwitcher: React.FC<ListSwitcherProps> = ({
                       <div className="col-span-2 flex items-center gap-2 min-w-0">
                         <span
                           className={`px-2 py-0.5 rounded-none text-[10px] font-extrabold ${
-                            isLight ? 'bg-slate-200 text-slate-800 border border-slate-300' : 'bg-white/10 text-slate-300'
+                            isLight ? 'bg-slate-200 text-slate-900 border border-slate-300' : 'bg-white/10 text-white'
                           }`}
                         >
                           {node.chain}

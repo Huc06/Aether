@@ -99,7 +99,7 @@ export const WordTiles: React.FC<
             }}
             onPointerEnter={() => reroll(i)}
             aria-hidden
-            className="shrink-0 px-[0.34em] py-[0.3em]"
+            className="word-tile shrink-0 px-[0.34em] py-[0.3em]"
             style={
               {
                 '--tile-index': i,

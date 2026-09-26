@@ -106,13 +106,13 @@ body, html {
   }
 }
 
-[data-slot="word-tiles"] > span {
+.word-tile {
   animation: word-tile-in 720ms cubic-bezier(0.16, 1, 0.3, 1) both;
   animation-delay: calc(var(--tile-index) * 120ms);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  [data-slot="word-tiles"] > span {
+  .word-tile {
     animation: none;
   }
 }
