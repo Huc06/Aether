@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { CanvasNode, PositionExitRoute } from '../../types';
+import { CanvasNode, PositionExitRoute, LensConfig } from '../../types';
 import { 
   ExposureGridRenderer, 
   ExposureGridTreatment 
@@ -25,6 +25,7 @@ import {
 
 interface ExposureGridFeedProps {
   nodes: CanvasNode[];
+  config?: LensConfig;
   onInspectNode: (node: CanvasNode) => void;
   onFocusNodeOnCanvas: (node: CanvasNode) => void;
   onEmergencyKill: (node: CanvasNode, route: PositionExitRoute) => void;
@@ -32,6 +33,7 @@ interface ExposureGridFeedProps {
 
 export const ExposureGridFeed: React.FC<ExposureGridFeedProps> = ({
   nodes,
+  config,
   onInspectNode,
   onFocusNodeOnCanvas,
   onEmergencyKill
@@ -42,6 +44,7 @@ export const ExposureGridFeed: React.FC<ExposureGridFeedProps> = ({
   const [selectedCellNode, setSelectedCellNode] = useState<CanvasNode | null>(null);
   const [timeString, setTimeString] = useState<string>('');
   const [reconnectingIds, setReconnectingIds] = useState<string[]>([]);
+  const isLight = config?.themeMode === 'light';
 
   // Offscreen composite canvas that feeds SolaceUI shader
   const compositeCanvasRef = useRef<HTMLCanvasElement>(document.createElement('canvas'));
@@ -287,21 +290,27 @@ export const ExposureGridFeed: React.FC<ExposureGridFeedProps> = ({
   };
 
   return (
-    <div className="absolute inset-0 z-30 pt-[78px] sm:pt-[84px] md:pt-[92px] px-3 sm:px-4 md:px-8 pb-4 overflow-hidden bg-[#04070c] text-slate-200 font-mono select-none animate-morph-rise flex flex-col items-center">
+    <div className={`absolute inset-0 z-30 pt-[78px] sm:pt-[84px] md:pt-[92px] px-3 sm:px-4 md:px-8 pb-4 overflow-hidden font-mono select-none animate-morph-rise flex flex-col items-center transition-colors duration-200 ${
+      isLight ? 'bg-slate-100 text-slate-900' : 'bg-[#04070c] text-slate-200'
+    }`}>
       <div className="w-full max-w-7xl h-full flex flex-col gap-2.5">
         {/* Surveillance Control Sub-Header */}
-        <div className="glass-panel px-4 py-2 rounded-xl border border-white/10 flex flex-wrap items-center justify-between gap-3 shadow-xl bg-slate-950/90 backdrop-blur-xl shrink-0">
+        <div className={`glass-panel px-4 py-2.5 rounded-xl border flex flex-wrap items-center justify-between gap-3 shadow-xl shrink-0 ${
+          isLight ? 'bg-white/95 border-slate-300 shadow-md text-slate-900' : 'bg-slate-950/90 border-white/10'
+        }`}>
           <div className="flex items-center gap-2.5">
             <div className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping" />
             <div className="flex items-center gap-2">
-              <span className="font-extrabold text-xs text-white tracking-wider">
+              <span className={`font-extrabold text-xs tracking-wider ${isLight ? 'text-slate-950' : 'text-white'}`}>
                 CCTV MATRIX STREAM
               </span>
-              <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-300 border border-rose-500/40">
+              <span className={`text-[9px] font-extrabold px-1.5 py-0.2 rounded border ${
+                isLight ? 'bg-rose-100 text-rose-900 border-rose-300' : 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
+              }`}>
                 ● {gridCols * gridRows}-CAM
               </span>
             </div>
-            <span className="text-[10px] text-slate-400 font-mono hidden sm:inline">
+            <span className={`text-[10px] font-mono font-semibold hidden sm:inline ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
               &bull; {activeCount} Online &bull; {noSignalCount} No Signal &bull; {timeString}
             </span>
           </div>
@@ -309,11 +318,15 @@ export const ExposureGridFeed: React.FC<ExposureGridFeedProps> = ({
           {/* SolaceUI Shader Controls */}
           <div className="flex items-center gap-2 text-xs">
             {/* Treatment Selector */}
-            <div className="inline-flex p-0.5 rounded-lg bg-black/60 border border-white/10">
+            <div className={`inline-flex p-0.5 rounded-lg border ${
+              isLight ? 'bg-slate-100 border-slate-300' : 'bg-black/60 border-white/10'
+            }`}>
               <button
                 onClick={() => setTreatment('chroma')}
-                className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all ${
-                  treatment === 'chroma' ? 'bg-amber-500 text-black shadow' : 'text-slate-400 hover:text-white'
+                className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all cursor-pointer ${
+                  treatment === 'chroma' 
+                    ? 'bg-amber-500 text-black shadow font-extrabold' 
+                    : (isLight ? 'text-slate-700 hover:text-slate-950' : 'text-slate-400 hover:text-white')
                 }`}
                 title="Photographic Ink Separation (Chroma)"
               >
@@ -321,8 +334,10 @@ export const ExposureGridFeed: React.FC<ExposureGridFeedProps> = ({
               </button>
               <button
                 onClick={() => setTreatment('exposure')}
-                className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all ${
-                  treatment === 'exposure' ? 'bg-amber-500 text-black shadow' : 'text-slate-400 hover:text-white'
+                className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all cursor-pointer ${
+                  treatment === 'exposure' 
+                    ? 'bg-amber-500 text-black shadow font-extrabold' 
+                    : (isLight ? 'text-slate-700 hover:text-slate-950' : 'text-slate-400 hover:text-white')
                 }`}
                 title="Dynamic Exposure Shifts"
               >
@@ -330,8 +345,10 @@ export const ExposureGridFeed: React.FC<ExposureGridFeedProps> = ({
               </button>
               <button
                 onClick={() => setTreatment('monochrome')}
-                className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all ${
-                  treatment === 'monochrome' ? 'bg-emerald-500 text-black shadow' : 'text-slate-400 hover:text-white'
+                className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all cursor-pointer ${
+                  treatment === 'monochrome' 
+                    ? 'bg-emerald-500 text-black shadow font-extrabold' 
+                    : (isLight ? 'text-slate-700 hover:text-slate-950' : 'text-slate-400 hover:text-white')
                 }`}
                 title="Night-Vision CCTV Monochrome"
               >
@@ -340,14 +357,18 @@ export const ExposureGridFeed: React.FC<ExposureGridFeedProps> = ({
             </div>
 
             {/* Grid Density */}
-            <div className="inline-flex p-0.5 rounded-lg bg-black/60 border border-white/10">
+            <div className={`inline-flex p-0.5 rounded-lg border ${
+              isLight ? 'bg-slate-100 border-slate-300' : 'bg-black/60 border-white/10'
+            }`}>
               <button
                 onClick={() => {
                   setGridCols(2);
                   setGridRows(2);
                 }}
-                className={`px-2 py-1 rounded-md text-[11px] font-bold ${
-                  gridCols === 2 ? 'bg-white/20 text-white' : 'text-slate-400 hover:text-white'
+                className={`px-2 py-1 rounded-md text-[11px] font-bold cursor-pointer ${
+                  gridCols === 2 
+                    ? (isLight ? 'bg-white text-slate-950 shadow-sm font-extrabold' : 'bg-white/20 text-white') 
+                    : (isLight ? 'text-slate-600 hover:text-slate-950' : 'text-slate-400 hover:text-white')
                 }`}
               >
                 2x2
@@ -357,8 +378,10 @@ export const ExposureGridFeed: React.FC<ExposureGridFeedProps> = ({
                   setGridCols(3);
                   setGridRows(3);
                 }}
-                className={`px-2 py-1 rounded-md text-[11px] font-bold ${
-                  gridCols === 3 ? 'bg-white/20 text-white' : 'text-slate-400 hover:text-white'
+                className={`px-2 py-1 rounded-md text-[11px] font-bold cursor-pointer ${
+                  gridCols === 3 
+                    ? (isLight ? 'bg-white text-slate-950 shadow-sm font-extrabold' : 'bg-white/20 text-white') 
+                    : (isLight ? 'text-slate-600 hover:text-slate-950' : 'text-slate-400 hover:text-white')
                 }`}
               >
                 3x3
@@ -386,18 +409,22 @@ export const ExposureGridFeed: React.FC<ExposureGridFeedProps> = ({
 
         {/* Selected Cell Node Action Drawer */}
         {selectedCellNode && (
-          <div className="glass-panel p-4 rounded-xl border border-amber-500/50 flex items-center justify-between gap-4 animate-in slide-in-from-bottom-3 duration-150 bg-slate-950/95">
+          <div className={`glass-panel p-4 rounded-xl border flex items-center justify-between gap-4 animate-in slide-in-from-bottom-3 duration-150 ${
+            isLight ? 'bg-white border-amber-500 shadow-2xl text-slate-900' : 'bg-slate-950/95 border-amber-500/50'
+          }`}>
             <div className="flex items-center gap-3">
               <div className="flex flex-col">
                 <div className="flex items-center gap-2">
-                  <span className="font-extrabold text-white text-sm">
+                  <span className={`font-extrabold text-sm ${isLight ? 'text-slate-950' : 'text-white'}`}>
                     {selectedCellNode.title}
                   </span>
-                  <span className="px-2 py-0.2 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                  <span className={`px-2 py-0.2 rounded text-[10px] font-extrabold border ${
+                    isLight ? 'bg-amber-100 text-amber-900 border-amber-300' : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                  }`}>
                     {selectedCellNode.chain}
                   </span>
                 </div>
-                <span className="text-xs text-slate-400 font-mono">
+                <span className={`text-xs font-mono font-medium ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
                   Value: ${selectedCellNode.valueUsd.toLocaleString()} &bull; {selectedCellNode.strategy}
                 </span>
               </div>
@@ -406,7 +433,11 @@ export const ExposureGridFeed: React.FC<ExposureGridFeedProps> = ({
             <div className="flex items-center gap-2">
               <button
                 onClick={() => onFocusNodeOnCanvas(selectedCellNode)}
-                className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-amber-500/20 hover:text-amber-300 text-slate-200 border border-white/10 text-xs font-bold flex items-center gap-1.5"
+                className={`px-3 py-1.5 rounded-lg border text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-colors ${
+                  isLight 
+                    ? 'bg-slate-100 hover:bg-amber-100 hover:text-amber-900 text-slate-800 border-slate-300' 
+                    : 'bg-white/10 hover:bg-amber-500/20 hover:text-amber-300 text-slate-200 border-white/10'
+                }`}
               >
                 <span>Glide on Canvas</span>
                 <ChevronRight className="w-3.5 h-3.5" />
@@ -414,7 +445,7 @@ export const ExposureGridFeed: React.FC<ExposureGridFeedProps> = ({
 
               <button
                 onClick={() => onInspectNode(selectedCellNode)}
-                className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-xs"
+                className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-xs cursor-pointer shadow"
               >
                 Inspect Detail
               </button>
@@ -422,7 +453,7 @@ export const ExposureGridFeed: React.FC<ExposureGridFeedProps> = ({
               {selectedCellNode.riskLevel === 'critical' && selectedCellNode.exitRoutes && (
                 <button
                   onClick={() => onEmergencyKill(selectedCellNode, selectedCellNode.exitRoutes![0])}
-                  className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-xs flex items-center gap-1 shadow-lg shadow-rose-600/40"
+                  className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-xs flex items-center gap-1 shadow-lg shadow-rose-600/40 cursor-pointer"
                 >
                   <Zap className="w-3.5 h-3.5 fill-white" />
                   <span>Kill Switch</span>
@@ -431,7 +462,9 @@ export const ExposureGridFeed: React.FC<ExposureGridFeedProps> = ({
 
               <button
                 onClick={() => setSelectedCellNode(null)}
-                className="p-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-slate-400 hover:text-white"
+                className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                  isLight ? 'bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900' : 'bg-white/5 hover:bg-white/15 text-slate-400 hover:text-white'
+                }`}
               >
                 <X className="w-4 h-4" />
               </button>

@@ -723,6 +723,7 @@ export const App: React.FC = () => {
         <ListSwitcher
           nodes={nodes}
           viewMode={viewMode}
+          config={config}
           onChangeViewMode={setViewMode}
           onFocusNodeOnCanvas={(node) => {
             setViewMode('canvas');
@@ -737,6 +738,7 @@ export const App: React.FC = () => {
       {viewMode === 'exposure-grid' && (
         <ExposureGridFeed
           nodes={nodes}
+          config={config}
           onInspectNode={(node) => setSelectedNode(node)}
           onFocusNodeOnCanvas={(node) => {
             setViewMode('canvas');
