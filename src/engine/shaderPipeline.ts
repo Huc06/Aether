@@ -208,16 +208,17 @@ export class WebGLShaderPipeline {
 
     gl.useProgram(this.program);
 
-    const prog = transitionProgress;
+    // Active real-time lens shader pipeline with overview focus boost
+    const overviewBoost = 1.0 + transitionProgress * 0.35;
     gl.uniform1i(this.uniforms.tex, 0);
     gl.uniform2f(this.uniforms.fullSize, width, height);
-    gl.uniform1f(this.uniforms.distort, config.distort * prog);
-    gl.uniform1f(this.uniforms.contrast, 1.0 + (config.contrast - 1.0) * prog);
-    gl.uniform1f(this.uniforms.brightness, config.feather * prog);
-    gl.uniform1f(this.uniforms.edgeBlur, config.edgeBlur * prog);
+    gl.uniform1f(this.uniforms.distort, config.distort * overviewBoost);
+    gl.uniform1f(this.uniforms.contrast, config.contrast);
+    gl.uniform1f(this.uniforms.brightness, config.feather);
+    gl.uniform1f(this.uniforms.edgeBlur, config.edgeBlur * (0.5 + transitionProgress * 0.5));
     gl.uniform1f(this.uniforms.edgeBlurStart, config.edgeBlurStart);
-    gl.uniform1f(this.uniforms.vignette, config.vignette * prog);
-    gl.uniform1f(this.uniforms.chromatic, config.chromatic * prog);
+    gl.uniform1f(this.uniforms.vignette, config.vignette * overviewBoost);
+    gl.uniform1f(this.uniforms.chromatic, config.chromatic * overviewBoost);
     gl.uniform1f(this.uniforms.scanlines, config.showScanlines ? 1.0 : 0.0);
 
     gl.bindVertexArray(this.vao);
