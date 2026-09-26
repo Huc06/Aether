@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { CanvasNode, PositionExitRoute, LensConfig } from '../../types';
 import { 
-  X, 
   ShieldCheck, 
   Activity, 
   FileText 
@@ -111,23 +110,21 @@ export const PositionDetailModal: React.FC<PositionDetailModalProps> = ({
             </div>
           </div>
 
-          {/* Unified Close Button (Single control, no duplicate Esc / X) */}
           <button
             onClick={onClose}
             title="Close (Esc)"
-            className={`shrink-0 h-7 sm:h-8 px-2 sm:px-2.5 rounded-lg flex items-center gap-1.5 border text-xs font-mono font-semibold transition-all cursor-pointer ${
+            className={`shrink-0 h-7 sm:h-8 px-2.5 rounded-lg flex items-center justify-center border text-[10px] font-mono font-bold tracking-wider uppercase cursor-pointer ${
               isLight 
-                ? 'bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-950 border-slate-300 shadow-sm' 
+                ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-950 border-slate-300 shadow-sm' 
                 : 'bg-slate-800/80 hover:bg-slate-800 text-slate-300 hover:text-white border-slate-700'
             }`}
           >
-            <span className="text-[10px] opacity-60">Esc</span>
-            <X className="w-3.5 h-3.5" />
+            Esc
           </button>
         </div>
 
         {/* Modal Scroll Body */}
-        <div className="overflow-y-auto p-3 sm:p-4 flex flex-col gap-2.5 flex-1 min-h-0">
+        <div className="modal-scroll overflow-y-auto overflow-x-hidden p-3 sm:p-4 flex flex-col gap-2.5 flex-1 min-h-0">
           {/* Top Primary Metrics & Solvency Gauge Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 items-stretch">
             {/* Left Column: Capital, Earnings & Obligations */}
