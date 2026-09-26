@@ -6,10 +6,7 @@ import {
   Lock, 
   Clock, 
   CheckCircle2, 
-  Radio, 
-  Activity, 
-  ArrowRight,
-  Terminal
+  ArrowRight
 } from 'lucide-react';
 import { RoutePipelineFlow } from './RoutePipelineFlow';
 
@@ -86,7 +83,6 @@ export const EmergencyExitDeck: React.FC<EmergencyExitDeckProps> = ({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.code === 'Space' && !e.repeat && !isHolding && !isExecuting) {
-        // Prevent page scroll
         const target = e.target as HTMLElement;
         if (target && ['INPUT', 'TEXTAREA', 'BUTTON'].includes(target.tagName)) return;
         e.preventDefault();
@@ -121,7 +117,7 @@ export const EmergencyExitDeck: React.FC<EmergencyExitDeckProps> = ({
         : 'bg-slate-950/70 border-slate-800'
     }`}>
       {/* Deck Header: Telemetry & State */}
-      <div className={`px-4 py-3 border-b flex items-center justify-between ${
+      <div className={`px-3.5 py-2 border-b flex items-center justify-between ${
         isLight ? 'bg-slate-100/70 border-slate-200' : 'bg-slate-900/60 border-slate-800'
       }`}>
         <div className="flex items-center gap-2">
@@ -132,15 +128,15 @@ export const EmergencyExitDeck: React.FC<EmergencyExitDeckProps> = ({
               ? 'bg-rose-500 animate-pulse' 
               : 'bg-emerald-500'
           }`} />
-          <span className={`text-xs font-mono font-bold tracking-wider uppercase ${
+          <span className={`text-[11px] font-mono font-bold tracking-wider uppercase ${
             isLight ? 'text-slate-900' : 'text-slate-200'
           }`}>
             {isCritical ? 'Emergency Unwind Protocol' : 'Pre-computed Exit Routes'}
           </span>
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded flex items-center gap-1 border ${
+        <div className="flex items-center gap-1.5">
+          <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded flex items-center gap-1 border ${
             isLight 
               ? 'bg-emerald-50 text-emerald-800 border-emerald-200' 
               : 'bg-emerald-950/40 text-emerald-400 border-emerald-800/60'
@@ -148,7 +144,7 @@ export const EmergencyExitDeck: React.FC<EmergencyExitDeckProps> = ({
             <Lock className="w-2.5 h-2.5" />
             MEV Protected
           </span>
-          <span className={`text-[10px] font-mono px-2 py-0.5 rounded border ${
+          <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded border ${
             isLight
               ? 'bg-slate-200/70 text-slate-700 border-slate-300'
               : 'bg-slate-900 text-slate-400 border-slate-800'
@@ -158,107 +154,96 @@ export const EmergencyExitDeck: React.FC<EmergencyExitDeckProps> = ({
         </div>
       </div>
 
-      <div className="p-4 flex flex-col gap-4">
+      <div className="p-3 flex flex-col gap-2.5">
         {/* Route Selector: Segmented Grid */}
-        <div className="flex flex-col gap-1.5">
-          <div className="flex items-center justify-between text-[11px] font-mono">
-            <span className={isLight ? 'text-slate-600 font-medium' : 'text-slate-400'}>
-              Available Liquidation &amp; Unwind Paths:
-            </span>
-            <span className={isLight ? 'text-slate-500' : 'text-slate-500'}>
-              {routes.length} paths pre-computed
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-            {routes.map((route, idx) => {
-              const isSelected = selectedRouteIndex === idx;
-              return (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => !isExecuting && onSelectRoute(idx)}
-                  disabled={isExecuting}
-                  className={`p-3 rounded-lg border text-left transition-all duration-150 flex flex-col gap-1.5 relative cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-slate-400 ${
-                    isSelected
-                      ? (isLight
-                          ? isCritical
-                            ? 'bg-white border-rose-500 shadow-sm ring-1 ring-rose-400/40 text-slate-900'
-                            : 'bg-white border-slate-900 shadow-sm ring-1 ring-slate-900/30 text-slate-900'
-                          : isCritical
-                            ? 'bg-slate-900/90 border-rose-500/80 shadow-[0_0_20px_rgba(244,63,94,0.12)] text-white'
-                            : 'bg-slate-900/90 border-cyan-500/70 shadow-[0_0_20px_rgba(6,182,212,0.12)] text-white')
-                      : (isLight
-                          ? 'bg-white/60 border-slate-200 text-slate-700 hover:bg-white hover:border-slate-300'
-                          : 'bg-slate-900/40 border-slate-800 text-slate-300 hover:border-slate-700 hover:bg-slate-900/60')
-                  } ${isExecuting ? 'opacity-50 cursor-not-allowed' : ''}`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center border transition-colors ${
-                        isSelected 
-                          ? (isCritical 
-                              ? 'border-rose-500 bg-rose-500 text-white' 
-                              : isLight ? 'border-slate-900 bg-slate-900 text-white' : 'border-cyan-500 bg-cyan-500 text-black')
-                          : (isLight ? 'border-slate-300 bg-slate-100' : 'border-slate-700 bg-slate-800')
-                      }`}>
-                        {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-                      </div>
-                      <span className={`text-xs font-bold font-mono ${
-                        isSelected 
-                          ? (isCritical ? (isLight ? 'text-rose-700' : 'text-rose-400') : (isLight ? 'text-slate-950' : 'text-cyan-400'))
-                          : (isLight ? 'text-slate-800' : 'text-slate-300')
-                      }`}>
-                        Exit to {route.targetAsset}
-                      </span>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {routes.map((route, idx) => {
+            const isSelected = selectedRouteIndex === idx;
+            return (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => !isExecuting && onSelectRoute(idx)}
+                disabled={isExecuting}
+                className={`p-2.5 rounded-lg border text-left transition-all duration-150 flex flex-col gap-1 relative cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-slate-400 ${
+                  isSelected
+                    ? (isLight
+                        ? isCritical
+                          ? 'bg-white border-rose-500 shadow-sm ring-1 ring-rose-400/40 text-slate-900'
+                          : 'bg-white border-slate-900 shadow-sm ring-1 ring-slate-900/30 text-slate-900'
+                        : isCritical
+                          ? 'bg-slate-900/90 border-rose-500/80 shadow-[0_0_20px_rgba(244,63,94,0.12)] text-white'
+                          : 'bg-slate-900/90 border-cyan-500/70 shadow-[0_0_20px_rgba(6,182,212,0.12)] text-white')
+                    : (isLight
+                        ? 'bg-white/60 border-slate-200 text-slate-700 hover:bg-white hover:border-slate-300'
+                        : 'bg-slate-900/40 border-slate-800 text-slate-300 hover:border-slate-700 hover:bg-slate-900/60')
+                } ${isExecuting ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <div className={`w-3 h-3 rounded-full flex items-center justify-center border transition-colors ${
+                      isSelected 
+                        ? (isCritical 
+                            ? 'border-rose-500 bg-rose-500 text-white' 
+                            : isLight ? 'border-slate-900 bg-slate-900 text-white' : 'border-cyan-500 bg-cyan-500 text-black')
+                        : (isLight ? 'border-slate-300 bg-slate-100' : 'border-slate-700 bg-slate-800')
+                    }`}>
+                      {isSelected && <div className="w-1 h-1 rounded-full bg-white" />}
                     </div>
-
-                    <div className={`text-[10px] font-mono flex items-center gap-1 ${
-                      isLight ? 'text-slate-500' : 'text-slate-500'
+                    <span className={`text-[11px] font-bold font-mono ${
+                      isSelected 
+                        ? (isCritical ? (isLight ? 'text-rose-700' : 'text-rose-400') : (isLight ? 'text-slate-950' : 'text-cyan-400'))
+                        : (isLight ? 'text-slate-800' : 'text-slate-300')
                     }`}>
-                      <Clock className="w-3 h-3" />
-                      <span>{route.timeSeconds}s</span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-baseline justify-between pt-0.5">
-                    <span className={`text-sm font-mono font-bold tracking-tight ${
-                      isLight ? 'text-slate-950' : 'text-white'
-                    }`}>
-                      {route.estReturn}
-                    </span>
-                    <span className={`text-[10px] font-mono ${
-                      isLight ? 'text-slate-500' : 'text-slate-400'
-                    }`}>
-                      Fee: {route.fee}
+                      Exit to {route.targetAsset}
                     </span>
                   </div>
 
-                  {/* Micro Flow Pipeline */}
-                  <RoutePipelineFlow 
-                    summary={route.routeSummary} 
-                    isLight={isLight} 
-                    isSelected={isSelected} 
-                  />
-                </button>
-              );
-            })}
-          </div>
+                  <div className={`text-[9px] font-mono flex items-center gap-0.5 ${
+                    isLight ? 'text-slate-500' : 'text-slate-500'
+                  }`}>
+                    <Clock className="w-2.5 h-2.5" />
+                    <span>{route.timeSeconds}s</span>
+                  </div>
+                </div>
+
+                <div className="flex items-baseline justify-between pt-0.5">
+                  <span className={`text-xs font-mono font-bold tracking-tight ${
+                    isLight ? 'text-slate-950' : 'text-white'
+                  }`}>
+                    {route.estReturn}
+                  </span>
+                  <span className={`text-[9px] font-mono ${
+                    isLight ? 'text-slate-500' : 'text-slate-400'
+                  }`}>
+                    Fee: {route.fee}
+                  </span>
+                </div>
+
+                {/* Micro Flow Pipeline */}
+                <RoutePipelineFlow 
+                  summary={route.routeSummary} 
+                  isLight={isLight} 
+                  isSelected={isSelected} 
+                />
+              </button>
+            );
+          })}
         </div>
 
         {/* Execution Stepper Terminal (Active State) */}
         {isExecuting && (
-          <div className={`p-3.5 rounded-lg border flex flex-col gap-2.5 animate-in fade-in duration-200 ${
+          <div className={`p-2.5 rounded-lg border flex flex-col gap-2 animate-in fade-in duration-200 ${
             isLight 
               ? 'bg-rose-50/60 border-rose-200 text-slate-900' 
               : 'bg-rose-950/20 border-rose-900/40 text-slate-100'
           }`}>
             <div className="flex items-center justify-between text-xs font-mono font-bold">
-              <span className="flex items-center gap-2 text-rose-600">
+              <span className="flex items-center gap-1.5 text-rose-600 text-[11px]">
                 <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
                 Executing Unwind Pipeline
               </span>
-              <span className={`text-[11px] ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+              <span className={`text-[10px] ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
                 Step {killStep} of 3
               </span>
             </div>
@@ -272,22 +257,22 @@ export const EmergencyExitDeck: React.FC<EmergencyExitDeckProps> = ({
               />
             </div>
 
-            <div className="grid grid-cols-3 gap-2 pt-1 text-[10px] font-mono">
-              <div className={`p-1.5 rounded border transition-colors ${
+            <div className="grid grid-cols-3 gap-1.5 pt-0.5 text-[9px] font-mono">
+              <div className={`p-1 rounded border transition-colors ${
                 killStep >= 1
                   ? (isLight ? 'bg-white border-rose-300 text-rose-700 font-bold' : 'bg-slate-900 border-rose-500/50 text-rose-400 font-bold')
                   : (isLight ? 'border-transparent text-slate-400' : 'border-transparent text-slate-600')
               }`}>
                 1. Revoke &amp; Collateral
               </div>
-              <div className={`p-1.5 rounded border transition-colors ${
+              <div className={`p-1 rounded border transition-colors ${
                 killStep >= 2
                   ? (isLight ? 'bg-white border-rose-300 text-rose-700 font-bold' : 'bg-slate-900 border-rose-500/50 text-rose-400 font-bold')
                   : (isLight ? 'border-transparent text-slate-400' : 'border-transparent text-slate-600')
               }`}>
-                2. Private RPC Routing
+                2. Private RPC Route
               </div>
-              <div className={`p-1.5 rounded border transition-colors ${
+              <div className={`p-1 rounded border transition-colors ${
                 killStep >= 3
                   ? (isLight ? 'bg-white border-rose-300 text-rose-700 font-bold' : 'bg-slate-900 border-rose-500/50 text-rose-400 font-bold')
                   : (isLight ? 'border-transparent text-slate-400' : 'border-transparent text-slate-600')
@@ -299,7 +284,7 @@ export const EmergencyExitDeck: React.FC<EmergencyExitDeckProps> = ({
         )}
 
         {/* Hold-to-Execute Action Bar */}
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-1.5">
           <div className="relative">
             <button
               type="button"
@@ -310,7 +295,7 @@ export const EmergencyExitDeck: React.FC<EmergencyExitDeckProps> = ({
               onTouchStart={startHold}
               onTouchEnd={cancelHold}
               onTouchCancel={cancelHold}
-              className={`w-full relative overflow-hidden py-3 px-4 rounded-lg font-mono text-xs font-bold tracking-wider uppercase flex items-center justify-center gap-2 border select-none transition-all duration-150 cursor-pointer ${
+              className={`w-full relative overflow-hidden py-2.5 px-3 rounded-lg font-mono text-xs font-bold tracking-wider uppercase flex items-center justify-center gap-2 border select-none transition-all duration-150 cursor-pointer ${
                 isExecuting
                   ? 'opacity-60 cursor-not-allowed bg-slate-800 border-slate-700 text-slate-400'
                   : isHolding
@@ -338,9 +323,9 @@ export const EmergencyExitDeck: React.FC<EmergencyExitDeckProps> = ({
 
               <div className="relative z-10 flex items-center justify-center gap-2">
                 {isCritical ? (
-                  <ShieldAlert className={`w-4 h-4 ${isHolding ? 'text-white animate-pulse' : (isLight ? 'text-white' : 'text-rose-400')}`} />
+                  <ShieldAlert className={`w-3.5 h-3.5 ${isHolding ? 'text-white animate-pulse' : (isLight ? 'text-white' : 'text-rose-400')}`} />
                 ) : (
-                  <CheckCircle2 className={`w-4 h-4 ${isHolding ? 'text-white animate-pulse' : (isLight ? 'text-white' : 'text-emerald-400')}`} />
+                  <CheckCircle2 className={`w-3.5 h-3.5 ${isHolding ? 'text-white animate-pulse' : (isLight ? 'text-white' : 'text-emerald-400')}`} />
                 )}
                 <span>
                   {isExecuting
@@ -356,9 +341,9 @@ export const EmergencyExitDeck: React.FC<EmergencyExitDeckProps> = ({
             </button>
           </div>
 
-          <div className="flex items-center justify-between text-[10px] font-mono px-1">
+          <div className="flex items-center justify-between text-[9px] font-mono px-1">
             <span className={isLight ? 'text-slate-500' : 'text-slate-500'}>
-              Hold <kbd className="px-1 py-0.2 rounded border text-[9px] bg-slate-800/40 border-slate-700">Space</kbd> or press &amp; hold button
+              Hold <kbd className="px-1 py-0.2 rounded border text-[9px] bg-slate-800/40 border-slate-700">Space</kbd> or press button
             </span>
             <span className={isLight ? 'text-slate-500' : 'text-slate-500'}>
               Zero-sandwich guarantee &bull; Flashbots / Jito Private RPC
