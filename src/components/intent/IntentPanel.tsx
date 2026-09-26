@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { CanvasNode, IntentQuery, RecommendedRoute } from '../../types';
+import { CanvasNode, IntentQuery, RecommendedRoute, LensConfig } from '../../types';
 import { 
   Search, 
   ArrowRight, 
@@ -10,12 +10,12 @@ import {
   Clock, 
   Fuel, 
   Zap, 
-  ChevronRight,
-  TrendingUp,
-  X,
-  Bot,
-  Terminal,
-  Activity
+  ChevronRight, 
+  TrendingUp, 
+  X, 
+  Bot, 
+  Terminal, 
+  Activity 
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { streamNansenAgent } from '../../services/nansenApi';
@@ -25,6 +25,7 @@ interface IntentPanelProps {
   onClose: () => void;
   nodes: CanvasNode[];
   intentPresets: IntentQuery[];
+  config?: LensConfig;
   onSelectNode: (node: CanvasNode) => void;
   onHighlightNodes: (nodeIds: string[]) => void;
   onExecuteRoute: (route: RecommendedRoute) => void;
@@ -79,6 +80,7 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
   onClose,
   nodes,
   intentPresets,
+  config,
   onSelectNode,
   onHighlightNodes,
   onExecuteRoute,
@@ -89,6 +91,7 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
   const [selectedRoute, setSelectedRoute] = useState<RecommendedRoute | null>(null);
   const [isSimulating, setIsSimulating] = useState(false);
   const [simulatedStep, setSimulatedStep] = useState(0);
+  const isLight = config?.themeMode === 'light';
 
   // Nansen Research Agent state
   const [isAgentStreaming, setIsAgentStreaming] = useState(false);
@@ -260,14 +263,20 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 bg-black/60 backdrop-blur-md transition-all">
       <div 
-        className="glass-panel w-full max-w-2xl rounded-xl border border-amber-500/50 shadow-2xl overflow-hidden flex flex-col max-h-[84vh] animate-in fade-in zoom-in-95 duration-150"
+        className={`w-full max-w-2xl rounded-2xl border shadow-2xl overflow-hidden flex flex-col max-h-[84vh] animate-in fade-in slide-in-from-top-3 duration-150 transition-colors ${
+          isLight 
+            ? 'bg-white/98 text-slate-900 border-slate-300 shadow-2xl' 
+            : 'glass-panel text-slate-200 border-amber-500/50'
+        }`}
         style={{
-          boxShadow: '0 0 50px rgba(245, 158, 11, 0.25), 0 25px 60px rgba(0, 0, 0, 0.9)'
+          boxShadow: isLight ? '0 20px 60px rgba(0, 0, 0, 0.15)' : '0 0 50px rgba(245, 158, 11, 0.25), 0 25px 60px rgba(0, 0, 0, 0.9)'
         }}
       >
         {/* Search Header Bar */}
-        <div className="p-4 border-b border-white/10 bg-slate-900/90 flex items-center gap-3">
-          <span className="text-amber-400 font-extrabold text-lg">&gt;</span>
+        <div className={`p-3.5 border-b flex items-center gap-2.5 flex-nowrap ${
+          isLight ? 'bg-slate-50/95 border-slate-200' : 'bg-slate-900/90 border-white/10'
+        }`}>
+          <span className="text-amber-500 font-extrabold text-base shrink-0 select-none">&gt;</span>
           <input
             ref={inputRef}
             type="text"
@@ -280,40 +289,50 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
                 handleAskNansenAgent();
               }
             }}
-            placeholder="Ask Nansen AI / Type intent: e.g. 'Which tokens are smart money accumulating?', 'find USDC'..."
-            className="w-full bg-transparent text-white font-mono text-sm outline-none placeholder:text-slate-500"
+            placeholder="Ask Nansen AI / Type intent: e.g. 'Which tokens are smart money accumulating?'..."
+            className={`flex-1 min-w-0 bg-transparent font-mono text-sm outline-none transition-colors ${
+              isLight ? 'text-slate-950 placeholder:text-slate-500 font-semibold' : 'text-white placeholder:text-slate-500'
+            }`}
           />
           
           <button
             onClick={() => handleAskNansenAgent()}
             disabled={isAgentStreaming || !query.trim()}
-            className="px-2.5 py-1 rounded bg-amber-500 hover:bg-amber-400 disabled:opacity-40 text-black font-extrabold text-xs font-mono flex items-center gap-1.5 transition-all shadow"
+            className="shrink-0 whitespace-nowrap px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 disabled:opacity-40 text-black font-extrabold text-xs font-mono flex items-center gap-1.5 transition-all shadow cursor-pointer"
             title="Ask Nansen AI Research Agent"
           >
-            <Bot className="w-3.5 h-3.5 fill-black" />
+            <Bot className="w-3.5 h-3.5 fill-black shrink-0" />
             <span>{isAgentStreaming ? 'Thinking...' : 'Ask Nansen AI'}</span>
           </button>
 
           {query && (
             <button 
               onClick={() => { setQuery(''); setAgentResponse(null); }}
-              className="text-slate-400 hover:text-white text-xs p-1"
+              className={`shrink-0 p-1 text-xs rounded transition-colors cursor-pointer ${
+                isLight ? 'text-slate-500 hover:text-slate-900 hover:bg-slate-200' : 'text-slate-400 hover:text-white'
+              }`}
             >
-              <X className="w-4 h-4" />
+              <X className="w-3.5 h-3.5" />
             </button>
           )}
           <button
             onClick={onClose}
-            className="text-xs px-2 py-1 rounded bg-slate-800 text-slate-400 hover:text-white border border-white/10"
+            className={`shrink-0 text-xs px-2 py-1 rounded font-mono font-bold border transition-colors cursor-pointer ${
+              isLight ? 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300' : 'bg-slate-800 text-slate-400 hover:text-white border-white/10'
+            }`}
           >
             ESC
           </button>
         </div>
 
         {/* Intent Presets Pills */}
-        <div className="p-3 bg-slate-950/70 border-b border-white/5 flex items-center gap-2 overflow-x-auto no-scrollbar">
-          <span className="text-[10px] text-slate-400 font-bold uppercase flex items-center gap-1 shrink-0">
-            <Sparkles className="w-3 h-3 text-amber-400" />
+        <div className={`p-3 border-b flex items-center gap-2 overflow-x-auto no-scrollbar ${
+          isLight ? 'bg-slate-100/90 border-slate-200' : 'bg-slate-950/70 border-white/5'
+        }`}>
+          <span className={`text-[10px] font-extrabold uppercase flex items-center gap-1 shrink-0 ${
+            isLight ? 'text-slate-700' : 'text-slate-400'
+          }`}>
+            <Sparkles className="w-3 h-3 text-amber-500" />
             Suggested:
           </span>
           <button
@@ -322,20 +341,28 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
               setSelectedRoute(SMART_MONEY_ROUTE);
               handleAskNansenAgent('Which tokens are smart money accumulating on Ethereum today?');
             }}
-            className="text-xs px-2.5 py-1 rounded-md bg-cyan-950/40 hover:bg-cyan-900/60 border border-cyan-500/40 text-cyan-300 shrink-0 transition-all font-mono flex items-center gap-1.5"
+            className={`text-xs px-2.5 py-1 rounded-md border shrink-0 transition-all font-mono font-bold flex items-center gap-1.5 cursor-pointer ${
+              isLight 
+                ? 'bg-cyan-50 hover:bg-cyan-100 border-cyan-300 text-cyan-950' 
+                : 'bg-cyan-950/40 hover:bg-cyan-900/60 border-cyan-500/40 text-cyan-300'
+            }`}
           >
-            <Bot className="w-3.5 h-3.5 text-cyan-400" />
+            <Bot className="w-3.5 h-3.5 text-cyan-500 shrink-0" />
             <span>Smart Money Accumulation (Live)</span>
           </button>
           {intentPresets.map((preset) => (
             <button
               key={preset.id}
               onClick={() => handleSelectPreset(preset)}
-              className="text-xs px-2.5 py-1 rounded-md bg-white/5 hover:bg-amber-500/20 hover:border-amber-500/50 border border-white/10 text-slate-300 hover:text-amber-300 shrink-0 transition-all font-mono flex items-center gap-1.5"
+              className={`text-xs px-2.5 py-1 rounded-md border shrink-0 transition-all font-mono font-bold flex items-center gap-1.5 cursor-pointer ${
+                isLight 
+                  ? 'bg-white hover:bg-amber-50 hover:border-amber-400 border-slate-300 text-slate-800 hover:text-amber-900 shadow-sm' 
+                  : 'bg-white/5 hover:bg-amber-500/20 hover:border-amber-500/50 border-white/10 text-slate-300 hover:text-amber-300'
+              }`}
             >
-              {preset.category === 'SAFETY' && <ShieldAlert className="w-3 h-3 text-rose-400" />}
-              {preset.category === 'REBALANCE' && <RefreshCw className="w-3 h-3 text-cyan-400" />}
-              {preset.category === 'HEDGE' && <TrendingUp className="w-3 h-3 text-purple-400" />}
+              {preset.category === 'SAFETY' && <ShieldAlert className="w-3 h-3 text-rose-500" />}
+              {preset.category === 'REBALANCE' && <RefreshCw className="w-3 h-3 text-cyan-500" />}
+              {preset.category === 'HEDGE' && <TrendingUp className="w-3 h-3 text-purple-500" />}
               <span>{preset.query}</span>
             </button>
           ))}
@@ -505,9 +532,11 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
 
           {/* Matched Positions & Nodes List */}
           <div className="flex flex-col gap-2">
-            <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
+            <div className={`text-[11px] font-extrabold uppercase tracking-wider flex items-center justify-between ${
+              isLight ? 'text-slate-700' : 'text-slate-400'
+            }`}>
               <span>Matching Portfolio Nodes ({filteredNodes.length})</span>
-              <span className="text-slate-500 text-[10px]">Click to glide camera &amp; zoom</span>
+              <span className={`text-[10px] ${isLight ? 'text-slate-500 font-semibold' : 'text-slate-500'}`}>Click to glide camera &amp; zoom</span>
             </div>
 
             <div className="flex flex-col gap-1.5">
@@ -518,26 +547,36 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
                     onSelectNode(node);
                     onClose();
                   }}
-                  className="p-3 rounded-lg bg-slate-900/60 hover:bg-slate-800/80 border border-white/10 hover:border-amber-500/50 cursor-pointer flex items-center justify-between transition-all group"
+                  className={`p-3 rounded-xl border cursor-pointer flex items-center justify-between transition-all group ${
+                    isLight 
+                      ? 'bg-slate-50 hover:bg-white border-slate-200 hover:border-amber-400 hover:shadow-md' 
+                      : 'bg-slate-900/60 hover:bg-slate-800/80 border-white/10 hover:border-amber-500/50'
+                  }`}
                 >
                   <div className="flex items-center gap-2.5">
                     <div className="flex flex-col">
                       <div className="flex items-center gap-2">
-                        <span className="font-bold text-xs text-white group-hover:text-amber-300">
+                        <span className={`font-extrabold text-xs transition-colors ${
+                          isLight ? 'text-slate-950 group-hover:text-amber-700' : 'text-white group-hover:text-amber-300'
+                        }`}>
                           {node.title}
                         </span>
-                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-white/10 text-slate-400">
+                        <span className={`text-[10px] px-1.5 py-0.2 rounded font-extrabold ${
+                          isLight ? 'bg-slate-200 text-slate-800' : 'bg-white/10 text-slate-400'
+                        }`}>
                           {node.chain}
                         </span>
                         {node.smartMoneyNetflow24h !== undefined && (
-                          <span className={`text-[9px] px-1.5 py-0.2 rounded font-bold font-mono ${
-                            node.smartMoneyNetflow24h >= 0 ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-rose-950 text-rose-400 border border-rose-800'
+                          <span className={`text-[9px] px-1.5 py-0.2 rounded font-extrabold font-mono ${
+                            node.smartMoneyNetflow24h >= 0 
+                              ? (isLight ? 'bg-emerald-100 text-emerald-900 border border-emerald-300' : 'bg-emerald-950 text-emerald-400 border border-emerald-800') 
+                              : (isLight ? 'bg-rose-100 text-rose-900 border border-rose-300' : 'bg-rose-950 text-rose-400 border border-rose-800')
                           }`}>
                             {node.smartMoneyNetflow24h >= 0 ? `+SM $${Math.round(node.smartMoneyNetflow24h).toLocaleString()}` : `-SM $${Math.abs(Math.round(node.smartMoneyNetflow24h)).toLocaleString()}`}
                           </span>
                         )}
                       </div>
-                      <span className="text-[11px] text-slate-400">
+                      <span className={`text-[11px] ${isLight ? 'text-slate-600 font-medium' : 'text-slate-400'}`}>
                         {node.app} &bull; {node.strategy || node.category}
                       </span>
                     </div>
@@ -545,23 +584,25 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
 
                   <div className="flex items-center gap-4 text-right">
                     <div>
-                      <div className="font-bold text-xs text-white font-mono">
+                      <div className={`font-extrabold text-xs font-mono ${isLight ? 'text-slate-950' : 'text-white'}`}>
                         ${node.valueUsd.toLocaleString()}
                       </div>
                       {node.apy && (
-                        <div className="text-[10px] text-emerald-400 font-semibold font-mono">
+                        <div className={`text-[10px] font-extrabold font-mono ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>
                           {node.apy}% APY
                         </div>
                       )}
                       {node.healthFactor && (
-                        <div className={`text-[10px] font-bold font-mono ${
-                          node.riskLevel === 'critical' ? 'text-rose-400' : 'text-amber-400'
+                        <div className={`text-[10px] font-extrabold font-mono ${
+                          node.riskLevel === 'critical' ? (isLight ? 'text-rose-700' : 'text-rose-400') : (isLight ? 'text-amber-700' : 'text-amber-400')
                         }`}>
                           HF: {node.healthFactor.toFixed(2)}
                         </div>
                       )}
                     </div>
-                    <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-amber-400 transition-transform group-hover:translate-x-0.5" />
+                    <ChevronRight className={`w-4 h-4 transition-transform group-hover:translate-x-0.5 ${
+                      isLight ? 'text-slate-400 group-hover:text-amber-600' : 'text-slate-500 group-hover:text-amber-400'
+                    }`} />
                   </div>
                 </div>
               ))}

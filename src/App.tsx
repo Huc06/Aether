@@ -770,6 +770,7 @@ export const App: React.FC = () => {
         onClose={() => toggleOverviewMode(false)}
         nodes={nodes}
         intentPresets={INTENT_PRESETS}
+        config={config}
         onSelectNode={(node) => handleFocusNode(node, true)}
         onHighlightNodes={setHighlightNodeIds}
         onExecuteRoute={handleExecuteRoute}
