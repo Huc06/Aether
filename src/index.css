@@ -90,3 +90,156 @@ body, html {
 .glow-accent {
   box-shadow: 0 0 25px var(--accent-glow);
 }
+
+/* ── Word tiles ─────────────────────────────────────────────────────────── */
+
+@keyframes word-tile-in {
+  from {
+    clip-path: inset(0 100% 0 0);
+    transform: translateY(0.16em);
+    opacity: 0;
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+[data-slot="word-tiles"] > span {
+  animation: word-tile-in 720ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(var(--tile-index) * 120ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-slot="word-tiles"] > span {
+    animation: none;
+  }
+}
+
+:root {
+  --tile-neutral-bg: #f2f2f2;
+  --tile-neutral-fg: #0a0a0a;
+}
+
+.theme-light {
+  --tile-neutral-bg: #0a0a0a;
+  --tile-neutral-fg: #ffffff;
+}
+
+/* ── Quiet scrollbars ───────────────────────────────────────────────────── */
+
+.scroll-quiet {
+  scrollbar-width: none;
+}
+
+.scroll-quiet::-webkit-scrollbar {
+  display: none;
+}
+
+.scroll-quiet * {
+  scrollbar-width: none;
+}
+
+.scroll-quiet *::-webkit-scrollbar {
+  display: none;
+}
+
+/* ── Decrypt veil ───────────────────────────────────────────────────────── */
+
+@property --cipher-x {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
+}
+
+@property --cipher-y {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
+}
+
+@property --cipher-r {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
+}
+
+@property --cipher-r-inner {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
+}
+
+.cipher-host {
+  position: relative;
+  isolation: isolate;
+}
+
+.cipher-content {
+  position: relative;
+  z-index: 0;
+  isolation: isolate;
+}
+
+.cipher-prompt {
+  position: sticky;
+  top: 30vh;
+}
+
+.cipher-glyphs {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.cipher-blur {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  backdrop-filter: blur(9px) saturate(0.2) contrast(0.85);
+  background-color: color-mix(in oklab, var(--bg-dark) 62%, transparent);
+  mask-image: radial-gradient(
+    circle at var(--cipher-x) var(--cipher-y),
+    transparent 0,
+    transparent var(--cipher-r-inner),
+    black var(--cipher-r)
+  );
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .cipher-blur {
+    background-color: color-mix(in oklab, var(--bg-dark) 92%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cipher-blur {
+    transition: none;
+  }
+}
+
+/* ── Bend ───────────────────────────────────────────────────────────────── */
+
+.bend-page {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+}
+
+.bend-scroll {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.bend-scroll > * {
+  flex-shrink: 0;
+}
