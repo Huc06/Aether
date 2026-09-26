@@ -2,6 +2,7 @@ import React from 'react';
 import { PortfolioViewMode } from '../morph/ListSwitcher';
 import { LensConfig } from '../../types';
 import { Orbit, List as ListIcon, Camera } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger } from '../ui/tabs';
 
 interface ViewModeDockProps {
   viewMode: PortfolioViewMode;
@@ -33,33 +34,35 @@ export const ViewModeDock: React.FC<ViewModeDockProps> = ({
           : 'opacity-100 scale-100'
       }`}
     >
-      <div className={`p-1.5 rounded-2xl border flex items-center gap-1.5 shadow-2xl backdrop-blur-2xl transition-all ${
+      <div className={`p-1 rounded-2xl border shadow-2xl backdrop-blur-2xl transition-all ${
         isLight
           ? 'bg-white/95 border-slate-300 shadow-[0_12px_40px_rgba(0,0,0,0.14)]'
           : 'glass-badge bg-slate-950/90 border-white/15 shadow-[0_16px_50px_rgba(0,0,0,0.85)]'
       }`}>
-        {items.map((item) => {
-          const isActive = viewMode === item.mode;
-          return (
-            <button
-              key={item.mode}
-              onClick={() => onChangeViewMode(item.mode)}
-              className={`relative px-4 py-2 rounded-xl text-xs font-sans font-bold flex items-center gap-2 transition-all cursor-pointer group ${
-                isActive
-                  ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/30 font-extrabold scale-105'
-                  : (isLight 
-                      ? 'text-slate-700 hover:text-slate-950 hover:bg-slate-100/90' 
-                      : 'text-slate-400 hover:text-white hover:bg-white/10')
-              }`}
-              title={`${item.label} (Press ${item.shortcut})`}
-            >
-              <span className={`transition-transform group-hover:scale-110 ${isActive ? 'text-black' : (isLight ? 'text-slate-700' : 'text-slate-400')}`}>
+        <Tabs
+          value={viewMode}
+          onValueChange={(v) => onChangeViewMode(v as PortfolioViewMode)}
+          variant="pill"
+        >
+          <TabsList
+            className="gap-1 p-0"
+            indicatorClassName="bg-amber-500 shadow-lg shadow-amber-500/30"
+          >
+            {items.map((item) => (
+              <TabsTrigger
+                key={item.mode}
+                value={item.mode}
+                className={`px-4 py-2 text-xs font-sans font-bold ${
+                  isLight ? 'text-slate-700 hover:text-slate-950' : 'text-slate-400 hover:text-white'
+                }`}
+                activeClassName="text-black font-extrabold"
+              >
                 {item.icon}
-              </span>
-              <span>{item.label}</span>
-            </button>
-          );
-        })}
+                <span>{item.label}</span>
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
       </div>
     </nav>
   );
