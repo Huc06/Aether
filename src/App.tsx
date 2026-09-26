@@ -955,7 +955,10 @@ export const App: React.FC = () => {
       />
 
       {/* Status Toast */}
-      <Toast message={toastMessage} />
+      <Toast 
+        message={toastMessage} 
+        isLight={config.themeMode === 'light'} 
+      />
 
       {/* Corner HUD coordinates & camera state readout */}
       <div className="absolute bottom-5 left-6 font-mono text-[10px] text-slate-500 tracking-wider pointer-events-none flex flex-col gap-1 drop-shadow">
