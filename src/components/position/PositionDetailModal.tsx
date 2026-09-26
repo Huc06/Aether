@@ -5,7 +5,6 @@ import {
   ShieldAlert, 
   ShieldCheck, 
   AlertTriangle, 
-  Zap, 
   ArrowUpRight, 
   Clock, 
   Coins, 
@@ -16,6 +15,7 @@ import {
   FileText 
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { EmergencyExitDeck } from './EmergencyExitDeck';
 
 interface PositionDetailModalProps {
   node: CanvasNode | null;
@@ -40,9 +40,9 @@ export const PositionDetailModal: React.FC<PositionDetailModalProps> = ({
   const isHigh = node.riskLevel === 'high';
   const isLight = config?.themeMode === 'light';
 
-  const handleTriggerKillSwitch = () => {
+  const handleTriggerKillSwitch = (targetRoute?: PositionExitRoute) => {
     if (!node.exitRoutes || node.exitRoutes.length === 0) return;
-    const targetRoute = node.exitRoutes[selectedExitIndex];
+    const route = targetRoute || node.exitRoutes[selectedExitIndex];
 
     setIsExecutingKill(true);
     setKillStep(1);
@@ -56,7 +56,7 @@ export const PositionDetailModal: React.FC<PositionDetailModalProps> = ({
         spread: 80,
         origin: { y: 0.5 }
       });
-      onKillSwitch(node, targetRoute);
+      onKillSwitch(node, route);
       onClose();
     }, 2400);
   };
@@ -228,94 +228,17 @@ export const PositionDetailModal: React.FC<PositionDetailModalProps> = ({
             </div>
           </div>
 
-          {/* Pre-defined Exit Routes & Emergency Kill Switch */}
+          {/* Pre-defined Exit Routes & Emergency Exit Deck */}
           {node.exitRoutes && node.exitRoutes.length > 0 && (
-            <div className={`rounded-xl border p-4 flex flex-col gap-3 ${
-              isLight 
-                ? 'bg-rose-50/70 border-rose-300 text-slate-900 shadow-sm' 
-                : 'bg-rose-950/20 border-rose-500/40'
-            }`}>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <ShieldAlert className="w-4 h-4 text-rose-600" />
-                  <span className={`font-black text-sm tracking-wide ${isLight ? 'text-slate-950' : 'text-white'}`}>
-                    Pre-computed Exit Routes &amp; Kill Switch
-                  </span>
-                </div>
-                <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded border ${
-                  isLight ? 'bg-rose-100 text-rose-900 border-rose-300' : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
-                }`}>
-                  MEV PROTECTED
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {node.exitRoutes.map((route, idx) => (
-                  <div
-                    key={idx}
-                    onClick={() => setSelectedExitIndex(idx)}
-                    className={`p-3 rounded-xl border cursor-pointer transition-all flex flex-col gap-1 ${
-                      selectedExitIndex === idx
-                        ? (isLight ? 'bg-white border-rose-500 text-slate-950 shadow-md ring-2 ring-rose-400/30' : 'bg-rose-500/20 border-rose-500 text-white shadow-lg')
-                        : (isLight ? 'bg-white/70 border-rose-200 text-slate-800 hover:bg-white' : 'bg-black/40 border-white/10 text-slate-300 hover:border-white/25')
-                    }`}
-                  >
-                    <div className="flex items-center justify-between text-xs font-bold">
-                      <span className="text-rose-600 font-extrabold flex items-center gap-1">
-                        <ArrowUpRight className="w-3.5 h-3.5" />
-                        Exit to {route.targetAsset}
-                      </span>
-                      <span className={`text-[10px] font-mono ${isLight ? 'text-slate-600 font-semibold' : 'text-slate-400'}`}>
-                        {route.timeSeconds}s
-                      </span>
-                    </div>
-                    <div className={`font-black text-sm font-mono mt-1 ${isLight ? 'text-slate-950' : 'text-white'}`}>
-                      {route.estReturn}
-                    </div>
-                    <div className={`text-[10px] font-mono ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
-                      Fee: {route.fee} &bull; {route.routeSummary}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Execution Progress Bar if active */}
-              {isExecutingKill && (
-                <div className={`p-3 rounded-xl border flex flex-col gap-2 animate-pulse ${
-                  isLight ? 'bg-white border-rose-300 shadow-md' : 'bg-black/60 border-rose-500/50'
-                }`}>
-                  <div className="flex items-center justify-between text-xs text-rose-600 font-black">
-                    <span>⚡ EXECUTING KILL SWITCH PROTOCOL...</span>
-                    <span>STEP {killStep}/3</span>
-                  </div>
-                  <div className={`w-full h-2 rounded-full overflow-hidden ${isLight ? 'bg-slate-200' : 'bg-slate-800'}`}>
-                    <div 
-                      className="bg-rose-500 h-full transition-all duration-500"
-                      style={{ width: `${(killStep / 3) * 100}%` }}
-                    />
-                  </div>
-                  <span className={`text-[10px] font-mono ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
-                    {killStep === 1 && '1. Unwinding LP tokens and withdrawing collateral...'}
-                    {killStep === 2 && '2. Routing through private RPC with 0 slippage MEV protection...'}
-                    {killStep === 3 && '3. Settling net output to safe wallet...'}
-                  </span>
-                </div>
-              )}
-
-              {/* 1-Click Kill Switch Button */}
-              <button
-                disabled={isExecutingKill}
-                onClick={handleTriggerKillSwitch}
-                className="w-full py-3 px-4 rounded-xl bg-rose-600 hover:bg-rose-500 disabled:opacity-50 text-white font-black text-xs tracking-wider uppercase flex items-center justify-center gap-2 shadow-lg shadow-rose-600/30 transition-all cursor-pointer"
-              >
-                <Zap className="w-4 h-4 fill-white" />
-                <span>
-                  {isExecutingKill
-                    ? 'Executing Emergency Unwind...'
-                    : `⚡ 1-Click Emergency Kill Switch (Exit to ${node.exitRoutes[selectedExitIndex].targetAsset})`}
-                </span>
-              </button>
-            </div>
+            <EmergencyExitDeck
+              routes={node.exitRoutes}
+              selectedRouteIndex={selectedExitIndex}
+              onSelectRoute={setSelectedExitIndex}
+              onTriggerUnwind={(route) => handleTriggerKillSwitch(route)}
+              isLight={isLight}
+              isExecuting={isExecutingKill}
+              killStep={killStep}
+            />
           )}
         </div>
       </div>
