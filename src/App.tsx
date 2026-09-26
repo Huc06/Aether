@@ -48,7 +48,10 @@ export const App: React.FC = () => {
     return INITIAL_WIRES;
   });
   const [config, setConfig] = useState<LensConfig>(() => {
+    const params = new URLSearchParams(window.location.search);
+    const themeParam = params.get('theme') as 'light' | 'dark' | null;
     const saved = localStorage.getItem('aether_config_v1') || localStorage.getItem('phantomat_config_v1');
+    let base = DEFAULT_LENS_CONFIG;
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -56,26 +59,56 @@ export const App: React.FC = () => {
           parsed.normalScale = 0.76;
           parsed.overviewScale = 0.32;
         }
-        return { ...DEFAULT_LENS_CONFIG, ...parsed };
+        base = { ...DEFAULT_LENS_CONFIG, ...parsed };
       } catch (e) {
         console.error('Failed to parse saved config', e);
       }
     }
-    return DEFAULT_LENS_CONFIG;
+    if (themeParam === 'light' || themeParam === 'dark') {
+      return { ...base, themeMode: themeParam };
+    }
+    return base;
   });
 
   const [highlightNodeIds, setHighlightNodeIds] = useState<string[]>([]);
   const [focusedNodeId, setFocusedNodeId] = useState<string>(nodes[0]?.id || 'wallet-ledger');
-  const [selectedNode, setSelectedNode] = useState<CanvasNode | null>(null);
-  const [viewMode, setViewMode] = useState<PortfolioViewMode>('canvas');
+  const [selectedNode, setSelectedNode] = useState<CanvasNode | null>(() => {
+    const params = new URLSearchParams(window.location.search);
+    const nodeId = params.get('node');
+    if (nodeId) {
+      return nodes.find(n => n.id === nodeId || n.id.toLowerCase().includes(nodeId.toLowerCase())) || null;
+    }
+    return null;
+  });
+  const [viewMode, setViewMode] = useState<PortfolioViewMode>(() => {
+    const params = new URLSearchParams(window.location.search);
+    const v = params.get('view');
+    if (v === 'list' || v === 'exposure-grid' || v === 'canvas') return v;
+    return 'canvas';
+  });
   const [isOverview, setIsOverview] = useState(false);
-  const [isIntentOpen, setIsIntentOpen] = useState(false);
-  const [isNansenOpen, setIsNansenOpen] = useState(false);
-  const [isTunerOpen, setIsTunerOpen] = useState(false);
+  const [isIntentOpen, setIsIntentOpen] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('intent') === '1' || params.get('intent') === 'true';
+  });
+  const [isNansenOpen, setIsNansenOpen] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('nansen') === '1' || params.get('nansen') === 'true';
+  });
+  const [isTunerOpen, setIsTunerOpen] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('tuner') === '1' || params.get('tuner') === 'true';
+  });
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isSimulatingRoute, setIsSimulatingRoute] = useState(false);
   const [activeNansenEntity, setActiveNansenEntity] = useState<NansenEntityTarget | null>(() => {
+    const params = new URLSearchParams(window.location.search);
+    const entityParam = params.get('entity');
+    if (entityParam) {
+      const found = PRESET_ENTITIES.find(e => e.label.toLowerCase().includes(entityParam.toLowerCase()) || e.address.toLowerCase() === entityParam.toLowerCase());
+      if (found) return found;
+    }
     const saved = localStorage.getItem('aether_active_entity_v1');
     if (saved) {
       try {
@@ -976,6 +1009,7 @@ export const App: React.FC = () => {
         viewMode={viewMode}
         onChangeViewMode={setViewMode}
         config={config}
+        isDimmed={viewMode === 'exposure-grid'}
       />
 
       {/* Status Toast */}

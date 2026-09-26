@@ -408,7 +408,7 @@ export const ExposureGridFeed: React.FC<ExposureGridFeedProps> = ({
 
         {/* Selected Cell Node Action Drawer */}
         {selectedCellNode && (
-          <div className={`glass-panel p-4 rounded-xl border flex items-center justify-between gap-4 animate-in slide-in-from-bottom-3 duration-150 ${
+          <div className={`glass-panel p-4 rounded-xl border flex items-center justify-between gap-4 animate-in slide-in-from-bottom-3 duration-150 mb-16 shrink-0 ${
             isLight ? 'bg-white border-amber-500 shadow-2xl text-slate-900' : 'bg-slate-950/95 border-amber-500/50'
           }`}>
             <div className="flex items-center gap-3">

@@ -7,12 +7,14 @@ interface ViewModeDockProps {
   viewMode: PortfolioViewMode;
   onChangeViewMode: (mode: PortfolioViewMode) => void;
   config?: LensConfig;
+  isDimmed?: boolean;
 }
 
 export const ViewModeDock: React.FC<ViewModeDockProps> = ({
   viewMode,
   onChangeViewMode,
-  config
+  config,
+  isDimmed = false
 }) => {
   const isLight = config?.themeMode === 'light';
 
@@ -25,7 +27,11 @@ export const ViewModeDock: React.FC<ViewModeDockProps> = ({
   return (
     <nav 
       aria-label="Workspace Views macOS Dock"
-      className="fixed bottom-5 left-1/2 -translate-x-1/2 z-40 pointer-events-auto select-none animate-in fade-in slide-in-from-bottom-3 duration-200"
+      className={`fixed bottom-5 left-1/2 -translate-x-1/2 z-40 pointer-events-auto select-none animate-in fade-in slide-in-from-bottom-3 duration-200 transition-all ${
+        isDimmed 
+          ? 'opacity-25 hover:opacity-100 scale-95 hover:scale-100 blur-[0.5px] hover:blur-none duration-300' 
+          : 'opacity-100 scale-100'
+      }`}
     >
       <div className={`p-1.5 rounded-2xl border flex items-center gap-1.5 shadow-2xl backdrop-blur-2xl transition-all ${
         isLight
