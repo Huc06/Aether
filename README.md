@@ -33,7 +33,7 @@
 
 | Capability | Production URL / Endpoint | Verification State |
 |---|---|---|
-| **Live Product Deployment** | [`https://aether-production.up.railway.app`](https://aether-production.up.railway.app) | Live production instance with WebGL 2.0 canvas and real-time Nansen integration. |
+| **Live Product Deployment** | [`https://aether-production-c385.up.railway.app`](https://aether-production-c385.up.railway.app) | Live production instance with WebGL 2.0 canvas and real-time Nansen integration. |
 | **Nansen API Proxy Gate** | [`POST /api/nansen/*`](#backend-proxy-layer) | Secure server proxy forwarding to `api.nansen.ai/api/v1/*` with zero client-side key leakage. |
 | **Meridian Buildathon Status** | [`nsn.ai/meridian-submit`](https://nsn.ai/meridian-submit) | **QUALIFIED** · 1,248+ verified live API calls registered in session. |
 | **Judge 5-Min Walkthrough** | [`docs/nansen-meridian-judge.md`](#judge-5-minute-walkthrough-flow) | Reproducible step-by-step verification commands, curl receipts & live demo flow. |
