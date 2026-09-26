@@ -26,7 +26,7 @@
 |       └── 3. CCTV Surveillance Matrix        ├── @Smart Money Radar     24h netflow & dump    |
 |                                              ├── @Nansen AI Agent       real-time SSE stream  |
 |       Dual Theme: Dark & Light               └── @Intent Router         0-slippage execution  |
-|       Full LocalStorage State Persistence    ⚡ 1-Click Emergency Unwind Kill Switch          |
+|       Full LocalStorage State Persistence    [!] 1-Click Emergency Unwind Kill Switch         |
 + - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - +
 ```
 
@@ -59,25 +59,25 @@ Managing modern DeFi portfolios across fragmented ecosystems (**Solana, Ethereum
                   ├──► [Token Position Nodes]  (Live Prices, Balances, USD Value)      │
                   │                                                                    │
                   └──► [Related Wallet Nodes]  ◄── /profiler/address/related-wallets ──┘
-                             ├── First Funder (Genesis Lineage 🔑)
-                             ├── Multisig Signers & Proxies 🛡️
-                             └── Token Millionaires 💎
+                             ├── First Funder (Genesis Lineage)
+                             ├── Multisig Signers & Proxies
+                             └── Token Millionaires
 
       [Smart Money Signals]       ◄─── /api/v1/smart-money/netflow ────────►  [Token God Mode]
                   │
-                  ├──► 🟢 Accumulation: +$45.1k (SM Inflow Badge & Green Node Pulse)
-                  └──► 🔴 Distribution: -$28.4k (Dump Warning & Divergence Alert)
+                  ├──► [+] Accumulation: +$45.1k (SM Inflow Badge & Green Node Pulse)
+                  └──► [-] Distribution: -$28.4k (Dump Warning & Divergence Alert)
 
       [Intent Engine (Cmd+K)]     ◄─── /api/v1/agent/fast (SSE Stream) ────►  [Nansen AI Research]
                   │
                   ├──► Natural Language Onchain Reasoning & Tool Calling (token_discovery_screener)
                   ├──► Auto-Spotlighting & Dynamic Subgraph Injection into Spatial Canvas
-                  └──► Visual 3-Step Execution Pipeline + ⚡ 1-Click Emergency Kill Switch
+                  └──► Visual 3-Step Execution Pipeline + 1-Click Emergency Kill Switch
 ```
 
 ---
 
-## 🖥️ Three Unified Workspaces (macOS Floating Dock)
+## Three Unified Workspaces (macOS Floating Dock)
 
 Aether gives operators three complementary lenses into their portfolio, switchable instantly via hotkeys (`1`, `2`, `3`) or the **macOS-style Floating Bottom Dock**:
 
@@ -114,6 +114,22 @@ Aether gives operators three complementary lenses into their portfolio, switchab
 
 ---
 
+## Visual Showcase
+
+| 1. Spatial WebGL Canvas (Amber Cyberpunk) | 2. Nymspace Bend Ledger (Curved Scroll) |
+|:---:|:---:|
+| <a href="docs/screenshots/01-spatial-canvas-overview.svg"><img src="docs/screenshots/01-spatial-canvas-overview.svg" alt="Aether Spatial WebGL Canvas" width="100%" /></a> | <a href="docs/screenshots/02-nymspace-bend-ledger.svg"><img src="docs/screenshots/02-nymspace-bend-ledger.svg" alt="Nymspace Bend Ledger" width="100%" /></a> |
+
+| 3. CCTV Surveillance Matrix (CRT Telemetry) | 4. Nansen Live Entity Profiler (vitalik.eth) |
+|:---:|:---:|
+| <a href="docs/screenshots/03-cctv-exposure-grid.svg"><img src="docs/screenshots/03-cctv-exposure-grid.svg" alt="CCTV Surveillance Feed" width="100%" /></a> | <a href="docs/screenshots/04-nansen-profiler-graph.svg"><img src="docs/screenshots/04-nansen-profiler-graph.svg" alt="Nansen Live Entity Profiler" width="100%" /></a> |
+
+| 5. Nansen AI Agent & Route Pipeline (Cmd+K) | 6. Clean Slate Light Mode (High Contrast) |
+|:---:|:---:|
+| <a href="docs/screenshots/05-intent-agent-stream.svg"><img src="docs/screenshots/05-intent-agent-stream.svg" alt="Nansen AI Research Agent" width="100%" /></a> | <a href="docs/screenshots/06-clean-slate-light-mode.svg"><img src="docs/screenshots/06-clean-slate-light-mode.svg" alt="Clean Slate Light Mode" width="100%" /></a> |
+
+---
+
 ## The Six Architectural Pillars
 
 ```
@@ -136,8 +152,8 @@ Aether gives operators three complementary lenses into their portfolio, switchab
 | 24h Netflow & Accumulation Alerts | Streaming Reasoning & Emergency Kill Switch              |
 | ───────────────────────────────── | ──────────────────────────────────                        |
 | • /smart-money/netflow telemetry  | • /api/v1/agent/fast real-time SSE stream                 |
-| • 🟢 +SM Inflow vs 🔴 -SM Outflow  | • Dynamic subgraph injection & camera gliding             |
-| • Liquidation & debt risk gauge   | • ⚡ 1-Click Emergency Kill Switch (MEV Protected)        |
+| • [+] SM Inflow vs [-] SM Outflow | • Dynamic subgraph injection & camera gliding             |
+| • Liquidation & debt risk gauge   | • 1-Click Emergency Kill Switch (MEV Protected)           |
 + - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - +
 ```
 
@@ -160,36 +176,36 @@ Aether gives operators three complementary lenses into their portfolio, switchab
 ### 4. Nansen Live Entity Profiler (`src/services/nansenApi.ts`)
 - **Real-Time Token Decomposition**: Calls `/api/v1/profiler/address/current-balance` to extract top holdings with live USD valuations and contract addresses.
 - **Relational Lineage Mapping**: Calls `/api/v1/profiler/address/related-wallets` to reconstruct wallet clusters:
-  - `First Funder 🔑`: Historical genesis address that funded the account with root timestamp and transaction hash.
-  - `Multisig Signer 🛡️`: Verified co-signers and proxy contracts.
-  - `Token Millionaire 💎`: Verified high-net-worth counterparties.
+  - `First Funder`: Historical genesis address that funded the account with root timestamp and transaction hash.
+  - `Multisig Signer`: Verified co-signers and proxy contracts.
+  - `Token Millionaire`: Verified high-net-worth counterparties.
 - **1-Click Entity Switcher**: Preset inspection profiles for *Vitalik Buterin (`vitalik.eth`)*, *Top Smart Money Funds*, *Solana Yield Hub*, and *Hyperliquid Whale*.
 
 ### 5. Smart Money Divergence Radar (`/api/v1/smart-money/netflow`)
-- **24h Netflow Badges**: Displays live accumulation tags on position nodes (e.g. `🟢 SM Inflow: +$45,081 (10 traders)`).
-- **Divergence Warning**: Detects when Smart Money is aggressively distributing (`🔴 -SM Outflow`) while the user is holding long exposure.
+- **24h Netflow Badges**: Displays live accumulation tags on position nodes (e.g. `[+] SM Inflow: +$45,081 (10 traders)`).
+- **Divergence Warning**: Detects when Smart Money is aggressively distributing (`[-] SM Outflow`) while the user is holding long exposure.
 - **Deep Risk Gauge**: Inspects distance-to-liquidation, debt ratios, borrow APRs, and oracle dependencies inside the Position Detail Modal.
 
 ### 6. Nansen AI Research Agent & Intent Engine (`/api/v1/agent/fast`, `src/components/intent/IntentPanel.tsx`)
-- **Real-Time SSE Streaming**: Connects directly to `/api/v1/agent/fast`, rendering token discovery tool calls (`⚙️ token_discovery_screener`, `⚙️ profiler_address_balances`) with low latency.
+- **Real-Time SSE Streaming**: Connects directly to `/api/v1/agent/fast`, rendering token discovery tool calls (`[tool: token_discovery_screener]`, `[tool: profiler_address_balances]`) with low latency.
 - **Dynamic Subgraph Injection**: When the AI researches protocols or tokens, Aether dynamically injects new nodes and energized Bezier flow wires directly into your canvas workspace.
 - **Auto-Spotlighting & Camera Gliding**: Identifies tokens, protocols, and chains mentioned in the AI response and glides the camera directly to relevant canvas nodes.
 - **Visual Execution Pipeline**: Assembles step-by-step transaction pipelines across bridges (deBridge DLN, Across), DEX swaps (1inch, Jupiter), and liquidity vaults.
-- **⚡ 1-Click Emergency Kill Switch**: Instant emergency unwind protocol that revokes permissions, withdraws collateral, and converts to safe stables with MEV protection.
+- **1-Click Emergency Kill Switch**: Instant emergency unwind protocol that revokes permissions, withdraws collateral, and converts to safe stables with MEV protection.
 
 ---
 
-## 🎨 Dual Theme Engine (Light & Dark)
+## Dual Theme Engine (Light & Dark)
 
-Aether features a seamless dual-theme system toggled with one click via the **Sun / Moon** icon in the TopBar:
+Aether features a seamless dual-theme system toggled with one click via the theme switch in the TopBar:
 
-- **🌙 Dark Mode (Cyberpunk Terminal)**: Deep space `#07090e` canvas, amber/cyan neon wire glows, CRT scanlines, and high-tech HUD badges.
-- **☀️ Light Mode (Clean Slate)**: Ultra-crisp `#f8fafc` canvas, bold slate typography, high-contrast borders, refined amber accents, and adapted shader contrast.
+- **Dark Mode (Cyberpunk Terminal)**: Deep space `#07090e` canvas, amber/cyan neon wire glows, CRT scanlines, and high-tech HUD badges.
+- **Light Mode (Clean Slate)**: Ultra-crisp `#f8fafc` canvas, bold slate typography, high-contrast borders, refined amber accents, and adapted shader contrast.
 - Fully synchronized across the Spatial Canvas, Nymspace Bend Ledger, CCTV Surveillance Feeds, and all HUD modals.
 
 ---
 
-## 💾 State Persistence (Survives Refresh)
+## State Persistence (Survives Refresh)
 
 All workspace states are continuously synchronized to browser `localStorage`:
 - **Canvas Node Coordinates & Bounds**: Custom layouts, resized cards, and arrangements are never lost on reload.
@@ -200,7 +216,7 @@ All workspace states are continuously synchronized to browser `localStorage`:
 
 ---
 
-## ⌨️ Complete Keyboard Shortcuts Reference
+## Complete Keyboard Shortcuts Reference
 
 | Shortcut | Action | Scope |
 |---|---|---|
@@ -286,6 +302,7 @@ aether/
 │   └── main.tsx                 # React entry point
 └── docs/
     ├── nansen-meridian-judge.md # Judge 5-minute verification walkthrough
+    ├── screenshots/             # High-resolution vector showcase previews
     └── brand/                   # SVG brand assets & architecture diagrams
 ```
 
@@ -303,7 +320,7 @@ aether/
 
 ---
 
-## ⚡ Quickstart & Local Development
+## Quickstart & Local Development
 
 ### 1. Clone & Install
 ```bash
@@ -353,17 +370,17 @@ cd Aether && npm install && npm run dev
 
 ### Reproducible Verification Checklist:
 1. **Tri-Modal Workspace Dock:** Click the floating bottom dock or press `1`, `2`, `3` $\rightarrow$ Toggle seamlessly between **Spatial Canvas**, **Nymspace Bend Ledger** (observe curved page deformation and WordTiles), and **CCTV Surveillance Matrix** (observe CRT glitch shaders).
-2. **Dual Theme Switch:** Click the **Sun / Moon** icon in the TopBar $\rightarrow$ Verify instantaneous transition between Clean Slate Light Mode and Cyberpunk Dark Mode across all views and modals.
-3. **Live Entity Profiler:** Click `[Nansen API]` in TopBar $\rightarrow$ Select `Vitalik Buterin (vitalik.eth)` $\rightarrow$ Verify real-time token balances and related wallet wires (`First Funder 🔑`, `Multisig Signer 🛡️`) are dynamically fetched and rendered.
-4. **Smart Money Flow Badges:** Inspect canvas nodes $\rightarrow$ Verify `🟢 +SM Inflow` badges with 24h net flow values from `/smart-money/netflow`.
-5. **Nansen AI Agent Stream:** Press `Cmd + K` $\rightarrow$ Click `[Smart Money Accumulation (Live)]` $\rightarrow$ Verify real-time SSE token stream from `/api/v1/agent/fast` with `[TOOL: token_discovery_screener]` call, and observe auto-spotlighting camera focus.
+2. **Dual Theme Switch:** Click the theme switch in the TopBar $\rightarrow$ Verify instantaneous transition between Clean Slate Light Mode and Cyberpunk Dark Mode across all views and modals.
+3. **Live Entity Profiler:** Click `[Nansen API]` in TopBar $\rightarrow$ Select `Vitalik Buterin (vitalik.eth)` $\rightarrow$ Verify real-time token balances and related wallet wires (`First Funder`, `Multisig Signer`) are dynamically fetched and rendered.
+4. **Smart Money Flow Badges:** Inspect canvas nodes $\rightarrow$ Verify `[+] SM Inflow` badges with 24h net flow values from `/smart-money/netflow`.
+5. **Nansen AI Agent Stream:** Press `Cmd + K` $\rightarrow$ Click `[Smart Money Accumulation (Live)]` $\rightarrow$ Verify real-time SSE token stream from `/api/v1/agent/fast` with `[tool: token_discovery_screener]` call, and observe auto-spotlighting camera focus.
 6. **Intent Route Simulation:** In the Intent panel, click `Simulate & Execute Route` $\rightarrow$ Observe step-by-step pipeline execution and celebratory confetti burst.
-7. **1-Click Emergency Kill Switch:** Double-click `Drift SOL-PERP 10x Long` $\rightarrow$ Click `⚡ 1-Click Emergency Kill Switch` $\rightarrow$ Observe 3-step unwind protocol and node transition to safe state.
+7. **1-Click Emergency Kill Switch:** Double-click `Drift SOL-PERP 10x Long` $\rightarrow$ Click `1-Click Emergency Kill Switch` $\rightarrow$ Observe 3-step unwind protocol and node transition to safe state.
 8. **State Persistence Across Refresh:** Move any window on the canvas, press `F5` $\rightarrow$ Verify canvas positions, camera zoom, and Nansen context persist intact.
 
 ---
 
-## 🛡️ Security & Zero-Secret Architecture
+## Security & Zero-Secret Architecture
 
 - **Backend Proxy Shield:** Client requests route through `/api/nansen/*`. API keys are stored exclusively in server environment variables and never exposed to client-side bundles.
 - **Fail-Safe Offline Resilience:** If external rate limits or network dropouts occur, Aether gracefully serves cached onchain snapshots with zero crashes or blank screens.

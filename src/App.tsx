@@ -400,7 +400,7 @@ export const App: React.FC = () => {
   const handleToggleThemeMode = useCallback(() => {
     setConfig(prev => {
       const nextMode = prev.themeMode === 'light' ? 'dark' : 'light';
-      showToast(nextMode === 'light' ? '☀ Switched to Clean Light Mode' : '🌙 Switched to Dark Cyberpunk Mode');
+      showToast(nextMode === 'light' ? 'Switched to Clean Light Mode' : 'Switched to Dark Cyberpunk Mode');
       return { ...prev, themeMode: nextMode };
     });
   }, [showToast]);

@@ -1,7 +1,7 @@
 import React from 'react';
 import { LensConfig } from '../../types';
 import { THEME_PRESETS } from '../../data/mockData';
-import { X, Sliders, Sparkles, Eye } from 'lucide-react';
+import { X, Sliders, Eye } from 'lucide-react';
 
 interface LiveTunerProps {
   isOpen: boolean;
@@ -66,14 +66,14 @@ export const LiveTuner: React.FC<LiveTunerProps> = ({
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
           <span className={`text-[10px] font-extrabold uppercase tracking-wider flex items-center gap-1 ${isLight ? 'text-slate-700' : 'text-slate-400'}`}>
-            <Sparkles className={`w-3 h-3 ${isLight ? 'text-amber-600' : 'text-amber-400'}`} />
+            <Sliders className={`w-3 h-3 ${isLight ? 'text-amber-600' : 'text-amber-400'}`} />
             Theme Palette &amp; Mode
           </span>
           <button
             onClick={() => {
               const nextMode = config.themeMode === 'light' ? 'dark' : 'light';
               handleSlider('themeMode' as any, nextMode);
-              onShowToast(nextMode === 'light' ? '☀ Light Mode' : '🌙 Dark Mode');
+              onShowToast(nextMode === 'light' ? 'Light Mode' : 'Dark Mode');
             }}
             className={`text-[10px] px-2 py-0.5 rounded font-extrabold border transition-colors cursor-pointer ${
               isLight 
@@ -81,7 +81,7 @@ export const LiveTuner: React.FC<LiveTunerProps> = ({
                 : 'bg-white/10 border-white/15 text-cyan-300 hover:border-cyan-400'
             }`}
           >
-            {config.themeMode === 'light' ? '☀ Light Mode' : '🌙 Dark Mode'}
+            {config.themeMode === 'light' ? 'Light Mode' : 'Dark Mode'}
           </button>
         </div>
         <div className="grid grid-cols-2 gap-1.5">

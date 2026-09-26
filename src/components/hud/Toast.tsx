@@ -9,8 +9,8 @@ interface ToastProps {
 export const Toast: React.FC<ToastProps> = ({ message, isLight = false }) => {
   if (!message) return null;
 
-  const isSuccess = message.includes('✓') || message.toLowerCase().includes('success') || message.toLowerCase().includes('settled');
-  const isAlert = message.includes('⚡') || message.toLowerCase().includes('kill') || message.toLowerCase().includes('alert') || message.toLowerCase().includes('critical') || message.toLowerCase().includes('error');
+  const isSuccess = message.toLowerCase().includes('success') || message.toLowerCase().includes('settled');
+  const isAlert = message.toLowerCase().includes('kill') || message.toLowerCase().includes('alert') || message.toLowerCase().includes('critical') || message.toLowerCase().includes('error');
 
   return (
     <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-[60] pointer-events-none flex items-center justify-center max-w-lg w-auto px-4 animate-in fade-in slide-in-from-bottom-3 duration-200">

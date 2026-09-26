@@ -13,8 +13,7 @@ import {
   ChevronRight, 
   Orbit, 
   Radio,
-  Clock,
-  Sparkles
+  Clock
 } from 'lucide-react';
 
 interface CameraMonitorProps {

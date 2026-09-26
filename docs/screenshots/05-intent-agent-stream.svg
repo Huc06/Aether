@@ -1,0 +1,111 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" width="100%" height="100%">
+  <defs>
+    <linearGradient id="intentBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#04060a" />
+      <stop offset="100%" stop-color="#0a121e" />
+    </linearGradient>
+  </defs>
+
+  <rect width="800" height="450" fill="url(#intentBg)" />
+
+  <!-- Center Modal Window (Cmd+K) -->
+  <g transform="translate(60, 20)">
+    <rect width="680" height="405" rx="12" fill="#0b1019" stroke="#06b6d4" stroke-width="1.5" />
+
+    <!-- Search Input Bar -->
+    <rect x="16" y="16" width="648" height="42" rx="8" fill="#111928" stroke="#ffffff" stroke-width="0.3" />
+    <text x="32" y="42" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="700" fill="#ffffff">
+      Which tokens are smart money accumulating on Ethereum today?
+    </text>
+    <rect x="535" y="24" width="115" height="26" rx="6" fill="#f59e0b" />
+    <text x="592" y="41" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="900" fill="#000000">
+      &gt;_ NANSEN AI
+    </text>
+
+    <!-- Suggested Quick Prompts -->
+    <g transform="translate(16, 68)">
+      <text x="0" y="16" font-family="'JetBrains Mono', monospace" font-size="8.5" font-weight="800" fill="#94a3b8">SUGGESTED:</text>
+      <rect x="80" y="2" width="180" height="22" rx="4" fill="#06b6d4" fill-opacity="0.15" stroke="#06b6d4" stroke-width="0.8" />
+      <text x="90" y="16" font-family="'JetBrains Mono', monospace" font-size="8" font-weight="800" fill="#38bdf8">Smart Money Accumulation (Live)</text>
+
+      <rect x="270" y="2" width="135" height="22" rx="4" fill="#ffffff" fill-opacity="0.05" stroke="#ffffff" stroke-width="0.3" />
+      <text x="280" y="16" font-family="'JetBrains Mono', monospace" font-size="8" font-weight="700" fill="#cbd5e1">Unwind High-Risk Sol</text>
+
+      <rect x="415" y="2" width="140" height="22" rx="4" fill="#ffffff" fill-opacity="0.05" stroke="#ffffff" stroke-width="0.3" />
+      <text x="425" y="16" font-family="'JetBrains Mono', monospace" font-size="8" font-weight="700" fill="#cbd5e1">Hedge ETH Debt Exposure</text>
+    </g>
+
+    <!-- Streaming Reasoning Box -->
+    <g transform="translate(16, 102)">
+      <rect width="648" height="150" rx="8" fill="#070c14" stroke="#06b6d4" stroke-width="0.8" />
+      <!-- Stream Header -->
+      <rect width="648" height="26" rx="8" fill="#0e1828" />
+      <text x="14" y="17" font-family="'JetBrains Mono', monospace" font-size="8.5" font-weight="900" fill="#67e8f9">
+        &gt;_ NANSEN RESEARCH AGENT (STREAMING TELEMETRY)
+      </text>
+      <rect x="520" y="5" width="115" height="16" rx="3" fill="#10b981" fill-opacity="0.2" />
+      <text x="577" y="16" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="7.5" font-weight="800" fill="#34d399">SSE ACTIVE ● 120ms</text>
+
+      <!-- Active Tool Calls -->
+      <g transform="translate(14, 34)">
+        <rect x="0" y="0" width="190" height="18" rx="3" fill="#f59e0b" fill-opacity="0.15" stroke="#f59e0b" stroke-width="0.6" />
+        <text x="8" y="12" font-family="'JetBrains Mono', monospace" font-size="7.5" font-weight="800" fill="#fbbf24">[tool: token_discovery_screener]</text>
+
+        <rect x="200" y="0" width="175" height="18" rx="3" fill="#06b6d4" fill-opacity="0.15" stroke="#06b6d4" stroke-width="0.6" />
+        <text x="208" y="12" font-family="'JetBrains Mono', monospace" font-size="7.5" font-weight="800" fill="#67e8f9">[tool: smart_money_netflow]</text>
+      </g>
+
+      <!-- Response Content -->
+      <text x="14" y="72" font-family="'JetBrains Mono', monospace" font-size="9" fill="#e2e8f0" line-height="1.4">
+        Based on Nansen 24h Netflow telemetry across Top 5,000 Smart Money Wallets on Ethereum:
+      </text>
+      <text x="14" y="92" font-family="'JetBrains Mono', monospace" font-size="9" fill="#34d399" font-weight="700">
+        • QNT (Quant): +$45,080.94 Net Inflow (10 High-Conviction Wallets Accumulating)
+      </text>
+      <text x="14" y="108" font-family="'JetBrains Mono', monospace" font-size="9" fill="#38bdf8" font-weight="700">
+        • CONDO: +$18,210.90 Net Inflow &bull; 7d Accumulation: +$42,657.83
+      </text>
+      <text x="14" y="128" font-family="'JetBrains Mono', monospace" font-size="8.5" fill="#f59e0b">
+        Action: Prepared 3-step capital rotation route from idle treasury stables.
+      </text>
+    </g>
+
+    <!-- Visual Execution Pipeline & Simulation -->
+    <g transform="translate(16, 264)">
+      <rect width="648" height="125" rx="8" fill="#0d1422" stroke="#ffffff" stroke-width="0.3" />
+      <text x="14" y="20" font-family="'JetBrains Mono', monospace" font-size="8.5" font-weight="900" fill="#ffffff">
+        RECOMMENDED EXECUTION ROUTE: ROTATE STABLES INTO SMART MONEY SIGNALS
+      </text>
+
+      <!-- 3-Step Pipeline Flow -->
+      <g transform="translate(14, 32)">
+        <!-- Step 1 -->
+        <rect width="130" height="45" rx="5" fill="#131e30" stroke="#10b981" stroke-width="1" />
+        <text x="8" y="16" font-family="'JetBrains Mono', monospace" font-size="8" font-weight="800" fill="#34d399">STEP 1: WITHDRAW</text>
+        <text x="8" y="32" font-family="'JetBrains Mono', monospace" font-size="8.5" fill="#ffffff">$45k USDC Treasury</text>
+
+        <!-- Arrow -->
+        <text x="138" y="26" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="900" fill="#64748b">──►</text>
+
+        <!-- Step 2 -->
+        <rect x="170" width="130" height="45" rx="5" fill="#131e30" stroke="#06b6d4" stroke-width="1" />
+        <text x="178" y="16" font-family="'JetBrains Mono', monospace" font-size="8" font-weight="800" fill="#38bdf8">STEP 2: 1INCH SWAP</text>
+        <text x="178" y="32" font-family="'JetBrains Mono', monospace" font-size="8.5" fill="#ffffff">0.02% Slippage</text>
+
+        <!-- Arrow -->
+        <text x="308" y="26" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="900" fill="#64748b">──►</text>
+
+        <!-- Step 3 -->
+        <rect x="340" width="130" height="45" rx="5" fill="#131e30" stroke="#f59e0b" stroke-width="1" />
+        <text x="348" y="16" font-family="'JetBrains Mono', monospace" font-size="8" font-weight="800" fill="#fbbf24">STEP 3: MINT QNT</text>
+        <text x="348" y="32" font-family="'JetBrains Mono', monospace" font-size="8.5" fill="#ffffff">Deposit Cold Vault</text>
+
+        <!-- Execute Button -->
+        <rect x="485" width="145" height="45" rx="6" fill="#10b981" />
+        <text x="557" y="26" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="900" fill="#000000">
+          EXECUTE ROUTE
+        </text>
+      </g>
+    </g>
+  </g>
+</svg>

@@ -16,7 +16,6 @@ import {
   Zap, 
   Sliders, 
   LayoutGrid, 
-  Sparkles, 
   Layers, 
   ChevronRight, 
   ExternalLink,

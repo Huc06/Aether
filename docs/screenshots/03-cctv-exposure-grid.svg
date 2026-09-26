@@ -1,0 +1,113 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" width="100%" height="100%">
+  <defs>
+    <linearGradient id="cctvBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#020305" />
+      <stop offset="100%" stop-color="#080c14" />
+    </linearGradient>
+    <pattern id="scanlinePat" width="100" height="4" patternUnits="userSpaceOnUse">
+      <line x1="0" y1="0" x2="100" y2="0" stroke="#000000" stroke-width="1.5" opacity="0.4" />
+    </pattern>
+  </defs>
+
+  <rect width="800" height="450" fill="url(#cctvBg)" />
+
+  <!-- Top CCTV Matrix Control Bar -->
+  <g transform="translate(30, 16)">
+    <circle cx="8" cy="10" r="4.5" fill="#ef4444" />
+    <text x="20" y="14" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="900" fill="#ffffff">AETHER CCTV TELEMETRY MATRIX</text>
+    <rect x="250" y="2" width="70" height="18" rx="3" fill="#ef4444" fill-opacity="0.2" stroke="#ef4444" stroke-width="0.8" />
+    <text x="260" y="14" font-family="'JetBrains Mono', monospace" font-size="8" font-weight="800" fill="#f87171">[ REC ● ]</text>
+    <text x="600" y="14" text-anchor="end" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="700" fill="#94a3b8">2026-09-26 14:48:22 UTC &bull; FEED: 60 FPS</text>
+  </g>
+
+  <!-- 2x3 CCTV Feed Grid -->
+  <!-- CAM 01: DRIFT SOL-PERP (CRITICAL ALERT) -->
+  <g transform="translate(30, 45)">
+    <rect width="230" height="160" fill="#14080a" stroke="#ef4444" stroke-width="1.2" />
+    <rect width="230" height="20" fill="#2b0d12" />
+    <text x="8" y="14" font-family="'JetBrains Mono', monospace" font-size="8" font-weight="800" fill="#fca5a5">CAM-01 [DRIFT SOL-PERP]</text>
+    <text x="220" y="14" text-anchor="end" font-family="'JetBrains Mono', monospace" font-size="7.5" font-weight="800" fill="#ef4444">CRITICAL</text>
+    
+    <text x="14" y="55" font-family="'JetBrains Mono', monospace" font-size="16" font-weight="900" fill="#ffffff">$124,500</text>
+    <text x="14" y="75" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="700" fill="#ef4444">HEALTH: 1.08x &bull; -12.8%</text>
+    <text x="14" y="95" font-family="'JetBrains Mono', monospace" font-size="8" fill="#fca5a5">LIQUIDATION: $142.10</text>
+
+    <rect x="14" y="120" width="202" height="26" rx="4" fill="#ef4444" fill-opacity="0.3" stroke="#ef4444" stroke-width="1" />
+    <text x="45" y="136" font-family="'JetBrains Mono', monospace" font-size="8.5" font-weight="800" fill="#fecaca">1-CLICK KILL SWITCH</text>
+    <rect width="230" height="160" fill="url(#scanlinePat)" pointer-events="none" />
+  </g>
+
+  <!-- CAM 02: LEDGER VAULT (SAFE) -->
+  <g transform="translate(285, 45)">
+    <rect width="230" height="160" fill="#080e14" stroke="#10b981" stroke-width="0.8" />
+    <rect width="230" height="20" fill="#0c1e18" />
+    <text x="8" y="14" font-family="'JetBrains Mono', monospace" font-size="8" font-weight="800" fill="#6ee7b7">CAM-02 [LEDGER TREASURY]</text>
+    <text x="220" y="14" text-anchor="end" font-family="'JetBrains Mono', monospace" font-size="7.5" font-weight="800" fill="#10b981">STABLE</text>
+
+    <text x="14" y="55" font-family="'JetBrains Mono', monospace" font-size="16" font-weight="900" fill="#ffffff">$850,000</text>
+    <text x="14" y="75" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="700" fill="#34d399">COLD MULTISIG &bull; +2.2%</text>
+    <text x="14" y="95" font-family="'JetBrains Mono', monospace" font-size="8" fill="#64748b">FIRST FUNDER VERIFIED</text>
+    <rect width="230" height="160" fill="url(#scanlinePat)" pointer-events="none" />
+  </g>
+
+  <!-- CAM 03: KAMINO JUPSOL (OPTIMAL) -->
+  <g transform="translate(540, 45)">
+    <rect width="230" height="160" fill="#080e14" stroke="#06b6d4" stroke-width="0.8" />
+    <rect width="230" height="20" fill="#0c1c24" />
+    <text x="8" y="14" font-family="'JetBrains Mono', monospace" font-size="8" font-weight="800" fill="#67e8f9">CAM-03 [KAMINO MULTIPLIER]</text>
+    <text x="220" y="14" text-anchor="end" font-family="'JetBrains Mono', monospace" font-size="7.5" font-weight="800" fill="#06b6d4">FLOW +</text>
+
+    <text x="14" y="55" font-family="'JetBrains Mono', monospace" font-size="16" font-weight="900" fill="#ffffff">$215,800</text>
+    <text x="14" y="75" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="700" fill="#34d399">APY: 18.4% &bull; HF: 2.94</text>
+    <text x="14" y="95" font-family="'JetBrains Mono', monospace" font-size="8" fill="#38bdf8">[+] SM INFLOW: +$45.1k</text>
+    <rect width="230" height="160" fill="url(#scanlinePat)" pointer-events="none" />
+  </g>
+
+  <!-- CAM 04: GMX V2 GLP -->
+  <g transform="translate(30, 220)">
+    <rect width="230" height="160" fill="#080e14" stroke="#f59e0b" stroke-width="0.8" />
+    <rect width="230" height="20" fill="#1c160c" />
+    <text x="8" y="14" font-family="'JetBrains Mono', monospace" font-size="8" font-weight="800" fill="#fcd34d">CAM-04 [GMX V2 ARBITRUM]</text>
+    <text x="220" y="14" text-anchor="end" font-family="'JetBrains Mono', monospace" font-size="7.5" font-weight="800" fill="#f59e0b">MODERATE</text>
+
+    <text x="14" y="55" font-family="'JetBrains Mono', monospace" font-size="16" font-weight="900" fill="#ffffff">$178,500</text>
+    <text x="14" y="75" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="700" fill="#fbbf24">APY: 22.8% &bull; GLP DELTA</text>
+    <text x="14" y="95" font-family="'JetBrains Mono', monospace" font-size="8" fill="#94a3b8">BORROW APR: 4.8%</text>
+    <rect width="230" height="160" fill="url(#scanlinePat)" pointer-events="none" />
+  </g>
+
+  <!-- CAM 05: AAVE V3 ETHEREUM -->
+  <g transform="translate(285, 220)">
+    <rect width="230" height="160" fill="#080e14" stroke="#8b5cf6" stroke-width="0.8" />
+    <rect width="230" height="20" fill="#181224" />
+    <text x="8" y="14" font-family="'JetBrains Mono', monospace" font-size="8" font-weight="800" fill="#c4b5fd">CAM-05 [AAVE V3 LENDING]</text>
+    <text x="220" y="14" text-anchor="end" font-family="'JetBrains Mono', monospace" font-size="7.5" font-weight="800" fill="#8b5cf6">BACKED</text>
+
+    <text x="14" y="55" font-family="'JetBrains Mono', monospace" font-size="16" font-weight="900" fill="#ffffff">$340,000</text>
+    <text x="14" y="75" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="700" fill="#a78bfa">COLLATERAL: stETH</text>
+    <text x="14" y="95" font-family="'JetBrains Mono', monospace" font-size="8" fill="#94a3b8">DEBT: 62.4 ETH &bull; HF: 1.82</text>
+    <rect width="230" height="160" fill="url(#scanlinePat)" pointer-events="none" />
+  </g>
+
+  <!-- CAM 06: HYPERLIQUID HYPE-PERP -->
+  <g transform="translate(540, 220)">
+    <rect width="230" height="160" fill="#080e14" stroke="#06b6d4" stroke-width="0.8" />
+    <rect width="230" height="20" fill="#0c1c24" />
+    <text x="8" y="14" font-family="'JetBrains Mono', monospace" font-size="8" font-weight="800" fill="#67e8f9">CAM-06 [HYPERLIQUID PERP]</text>
+    <text x="220" y="14" text-anchor="end" font-family="'JetBrains Mono', monospace" font-size="7.5" font-weight="800" fill="#06b6d4">5x LONG</text>
+
+    <text x="14" y="55" font-family="'JetBrains Mono', monospace" font-size="16" font-weight="900" fill="#ffffff">$95,000</text>
+    <text x="14" y="75" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="700" fill="#34d399">+14.2% &bull; MARGIN SAFE</text>
+    <text x="14" y="95" font-family="'JetBrains Mono', monospace" font-size="8" fill="#94a3b8">ORACLE: HYPERLIQUID NATIVE</text>
+    <rect width="230" height="160" fill="url(#scanlinePat)" pointer-events="none" />
+  </g>
+
+  <!-- Bottom Dock -->
+  <g transform="translate(290, 400)">
+    <rect width="220" height="34" rx="17" fill="#090d14" stroke="#ffffff" stroke-width="0.6" opacity="0.95" />
+    <text x="18" y="21" font-family="'JetBrains Mono', monospace" font-size="8" font-weight="700" fill="#94a3b8">1 Canvas</text>
+    <text x="85" y="21" font-family="'JetBrains Mono', monospace" font-size="8" font-weight="700" fill="#94a3b8">2 Ledger</text>
+    <rect x="145" y="5" width="65" height="24" rx="12" fill="#f59e0b" />
+    <text x="156" y="21" font-family="'JetBrains Mono', monospace" font-size="8" font-weight="800" fill="#000000">3 CCTV</text>
+  </g>
+</svg>

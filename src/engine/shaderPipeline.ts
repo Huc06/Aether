@@ -209,6 +209,7 @@ export class WebGLShaderPipeline {
     gl.useProgram(this.program);
 
     // Active real-time lens shader pipeline with overview focus boost
+    const isLight = config.themeMode === 'light';
     const overviewBoost = 1.0 + transitionProgress * 0.35;
     gl.uniform1i(this.uniforms.tex, 0);
     gl.uniform2f(this.uniforms.fullSize, width, height);
@@ -217,9 +218,9 @@ export class WebGLShaderPipeline {
     gl.uniform1f(this.uniforms.brightness, config.feather);
     gl.uniform1f(this.uniforms.edgeBlur, config.edgeBlur * (0.5 + transitionProgress * 0.5));
     gl.uniform1f(this.uniforms.edgeBlurStart, config.edgeBlurStart);
-    gl.uniform1f(this.uniforms.vignette, config.vignette * overviewBoost);
+    gl.uniform1f(this.uniforms.vignette, isLight ? config.vignette * 0.2 : config.vignette * overviewBoost);
     gl.uniform1f(this.uniforms.chromatic, config.chromatic * overviewBoost);
-    gl.uniform1f(this.uniforms.scanlines, config.showScanlines ? 1.0 : 0.0);
+    gl.uniform1f(this.uniforms.scanlines, config.showScanlines ? (isLight ? 0.25 : 1.0) : 0.0);
 
     gl.bindVertexArray(this.vao);
     gl.drawArrays(gl.TRIANGLES, 0, 6);

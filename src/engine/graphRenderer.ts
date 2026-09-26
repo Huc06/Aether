@@ -496,7 +496,7 @@ export class GraphRenderer {
       ctx.fillStyle = '#ef4444';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('⚡ Liquidation Risk · Click to Inspect Exit', x + w / 2, badgeY + badgeH / 2);
+      ctx.fillText('Liquidation Risk · Click to Inspect Exit', x + w / 2, badgeY + badgeH / 2);
     }
   }
 

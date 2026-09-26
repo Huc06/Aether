@@ -11,7 +11,7 @@
 
 | Scoring Dimension | Weight | How Aether Delivers |
 |---|:---:|---|
-| **Data Integration** | **25%** | Nansen data directly dictates node positions ($x, y$), energy particle velocity, Smart Money accumulation pulses (`🟢 +SM Inflow`), and relational graph wires. |
+| **Data Integration** | **25%** | Nansen data directly dictates node positions ($x, y$), energy particle velocity, Smart Money accumulation pulses (`[+] SM Inflow`), and relational graph wires. |
 | **Creativity & Originality** | **25%** | Replaces traditional flat table dashboards with an infinite WebGL 2.0 spatial canvas, CRT shader optics, and an NLP intent execution layer. |
 | **Functionality & Workability** | **25%** | Real-time SSE streaming from `/api/v1/agent/fast`, zero-crash fail-safe snapshots, and 100% clean builds with zero console warnings. |
 | **Documentation & Submission** | **25%** | Reproducible in under 2 minutes (`npm run build && npm run dev`), with full endpoint transcripts and cURL test suite. |
@@ -44,14 +44,14 @@ npm run dev
 ---
 
 ### Step 2: Test Nansen Live Entity Profiler (1 minute)
-1. In the top bar, click the **`[💎 NANSEN]`** status button.
+1. In the top bar, click the **`[NANSEN API]`** status button.
 2. Observe the **1,000+ API Calls Qualified** tracker.
 3. Click on the preset **`Vitalik Buterin (vitalik.eth)`**.
 4. **Expected Result:**
    - The camera glides to coordinates `(0, 0)`.
    - The center node reflects `Vitalik Buterin (vitalik.eth)` ($850k+ USD).
    - Orbital token nodes spawn for `WHITE`, `MOODENG`, `ETH`, `ENS` with live prices.
-   - Violet wires connect to `vitalikbuterin.eth (First Funder 🔑)` and `Proxy (Multisig Signer 🛡️)`.
+   - Violet wires connect to `vitalikbuterin.eth (First Funder)` and `Proxy (Multisig Signer)`.
 
 ---
 
@@ -60,7 +60,7 @@ npm run dev
 2. Click the cyan pill **`[Smart Money Accumulation (Live)]`** (or type: *"Which tokens are smart money accumulating on Ethereum today?"*).
 3. **Expected Result:**
    - Real-time SSE streaming answer from Nansen Research Agent.
-   - Active tool call banner: `⚙️ [TOOL: token_discovery_screener]`.
+   - Active tool call banner: `[tool: token_discovery_screener]`.
    - Camera auto-highlights researched nodes on the spatial canvas.
    - A 3-step **Visual Execution Pipeline** renders below the answer.
    - Click **`Simulate & Execute Route`** $\rightarrow$ Step progress turns green $\rightarrow$ Confetti celebration triggers.
@@ -71,7 +71,7 @@ npm run dev
 1. On the spatial canvas, locate the node **`Drift SOL-PERP 10x Long`** (marked in red with critical health factor).
 2. Double-click the node to open the **Position Detail Modal**.
 3. Observe the Nansen Smart Money 24h netflow correlation and distance-to-liquidation gauge.
-4. Click **`⚡ 1-Click Emergency Kill Switch`**.
+4. Click **`1-Click Emergency Kill Switch`**.
 5. **Expected Result:**
    - 3-step emergency unwind protocol executes with MEV protection.
    - Node status updates to `(Unwound & Safe)`.

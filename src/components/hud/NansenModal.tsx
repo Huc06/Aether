@@ -5,7 +5,6 @@ import {
   Activity, 
   CheckCircle2, 
   ExternalLink, 
-  Sparkles, 
   Database, 
   Cpu, 
   RefreshCw, 
