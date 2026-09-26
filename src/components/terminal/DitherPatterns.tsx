@@ -30,7 +30,7 @@ export const DitherDefs: React.FC<DitherDefsProps> = ({
   const mutedColor = isLight ? '#64748b' : '#94a3b8';
 
   return (
-    <svg width={0} height={0} className="absolute pointer-events-none" aria-hidden focusable="false">
+    <svg width={0} height={0} className="absolute w-0 h-0 overflow-hidden pointer-events-none" aria-hidden focusable="false">
       <defs>
         {/* Safe / Success: 50% checkerboard (dense ink) */}
         <pattern
@@ -170,7 +170,7 @@ export const DitherBadge: React.FC<{
       className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider border ${borderTone} ${className}`}
     >
       <DitherSwatch status={status} idPrefix={idPrefix} size={10} />
-      <span>{children}</span>
+      <span className="text-inherit">{children}</span>
     </span>
   );
 };

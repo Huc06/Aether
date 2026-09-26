@@ -98,10 +98,15 @@ export const ListSwitcher: React.FC<ListSwitcherProps> = ({
   ];
 
   const riskTabs = [
-    { id: 'all', label: 'All Risks' },
-    { id: 'safe', label: 'Safe Tier' },
-    { id: 'medium', label: 'Moderate' },
-    { id: 'critical', label: 'Critical Alert', badge: nodes.filter((n) => n.riskLevel === 'critical').length || undefined },
+    { id: 'all', label: 'All Risks', tone: 'default' as const },
+    { id: 'safe', label: 'Safe Tier', tone: 'safe' as const },
+    { id: 'medium', label: 'Moderate', tone: 'warn' as const },
+    {
+      id: 'critical',
+      label: 'Critical Alert',
+      tone: 'critical' as const,
+      badge: nodes.filter((n) => n.riskLevel === 'critical').length || undefined,
+    },
   ];
 
   return (
