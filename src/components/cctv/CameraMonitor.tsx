@@ -131,9 +131,6 @@ export const CameraMonitor: React.FC<CameraMonitorProps> = ({
             {/* Asset Header Information */}
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-2.5">
-                <span className="text-2xl p-2 rounded-xl bg-slate-900/80 border border-white/10 shadow-inner">
-                  {node.icon}
-                </span>
                 <div className="flex flex-col">
                   <span className="font-extrabold text-sm text-white group-hover:text-amber-300 transition-colors">
                     {node.title}

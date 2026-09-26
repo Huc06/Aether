@@ -106,6 +106,35 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
     }
   };
 
+  const matchNodesFromResearch = (text: string) => {
+    const lower = text.toLowerCase();
+    return nodes.filter(n => {
+      const chain = n.chain.toLowerCase();
+      const app = n.app.toLowerCase();
+      const title = n.title.toLowerCase();
+      const collateral = (n.collateralAsset || '').toLowerCase();
+      const strategy = (n.strategy || '').toLowerCase();
+
+      // Check chain or app
+      if (lower.includes(chain) || lower.includes(app)) return true;
+
+      // Check words in title
+      const titleWords = title.split(/[\s\-\/\(\),]+/).filter(w => w.length >= 3 && !['vault', 'account', 'active', 'concentrated', 'positions'].includes(w));
+      if (titleWords.some(w => lower.includes(w))) return true;
+
+      // Check collateral words (e.g. sol, eth, usdc, btc, pendle, jito, gm)
+      const colWords = collateral.split(/[\s\-\/\(\),]+/).filter(w => w.length >= 3 && !['tokens', 'margin'].includes(w));
+      if (colWords.some(w => lower.includes(w))) return true;
+
+      // Check strategy keywords
+      if (strategy && ['smart money', 'accumulation', 'netflow', 'inflow', 'outflow', 'whale', 'profiler'].some(term => lower.includes(term) && strategy.includes(term))) {
+        return true;
+      }
+
+      return false;
+    });
+  };
+
   const handleAskNansenAgent = async (customPrompt?: string) => {
     const promptToUse = customPrompt || query.trim();
     if (!promptToUse) return;
@@ -126,20 +155,22 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
         (fullText) => {
           setIsAgentStreaming(false);
 
-          // Auto spotlight relevant nodes if mentioned in AI response
-          const lower = fullText.toLowerCase();
-          const autoMatched = nodes.filter(n => 
-            lower.includes(n.chain.toLowerCase()) || 
-            lower.includes(n.title.toLowerCase()) || 
-            (n.collateralAsset && lower.includes(n.collateralAsset.toLowerCase()))
-          );
-          if (autoMatched.length > 0) {
-            onHighlightNodes(autoMatched.map(n => n.id));
+          // Auto spotlight relevant nodes and connection flow wires
+          const matched = matchNodesFromResearch(fullText);
+          if (matched.length > 0) {
+            onHighlightNodes(matched.map(n => n.id));
+          } else {
+            onHighlightNodes(nodes.slice(0, 4).map(n => n.id));
           }
         },
         (err) => {
           setIsAgentStreaming(false);
-          setAgentResponse(prev => (prev ? prev + `\n\n[Note: Stream closed - ${err.message}]` : `Nansen Onchain Agent: Analyzed portfolio exposure and smart money netflows across active chains. Real-time metrics indexed.`));
+          const fallbackText = `Nansen Onchain Agent: Analyzed portfolio exposure and smart money netflows across active chains. Real-time metrics indexed.`;
+          setAgentResponse(prev => (prev ? prev + `\n\n[Note: Stream closed - ${err.message}]` : fallbackText));
+          const matched = matchNodesFromResearch(fallbackText);
+          if (matched.length > 0) {
+            onHighlightNodes(matched.map(n => n.id));
+          }
         }
       );
     } catch (e: any) {
@@ -294,6 +325,27 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
                 {agentResponse || 'Initializing Nansen Agent stream...'}
                 {isAgentStreaming && <span className="inline-block w-2 h-4 ml-1 bg-amber-400 animate-pulse" />}
               </div>
+
+              {agentResponse && !isAgentStreaming && (
+                <div className="pt-2 flex items-center justify-between border-t border-cyan-500/20">
+                  <span className="text-[10px] text-cyan-300 font-mono">
+                    Intelligence indexed &bull; Wires energized
+                  </span>
+                  <button
+                    onClick={() => {
+                      const matched = matchNodesFromResearch(agentResponse);
+                      const targetNodes = matched.length > 0 ? matched : nodes;
+                      onHighlightNodes(targetNodes.map(n => n.id));
+                      onSelectNode(targetNodes[0]);
+                      onClose();
+                    }}
+                    className="px-3 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-black font-extrabold text-xs font-mono flex items-center gap-1.5 transition-all shadow cursor-pointer"
+                  >
+                    <span>Focus Researched Nodes &amp; Wires</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
@@ -411,10 +463,7 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
                   }}
                   className="p-3 rounded-lg bg-slate-900/60 hover:bg-slate-800/80 border border-white/10 hover:border-amber-500/50 cursor-pointer flex items-center justify-between transition-all group"
                 >
-                  <div className="flex items-center gap-3">
-                    <span className="px-2 py-0.5 rounded bg-black/40 border border-white/10 text-[10px] font-bold text-amber-400">
-                      [{node.icon || node.chain.slice(0, 3).toUpperCase()}]
-                    </span>
+                  <div className="flex items-center gap-2.5">
                     <div className="flex flex-col">
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-xs text-white group-hover:text-amber-300">

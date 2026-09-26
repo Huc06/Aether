@@ -6,7 +6,6 @@ export interface RouteStep {
   stepNumber: number;
   type: 'bridge' | 'swap' | 'stake' | 'deposit' | 'withdraw' | 'repay' | 'revoke';
   protocol: string;
-  protocolIcon?: string;
   fromAsset: string;
   toAsset?: string;
   fromChain: string;
@@ -44,7 +43,6 @@ export interface CanvasNode {
   type: NodeType;
   category: 'Wallet' | 'Chain' | 'Lending' | 'DEX' | 'Perps' | 'Yield' | 'Staking';
   chain: 'Solana' | 'Arbitrum' | 'Ethereum' | 'Hyperliquid' | 'Berachain';
-  icon?: string;
   x: number;
   y: number;
   w: number;

@@ -223,7 +223,7 @@ export const ExposureGridFeed: React.FC<ExposureGridFeedProps> = ({
             ctx.textAlign = 'left';
             ctx.font = "700 14px 'JetBrains Mono', monospace";
             ctx.fillStyle = '#e2e8f0';
-            ctx.fillText(`${node.icon}  ${node.title}`, cellX + pad, contentY + 55);
+            ctx.fillText(node.title, cellX + pad, contentY + 55);
 
             // Telemetry Box
             ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
@@ -388,9 +388,6 @@ export const ExposureGridFeed: React.FC<ExposureGridFeedProps> = ({
         {selectedCellNode && (
           <div className="glass-panel p-4 rounded-xl border border-amber-500/50 flex items-center justify-between gap-4 animate-in slide-in-from-bottom-3 duration-150 bg-slate-950/95">
             <div className="flex items-center gap-3">
-              <span className="px-2 py-1 rounded bg-black/40 border border-white/10 text-xs font-bold text-amber-400">
-                [{selectedCellNode.icon || selectedCellNode.chain.slice(0, 3).toUpperCase()}]
-              </span>
               <div className="flex flex-col">
                 <div className="flex items-center gap-2">
                   <span className="font-extrabold text-white text-sm">

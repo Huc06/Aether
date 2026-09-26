@@ -71,7 +71,6 @@ export const PositionDetailModal: React.FC<PositionDetailModalProps> = ({
         {/* Header Bar */}
         <div className="p-5 border-b border-white/10 bg-slate-900/90 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="text-3xl">{node.icon}</span>
             <div className="flex flex-col">
               <div className="flex items-center gap-2">
                 <h2 className="font-extrabold text-base text-white tracking-wide">

@@ -277,7 +277,6 @@ export const App: React.FC = () => {
       setIsIntentOpen(true);
     } else {
       setIsIntentOpen(false);
-      setHighlightNodeIds([]);
     }
   }, [config.overviewScale, config.normalScale]);
 

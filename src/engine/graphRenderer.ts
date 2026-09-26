@@ -132,13 +132,15 @@ export class GraphRenderer {
 
       // Base Wire Glow
       const wireColor = wire.color || config.accent;
-      ctx.strokeStyle = isHighlighted ? wireColor : 'rgba(255, 255, 255, 0.08)';
-      ctx.lineWidth = (isHighlighted ? 2.5 : 1.0) * Math.max(0.5, sc);
+      const isTargeted = highlightIds.length > 0 && isHighlighted;
+      ctx.strokeStyle = isHighlighted ? wireColor : 'rgba(255, 255, 255, 0.06)';
+      ctx.lineWidth = (isTargeted ? 3.5 : (isHighlighted ? 2.2 : 1.0)) * Math.max(0.5, sc);
       ctx.lineCap = 'round';
 
       if (isHighlighted) {
+        const glowPulse = isTargeted ? (Math.sin(this.particleTime * 4) * 0.3 + 0.9) : 1.0;
         ctx.shadowColor = wireColor;
-        ctx.shadowBlur = 12 * sc;
+        ctx.shadowBlur = (isTargeted ? 22 : 12) * sc * glowPulse;
       }
 
       ctx.beginPath();
@@ -146,11 +148,12 @@ export class GraphRenderer {
       ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y);
       ctx.stroke();
 
-      // Flowing Energy Particles
+      // Flowing Energy Laser Particles
       if (isHighlighted) {
-        const numParticles = Math.max(3, Math.floor(dist / (80 * sc)));
+        const speed = isSimulating ? 1.4 : (isTargeted ? 0.75 : 0.35);
+        const numParticles = Math.max(4, Math.floor(dist / ((isTargeted ? 50 : 80) * sc)));
         for (let i = 0; i < numParticles; i++) {
-          const t = ((this.particleTime * 0.35 + i / numParticles) % 1.0);
+          const t = ((this.particleTime * speed + i / numParticles) % 1.0);
           
           const u = 1 - t;
           const tt = t * t;
@@ -163,9 +166,9 @@ export class GraphRenderer {
 
           ctx.fillStyle = '#ffffff';
           ctx.shadowColor = isSimulating ? '#4ade80' : wireColor;
-          ctx.shadowBlur = (isSimulating ? 16 : 8) * sc;
+          ctx.shadowBlur = (isTargeted || isSimulating ? 18 : 8) * sc;
           ctx.beginPath();
-          ctx.arc(px, py, (isSimulating ? 4.5 : 2.5) * Math.max(0.6, sc), 0, Math.PI * 2);
+          ctx.arc(px, py, (isSimulating ? 4.8 : (isTargeted ? 3.8 : 2.5)) * Math.max(0.6, sc), 0, Math.PI * 2);
           ctx.fill();
         }
       }
@@ -234,9 +237,10 @@ export class GraphRenderer {
       else riskColor = '#10b981';
 
       // Card Shadow / Glow
-      if (isSelected || node.riskLevel === 'critical') {
-        ctx.shadowColor = isSelected ? config.accent : riskColor;
-        ctx.shadowBlur = (isSelected ? 30 : 20) * sc;
+      const isTargetedNode = highlightIds.length > 0 && isHighlighted;
+      if (isTargetedNode || isSelected || node.riskLevel === 'critical') {
+        ctx.shadowColor = isSelected ? config.accent : (isTargetedNode ? '#38bdf8' : riskColor);
+        ctx.shadowBlur = (isSelected ? 30 : (isTargetedNode ? 24 : 20)) * sc;
         ctx.shadowOffsetY = 4 * sc;
       } else {
         ctx.shadowColor = 'rgba(0, 0, 0, 0.75)';
@@ -251,10 +255,20 @@ export class GraphRenderer {
       ctx.roundRect(pos.x, pos.y, sw, sh, radius);
       ctx.fill();
 
+      // Spotlight Pulsing Aura on Researched Nodes
+      if (isTargetedNode) {
+        const auraPulse = Math.sin(this.particleTime * 5 + node.x * 0.01) * 3 * sc + 4 * sc;
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 1.8 * sc;
+        ctx.beginPath();
+        ctx.roundRect(pos.x - auraPulse, pos.y - auraPulse, sw + auraPulse * 2, sh + auraPulse * 2, radius + auraPulse);
+        ctx.stroke();
+      }
+
       // Card Border
       ctx.shadowColor = 'transparent';
-      ctx.lineWidth = isSelected ? 2.5 : (node.riskLevel === 'critical' ? 2.0 : 1.2);
-      ctx.strokeStyle = isSelected ? config.accent : (node.riskLevel === 'critical' ? '#ef4444' : 'rgba(255, 255, 255, 0.14)');
+      ctx.lineWidth = isSelected ? 2.5 : (isTargetedNode ? 2.0 : (node.riskLevel === 'critical' ? 2.0 : 1.2));
+      ctx.strokeStyle = isSelected ? config.accent : (isTargetedNode ? '#38bdf8' : (node.riskLevel === 'critical' ? '#ef4444' : 'rgba(255, 255, 255, 0.14)'));
       ctx.stroke();
 
       // Title Bar Header

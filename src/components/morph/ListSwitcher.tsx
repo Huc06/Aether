@@ -195,10 +195,7 @@ export const ListSwitcher: React.FC<ListSwitcherProps> = ({
                   }`}
                 >
                   {/* Col 1 */}
-                  <div className="col-span-4 flex items-center gap-3">
-                    <span className="px-2 py-1 rounded bg-black/40 border border-white/10 text-[10px] font-bold text-amber-400">
-                      [{node.icon || node.chain.slice(0, 3).toUpperCase()}]
-                    </span>
+                  <div className="col-span-4 flex items-center gap-2.5">
                     <div className="flex flex-col min-w-0">
                       <span className="font-bold text-white truncate hover:text-amber-300">
                         {node.title}
