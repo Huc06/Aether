@@ -13,7 +13,9 @@ import {
   Orbit, 
   List as ListIcon, 
   Camera, 
-  Database 
+  Database,
+  Sun,
+  Moon
 } from 'lucide-react';
 
 interface TopBarProps {
@@ -27,6 +29,7 @@ interface TopBarProps {
   onOpenTuner: () => void;
   onOpenHelp: () => void;
   onOpenNansen: () => void;
+  onToggleThemeMode: () => void;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
@@ -39,13 +42,15 @@ export const TopBar: React.FC<TopBarProps> = ({
   onSmartArrange,
   onOpenTuner,
   onOpenHelp,
-  onOpenNansen
+  onOpenNansen,
+  onToggleThemeMode
 }) => {
   // Aggregate portfolio metrics
   const totalValue = nodes.reduce((sum, n) => sum + n.valueUsd, 0);
   const totalPnl = nodes.reduce((sum, n) => sum + (n.pnl24hUsd || 0), 0);
   const pnlPercent = totalValue > 0 ? (totalPnl / (totalValue - totalPnl)) * 100 : 0;
   const callCount = getApiCallCount();
+  const isLight = config.themeMode === 'light';
 
   return (
     <header className="absolute top-3 left-3 right-3 z-40 flex items-center justify-between gap-3 pointer-events-none select-none">
@@ -199,6 +204,14 @@ export const TopBar: React.FC<TopBarProps> = ({
         >
           <Sliders className="w-3.5 h-3.5" />
           <span className="hidden xl:inline">Lens</span>
+        </button>
+
+        <button
+          onClick={onToggleThemeMode}
+          className="glass-badge flex items-center justify-center w-7 h-7 rounded-lg text-slate-300 hover:text-amber-400 border border-white/10 shadow-lg transition-all cursor-pointer"
+          title={isLight ? "Switch to Dark Mode (Cyberpunk)" : "Switch to Light Mode (Clean Slate)"}
+        >
+          {isLight ? <Sun className="w-3.5 h-3.5 text-amber-500" /> : <Moon className="w-3.5 h-3.5 text-cyan-400" />}
         </button>
 
         <button

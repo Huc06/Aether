@@ -60,6 +60,33 @@ body, html {
   border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
+.theme-light {
+  --bg-dark: #f8fafc;
+  --panel-bg: rgba(255, 255, 255, 0.94);
+  --panel-border: rgba(15, 23, 42, 0.14);
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+}
+
+.theme-light .glass-panel {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(15, 23, 42, 0.14);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+}
+
+.theme-light .glass-badge {
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(15, 23, 42, 0.14);
+  color: #0f172a;
+}
+
+.theme-light input,
+.theme-light select {
+  background: rgba(241, 245, 249, 0.95);
+  color: #0f172a;
+  border-color: rgba(15, 23, 42, 0.15);
+}
+
 .glow-accent {
   box-shadow: 0 0 25px var(--accent-glow);
 }

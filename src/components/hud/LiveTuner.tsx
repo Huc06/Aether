@@ -20,7 +20,7 @@ export const LiveTuner: React.FC<LiveTunerProps> = ({
 }) => {
   if (!isOpen) return null;
 
-  const handleSlider = (key: keyof LensConfig, val: number | boolean) => {
+  const handleSlider = (key: keyof LensConfig, val: number | boolean | string) => {
     onChangeConfig({
       ...config,
       [key]: val
@@ -59,10 +59,22 @@ export const LiveTuner: React.FC<LiveTunerProps> = ({
 
       {/* Theme Presets */}
       <div className="flex flex-col gap-2">
-        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-          <Sparkles className="w-3 h-3 text-amber-400" />
-          Theme Presets
-        </span>
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+            <Sparkles className="w-3 h-3 text-amber-400" />
+            Theme Palette &amp; Mode
+          </span>
+          <button
+            onClick={() => {
+              const nextMode = config.themeMode === 'light' ? 'dark' : 'light';
+              handleSlider('themeMode' as any, nextMode);
+              onShowToast(nextMode === 'light' ? '☀ Light Mode' : '🌙 Dark Mode');
+            }}
+            className="text-[10px] px-2 py-0.5 rounded bg-white/10 text-cyan-300 font-bold border border-white/15 hover:border-cyan-400 transition-colors cursor-pointer"
+          >
+            {config.themeMode === 'light' ? '☀ Light Mode' : '🌙 Dark Mode'}
+          </button>
+        </div>
         <div className="grid grid-cols-2 gap-1.5">
           {Object.entries(THEME_PRESETS).map(([k, p]) => (
             <button

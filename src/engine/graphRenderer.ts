@@ -18,22 +18,23 @@ export class GraphRenderer {
     isSimulating = false
   ) {
     this.particleTime += dt * (isSimulating ? 3.5 : 1.0);
+    const isLight = config.themeMode === 'light';
 
     // Clear background
-    ctx.fillStyle = '#07090e';
+    ctx.fillStyle = isLight ? '#f8fafc' : '#07090e';
     ctx.fillRect(0, 0, width, height);
 
     // Draw Grid
-    this.drawGrid(ctx, width, height, camera, config);
+    this.drawGrid(ctx, width, height, camera, config, isLight);
 
     // Draw Connection Wires with flowing particles
-    this.drawWires(ctx, width, height, camera, nodes, wires, config, highlightIds, isSimulating);
+    this.drawWires(ctx, width, height, camera, nodes, wires, config, highlightIds, isSimulating, isLight);
 
     // Draw Spatial Nodes & Windows
-    this.drawNodes(ctx, width, height, camera, nodes, config, highlightIds, selectedNodeId);
+    this.drawNodes(ctx, width, height, camera, nodes, config, highlightIds, selectedNodeId, isLight);
 
     // Draw Minimap
-    this.drawMinimap(ctx, width, height, camera, nodes, config, selectedNodeId);
+    this.drawMinimap(ctx, width, height, camera, nodes, config, selectedNodeId, isLight);
   }
 
   private drawGrid(
@@ -41,7 +42,8 @@ export class GraphRenderer {
     width: number,
     height: number,
     camera: CameraController,
-    config: LensConfig
+    config: LensConfig,
+    isLight: boolean
   ) {
     ctx.save();
     const sc = camera.state.scale;
@@ -56,7 +58,7 @@ export class GraphRenderer {
     const startY = (offset.y % step + step) % step;
 
     const dotAlpha = Math.min(0.28, Math.max(0.04, (sc - 0.1) * 0.35));
-    ctx.fillStyle = `rgba(255, 255, 255, ${dotAlpha})`;
+    ctx.fillStyle = isLight ? `rgba(15, 23, 42, ${dotAlpha * 0.9})` : `rgba(255, 255, 255, ${dotAlpha})`;
 
     const dotSize = Math.max(1.0, 1.8 * Math.min(1.0, sc));
 
@@ -71,7 +73,7 @@ export class GraphRenderer {
     // Canvas Origin Axis Crosshairs
     const origin = camera.worldToScreen(0, 0, width, height);
     if (origin.x >= 0 && origin.x <= width && origin.y >= 0 && origin.y <= height) {
-      ctx.strokeStyle = `${config.accent}40`;
+      ctx.strokeStyle = `${config.accent}60`;
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(origin.x - 16, origin.y);
@@ -93,7 +95,8 @@ export class GraphRenderer {
     wires: WireConnection[],
     config: LensConfig,
     highlightIds: string[],
-    isSimulating: boolean
+    isSimulating: boolean,
+    isLight: boolean
   ) {
     const sc = camera.state.scale;
     const nodeMap = new Map<string, CanvasNode>();
@@ -133,7 +136,7 @@ export class GraphRenderer {
       // Base Wire Glow
       const wireColor = wire.color || config.accent;
       const isTargeted = highlightIds.length > 0 && isHighlighted;
-      ctx.strokeStyle = isHighlighted ? wireColor : 'rgba(255, 255, 255, 0.06)';
+      ctx.strokeStyle = isHighlighted ? wireColor : (isLight ? 'rgba(15, 23, 42, 0.12)' : 'rgba(255, 255, 255, 0.06)');
       ctx.lineWidth = (isTargeted ? 3.5 : (isHighlighted ? 2.2 : 1.0)) * Math.max(0.5, sc);
       ctx.lineCap = 'round';
 
@@ -177,19 +180,18 @@ export class GraphRenderer {
       if (sc > 0.45 && wire.label && isHighlighted) {
         const midX = (p1.x + p2.x) / 2;
         const midY = (p1.y + p2.y) / 2;
-        ctx.font = `600 ${Math.max(8, Math.floor(10 * sc))}px 'JetBrains Mono', monospace`;
-        ctx.fillStyle = '#cbd5e1';
+        ctx.font = `700 ${Math.max(8, Math.floor(10 * sc))}px 'JetBrains Mono', monospace`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         
         const padX = 8 * sc;
         const textW = ctx.measureText(wire.label).width;
         
-        ctx.fillStyle = 'rgba(10, 14, 22, 0.85)';
+        ctx.fillStyle = isLight ? 'rgba(255, 255, 255, 0.95)' : 'rgba(10, 14, 22, 0.85)';
         ctx.beginPath();
         ctx.roundRect(midX - textW / 2 - padX, midY - 10 * sc, textW + padX * 2, 20 * sc, 4 * sc);
         ctx.fill();
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+        ctx.strokeStyle = isLight ? 'rgba(15, 23, 42, 0.15)' : 'rgba(255, 255, 255, 0.15)';
         ctx.stroke();
 
         ctx.fillStyle = wireColor;
@@ -208,7 +210,8 @@ export class GraphRenderer {
     nodes: CanvasNode[],
     config: LensConfig,
     highlightIds: string[],
-    selectedNodeId: string | null
+    selectedNodeId: string | null,
+    isLight: boolean
   ) {
     const sc = camera.state.scale;
 
@@ -239,18 +242,20 @@ export class GraphRenderer {
       // Card Shadow / Glow
       const isTargetedNode = highlightIds.length > 0 && isHighlighted;
       if (isTargetedNode || isSelected || node.riskLevel === 'critical') {
-        ctx.shadowColor = isSelected ? config.accent : (isTargetedNode ? '#38bdf8' : riskColor);
+        ctx.shadowColor = isSelected ? config.accent : (isTargetedNode ? (isLight ? '#0284c7' : '#38bdf8') : riskColor);
         ctx.shadowBlur = (isSelected ? 30 : (isTargetedNode ? 24 : 20)) * sc;
         ctx.shadowOffsetY = 4 * sc;
       } else {
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.75)';
-        ctx.shadowBlur = 14 * sc;
-        ctx.shadowOffsetY = 6 * sc;
+        ctx.shadowColor = isLight ? 'rgba(0, 0, 0, 0.12)' : 'rgba(0, 0, 0, 0.75)';
+        ctx.shadowBlur = (isLight ? 10 : 14) * sc;
+        ctx.shadowOffsetY = (isLight ? 4 : 6) * sc;
       }
 
-      // Card Background (Glass dark)
+      // Card Background (Glass dark / glass light)
       const radius = 10 * sc;
-      ctx.fillStyle = isSelected ? 'rgba(18, 24, 38, 0.95)' : 'rgba(10, 14, 22, 0.90)';
+      ctx.fillStyle = isLight
+        ? (isSelected ? 'rgba(255, 255, 255, 0.98)' : 'rgba(255, 255, 255, 0.94)')
+        : (isSelected ? 'rgba(18, 24, 38, 0.95)' : 'rgba(10, 14, 22, 0.90)');
       ctx.beginPath();
       ctx.roundRect(pos.x, pos.y, sw, sh, radius);
       ctx.fill();
@@ -258,7 +263,7 @@ export class GraphRenderer {
       // Spotlight Pulsing Aura on Researched Nodes
       if (isTargetedNode) {
         const auraPulse = Math.sin(this.particleTime * 5 + node.x * 0.01) * 3 * sc + 4 * sc;
-        ctx.strokeStyle = '#38bdf8';
+        ctx.strokeStyle = isLight ? '#0284c7' : '#38bdf8';
         ctx.lineWidth = 1.8 * sc;
         ctx.beginPath();
         ctx.roundRect(pos.x - auraPulse, pos.y - auraPulse, sw + auraPulse * 2, sh + auraPulse * 2, radius + auraPulse);
@@ -268,12 +273,18 @@ export class GraphRenderer {
       // Card Border
       ctx.shadowColor = 'transparent';
       ctx.lineWidth = isSelected ? 2.5 : (isTargetedNode ? 2.0 : (node.riskLevel === 'critical' ? 2.0 : 1.2));
-      ctx.strokeStyle = isSelected ? config.accent : (isTargetedNode ? '#38bdf8' : (node.riskLevel === 'critical' ? '#ef4444' : 'rgba(255, 255, 255, 0.14)'));
+      ctx.strokeStyle = isSelected 
+        ? config.accent 
+        : (isTargetedNode 
+          ? (isLight ? '#0284c7' : '#38bdf8') 
+          : (node.riskLevel === 'critical' ? '#ef4444' : (isLight ? 'rgba(15, 23, 42, 0.12)' : 'rgba(255, 255, 255, 0.14)')));
       ctx.stroke();
 
       // Title Bar Header
       const headerH = 34 * sc;
-      ctx.fillStyle = isSelected ? 'rgba(30, 41, 59, 0.95)' : 'rgba(15, 21, 32, 0.9)';
+      ctx.fillStyle = isLight
+        ? (isSelected ? 'rgba(241, 245, 249, 0.98)' : 'rgba(248, 250, 252, 0.95)')
+        : (isSelected ? 'rgba(30, 41, 59, 0.95)' : 'rgba(15, 21, 32, 0.9)');
       ctx.beginPath();
       ctx.roundRect(pos.x, pos.y, sw, headerH, [radius, radius, 0, 0]);
       ctx.fill();
@@ -293,7 +304,9 @@ export class GraphRenderer {
       // Header Title & Clean Monospace Text
       const headerFontSize = Math.max(9, Math.floor(12 * sc));
       ctx.font = `700 ${headerFontSize}px 'JetBrains Mono', monospace`;
-      ctx.fillStyle = isSelected ? '#ffffff' : '#e2e8f0';
+      ctx.fillStyle = isLight
+        ? (isSelected ? '#0f172a' : '#1e293b')
+        : (isSelected ? '#ffffff' : '#e2e8f0');
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
       ctx.fillText(node.title, pos.x + dotPad + 38 * sc, dotY);
@@ -321,15 +334,15 @@ export class GraphRenderer {
       ctx.rect(pos.x, bodyY, sw, bodyH);
       ctx.clip();
 
-      this.drawDeFiContent(ctx, node, pos.x, bodyY, sw, bodyH, sc, riskColor, isSelected);
+      this.drawDeFiContent(ctx, node, pos.x, bodyY, sw, bodyH, sc, riskColor, isSelected, isLight);
 
       ctx.restore();
 
       // Macro Label in overview mode
       if (camera.state.isOverview || camera.state.transitionProgress > 0.3) {
         const badgeAlpha = Math.min(1.0, (camera.state.transitionProgress - 0.2) / 0.6);
-        ctx.fillStyle = `rgba(10, 14, 22, ${0.92 * badgeAlpha})`;
-        ctx.strokeStyle = isSelected ? config.accent : `rgba(255, 255, 255, ${0.25 * badgeAlpha})`;
+        ctx.fillStyle = isLight ? `rgba(255, 255, 255, ${0.94 * badgeAlpha})` : `rgba(10, 14, 22, ${0.92 * badgeAlpha})`;
+        ctx.strokeStyle = isSelected ? config.accent : (isLight ? `rgba(15, 23, 42, ${0.2 * badgeAlpha})` : `rgba(255, 255, 255, ${0.25 * badgeAlpha})`);
         ctx.lineWidth = 1;
 
         const badgeW = 220 * sc;
@@ -343,7 +356,7 @@ export class GraphRenderer {
         ctx.stroke();
 
         ctx.font = `800 ${Math.max(8, Math.floor(11 * sc))}px 'JetBrains Mono', monospace`;
-        ctx.fillStyle = isSelected ? config.accent : `rgba(255, 255, 255, ${0.9 * badgeAlpha})`;
+        ctx.fillStyle = isSelected ? config.accent : (isLight ? `rgba(15, 23, 42, ${0.9 * badgeAlpha})` : `rgba(255, 255, 255, ${0.9 * badgeAlpha})`);
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(`${node.app.toUpperCase()}`, badgeX + badgeW / 2, badgeY + badgeH / 2);
@@ -362,13 +375,14 @@ export class GraphRenderer {
     h: number,
     sc: number,
     riskColor: string,
-    isSelected: boolean
+    isSelected: boolean,
+    isLight: boolean
   ) {
     const pad = 14 * sc;
 
     // Primary Value Metric
     ctx.font = `800 ${Math.max(12, Math.floor(20 * sc))}px 'JetBrains Mono', monospace`;
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = isLight ? '#0f172a' : '#ffffff';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
     ctx.fillText(`$${node.valueUsd.toLocaleString()}`, x + pad, y + pad);
@@ -377,7 +391,7 @@ export class GraphRenderer {
     if (node.pnl24hUsd !== undefined) {
       const pnlIsPos = node.pnl24hUsd >= 0;
       ctx.font = `700 ${Math.max(8, Math.floor(11 * sc))}px 'JetBrains Mono', monospace`;
-      ctx.fillStyle = pnlIsPos ? '#4ade80' : '#f87171';
+      ctx.fillStyle = pnlIsPos ? (isLight ? '#16a34a' : '#4ade80') : (isLight ? '#dc2626' : '#f87171');
       ctx.textAlign = 'right';
       ctx.fillText(
         `${pnlIsPos ? '+' : ''}$${Math.abs(node.pnl24hUsd).toLocaleString()} (${pnlIsPos ? '+' : ''}${node.pnlPercent}%)`,
@@ -393,10 +407,10 @@ export class GraphRenderer {
     if (node.type === 'position') {
       if (node.apy !== undefined) {
         ctx.font = `600 ${Math.max(8, Math.floor(10 * sc))}px 'JetBrains Mono', monospace`;
-        ctx.fillStyle = '#94a3b8';
+        ctx.fillStyle = isLight ? '#475569' : '#94a3b8';
         ctx.textAlign = 'left';
         ctx.fillText('Net Yield (APY):', x + pad, lineY);
-        ctx.fillStyle = '#4ade80';
+        ctx.fillStyle = isLight ? '#16a34a' : '#4ade80';
         ctx.textAlign = 'right';
         ctx.fillText(`${node.apy}%`, x + w - pad, lineY);
         lineY += rowH;
@@ -404,7 +418,7 @@ export class GraphRenderer {
 
       if (node.healthFactor !== undefined) {
         ctx.font = `600 ${Math.max(8, Math.floor(10 * sc))}px 'JetBrains Mono', monospace`;
-        ctx.fillStyle = '#94a3b8';
+        ctx.fillStyle = isLight ? '#475569' : '#94a3b8';
         ctx.textAlign = 'left';
         ctx.fillText('Health Factor:', x + pad, lineY);
         ctx.fillStyle = riskColor;
@@ -415,10 +429,10 @@ export class GraphRenderer {
 
       if (node.liquidationDistancePct !== undefined) {
         ctx.font = `600 ${Math.max(8, Math.floor(10 * sc))}px 'JetBrains Mono', monospace`;
-        ctx.fillStyle = '#94a3b8';
+        ctx.fillStyle = isLight ? '#475569' : '#94a3b8';
         ctx.textAlign = 'left';
         ctx.fillText('Liq Distance:', x + pad, lineY);
-        ctx.fillStyle = node.liquidationDistancePct < 15 ? '#ef4444' : '#cbd5e1';
+        ctx.fillStyle = node.liquidationDistancePct < 15 ? '#ef4444' : (isLight ? '#334155' : '#cbd5e1');
         ctx.textAlign = 'right';
         ctx.fillText(`-${node.liquidationDistancePct.toFixed(1)}%`, x + w - pad, lineY);
         lineY += rowH;
@@ -426,7 +440,7 @@ export class GraphRenderer {
 
       if (node.collateralAsset && sc > 0.4) {
         ctx.font = `500 ${Math.max(7, Math.floor(9 * sc))}px 'JetBrains Mono', monospace`;
-        ctx.fillStyle = '#64748b';
+        ctx.fillStyle = isLight ? '#64748b' : '#64748b';
         ctx.textAlign = 'left';
         ctx.fillText(`Collateral: ${node.collateralAsset}`, x + pad, lineY);
         lineY += rowH;
@@ -436,7 +450,7 @@ export class GraphRenderer {
       if (node.smartMoneyNetflow24h !== undefined && sc > 0.35) {
         const isPositive = node.smartMoneyNetflow24h >= 0;
         ctx.font = `700 ${Math.max(7, Math.floor(9 * sc))}px 'JetBrains Mono', monospace`;
-        ctx.fillStyle = isPositive ? '#10b981' : '#f43f5e';
+        ctx.fillStyle = isPositive ? (isLight ? '#16a34a' : '#10b981') : (isLight ? '#dc2626' : '#f43f5e');
         ctx.textAlign = 'left';
         const smText = isPositive
           ? `[SM INFLOW: +$${Math.round(node.smartMoneyNetflow24h).toLocaleString()}${node.smartMoneyTraderCount ? ` (${node.smartMoneyTraderCount} traders)` : ''}]`
@@ -446,7 +460,7 @@ export class GraphRenderer {
       }
     } else if (node.type === 'wallet') {
       ctx.font = `500 ${Math.max(8, Math.floor(10 * sc))}px 'JetBrains Mono', monospace`;
-      ctx.fillStyle = '#94a3b8';
+      ctx.fillStyle = isLight ? '#475569' : '#94a3b8';
       ctx.textAlign = 'left';
       ctx.fillText('Status: Connected & Streaming', x + pad, lineY);
       lineY += rowH;
@@ -455,7 +469,7 @@ export class GraphRenderer {
 
       if (node.nansenLabel && sc > 0.35) {
         ctx.font = `700 ${Math.max(7, Math.floor(9 * sc))}px 'JetBrains Mono', monospace`;
-        ctx.fillStyle = '#38bdf8';
+        ctx.fillStyle = isLight ? '#0284c7' : '#38bdf8';
         ctx.fillText(`[NANSEN] ${node.nansenLabel}`, x + pad, lineY);
         lineY += rowH;
       }
@@ -490,7 +504,8 @@ export class GraphRenderer {
     camera: CameraController,
     nodes: CanvasNode[],
     config: LensConfig,
-    selectedNodeId: string | null
+    selectedNodeId: string | null,
+    isLight: boolean
   ) {
     if (config.minimapOpacity <= 0.05) return;
 
@@ -503,8 +518,8 @@ export class GraphRenderer {
     ctx.save();
 
     // Minimap Panel Background
-    ctx.fillStyle = `rgba(10, 14, 22, ${config.minimapOpacity})`;
-    ctx.strokeStyle = `rgba(255, 255, 255, 0.18)`;
+    ctx.fillStyle = isLight ? `rgba(255, 255, 255, ${config.minimapOpacity})` : `rgba(10, 14, 22, ${config.minimapOpacity})`;
+    ctx.strokeStyle = isLight ? `rgba(15, 23, 42, 0.15)` : `rgba(255, 255, 255, 0.18)`;
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.roundRect(mapX, mapY, mapW, mapH, 8);
@@ -528,7 +543,7 @@ export class GraphRenderer {
       const mw = Math.max(4, p2.x - p1.x);
       const mh = Math.max(4, p2.y - p1.y);
 
-      let color = node.id === selectedNodeId ? config.accent : 'rgba(148, 163, 184, 0.55)';
+      let color = node.id === selectedNodeId ? config.accent : (isLight ? 'rgba(100, 116, 139, 0.6)' : 'rgba(148, 163, 184, 0.55)');
       if (node.riskLevel === 'critical') color = '#ef4444';
 
       ctx.fillStyle = color;
@@ -537,7 +552,7 @@ export class GraphRenderer {
       ctx.fill();
 
       if (node.id === selectedNodeId) {
-        ctx.strokeStyle = '#ffffff';
+        ctx.strokeStyle = isLight ? '#0f172a' : '#ffffff';
         ctx.lineWidth = 1;
         ctx.stroke();
       }
@@ -564,7 +579,7 @@ export class GraphRenderer {
     const btnSize = 20;
     const btnX = mapX + mapW - btnSize - 6;
     const btnY = mapY + 6;
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+    ctx.fillStyle = isLight ? 'rgba(15, 23, 42, 0.06)' : 'rgba(255, 255, 255, 0.08)';
     ctx.beginPath();
     ctx.roundRect(btnX, btnY, btnSize, btnSize, 3);
     ctx.fill();
@@ -577,7 +592,7 @@ export class GraphRenderer {
     }
 
     ctx.font = "700 8px 'JetBrains Mono', monospace";
-    ctx.fillStyle = '#64748b';
+    ctx.fillStyle = isLight ? '#64748b' : '#64748b';
     ctx.fillText("RADAR // MINIMAP", mapX + 8, mapY + 15);
 
     ctx.restore();

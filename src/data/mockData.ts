@@ -650,6 +650,7 @@ export const INTENT_PRESETS: IntentQuery[] = [
 export const DEFAULT_LENS_CONFIG: LensConfig = {
   accent: '#f59e0b',
   accentRgb: [0.96, 0.62, 0.04],
+  themeMode: 'dark',
   distort: 0.14,
   contrast: 1.08,
   feather: 0.025,

@@ -299,6 +299,15 @@ export const App: React.FC = () => {
     showToast(`Spotlighting ${criticalNodes.length} High-Risk Positions`);
   }, [nodes, toggleOverviewMode, showToast]);
 
+  // Toggle Theme Mode (Light / Dark)
+  const handleToggleThemeMode = useCallback(() => {
+    setConfig(prev => {
+      const nextMode = prev.themeMode === 'light' ? 'dark' : 'light';
+      showToast(nextMode === 'light' ? '☀ Switched to Clean Light Mode' : '🌙 Switched to Dark Cyberpunk Mode');
+      return { ...prev, themeMode: nextMode };
+    });
+  }, [showToast]);
+
   // Dynamically generate and inject research graph & animated wires
   const handleApplyDynamicResearchGraph = useCallback(async (prompt: string) => {
     try {
@@ -681,7 +690,9 @@ export const App: React.FC = () => {
   const criticalCount = nodes.filter(n => n.riskLevel === 'critical' || n.riskLevel === 'high').length;
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden bg-[#07090e] font-mono text-slate-200 select-none">
+    <div className={`relative w-screen h-screen overflow-hidden font-mono select-none transition-colors duration-200 ${
+      config.themeMode === 'light' ? 'theme-light bg-[#f8fafc] text-slate-900' : 'bg-[#07090e] text-slate-200'
+    }`}>
       {/* WebGL Canvas */}
       <canvas
         ref={canvasRef}
@@ -704,6 +715,7 @@ export const App: React.FC = () => {
         onOpenNansen={() => setIsNansenOpen(true)}
         onOpenTuner={() => setIsTunerOpen(true)}
         onOpenHelp={() => setIsHelpOpen(true)}
+        onToggleThemeMode={handleToggleThemeMode}
       />
 
       {/* Morph UI: List Switcher (Dense Table List View) */}

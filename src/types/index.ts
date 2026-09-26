@@ -96,6 +96,7 @@ export interface WireConnection {
 export interface LensConfig {
   accent: string;
   accentRgb: [number, number, number];
+  themeMode?: 'dark' | 'light';
   distort: number;
   contrast: number;
   feather: number;
