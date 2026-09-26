@@ -3,9 +3,6 @@ import { CameraController } from './camera';
 
 export class GraphRenderer {
   private particleTime = 0;
-  private torusRotation = 0;
-  private cpuBars: number[] = [45, 62, 30, 85, 20, 70, 92, 55];
-  private audioBars: number[] = [15, 35, 75, 95, 60, 40, 80, 50, 65, 30, 90, 45];
 
   renderScene(
     ctx: CanvasRenderingContext2D,
@@ -21,16 +18,6 @@ export class GraphRenderer {
     isSimulating = false
   ) {
     this.particleTime += dt * (isSimulating ? 3.5 : 1.0);
-    this.torusRotation += dt * 1.2;
-
-    // Fluctuations
-    for (let i = 0; i < this.audioBars.length; i++) {
-      this.audioBars[i] = Math.max(10, Math.min(100, this.audioBars[i] + (Math.random() - 0.5) * 35));
-    }
-    if (Math.random() < 0.1) {
-      const randCore = Math.floor(Math.random() * this.cpuBars.length);
-      this.cpuBars[randCore] = Math.floor(Math.random() * 85) + 15;
-    }
 
     // Clear background
     ctx.fillStyle = '#07090e';
@@ -145,13 +132,15 @@ export class GraphRenderer {
 
       // Base Wire Glow
       const wireColor = wire.color || config.accent;
-      ctx.strokeStyle = isHighlighted ? wireColor : 'rgba(255, 255, 255, 0.08)';
-      ctx.lineWidth = (isHighlighted ? 2.5 : 1.0) * Math.max(0.5, sc);
+      const isTargeted = highlightIds.length > 0 && isHighlighted;
+      ctx.strokeStyle = isHighlighted ? wireColor : 'rgba(255, 255, 255, 0.06)';
+      ctx.lineWidth = (isTargeted ? 3.5 : (isHighlighted ? 2.2 : 1.0)) * Math.max(0.5, sc);
       ctx.lineCap = 'round';
 
       if (isHighlighted) {
+        const glowPulse = isTargeted ? (Math.sin(this.particleTime * 4) * 0.3 + 0.9) : 1.0;
         ctx.shadowColor = wireColor;
-        ctx.shadowBlur = 12 * sc;
+        ctx.shadowBlur = (isTargeted ? 22 : 12) * sc * glowPulse;
       }
 
       ctx.beginPath();
@@ -159,11 +148,12 @@ export class GraphRenderer {
       ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y);
       ctx.stroke();
 
-      // Flowing Energy Particles
+      // Flowing Energy Laser Particles
       if (isHighlighted) {
-        const numParticles = Math.max(3, Math.floor(dist / (80 * sc)));
+        const speed = isSimulating ? 1.4 : (isTargeted ? 0.75 : 0.35);
+        const numParticles = Math.max(4, Math.floor(dist / ((isTargeted ? 50 : 80) * sc)));
         for (let i = 0; i < numParticles; i++) {
-          const t = ((this.particleTime * 0.35 + i / numParticles) % 1.0);
+          const t = ((this.particleTime * speed + i / numParticles) % 1.0);
           
           const u = 1 - t;
           const tt = t * t;
@@ -176,9 +166,9 @@ export class GraphRenderer {
 
           ctx.fillStyle = '#ffffff';
           ctx.shadowColor = isSimulating ? '#4ade80' : wireColor;
-          ctx.shadowBlur = (isSimulating ? 16 : 8) * sc;
+          ctx.shadowBlur = (isTargeted || isSimulating ? 18 : 8) * sc;
           ctx.beginPath();
-          ctx.arc(px, py, (isSimulating ? 4.5 : 2.5) * Math.max(0.6, sc), 0, Math.PI * 2);
+          ctx.arc(px, py, (isSimulating ? 4.8 : (isTargeted ? 3.8 : 2.5)) * Math.max(0.6, sc), 0, Math.PI * 2);
           ctx.fill();
         }
       }
@@ -247,9 +237,10 @@ export class GraphRenderer {
       else riskColor = '#10b981';
 
       // Card Shadow / Glow
-      if (isSelected || node.riskLevel === 'critical') {
-        ctx.shadowColor = isSelected ? config.accent : riskColor;
-        ctx.shadowBlur = (isSelected ? 30 : 20) * sc;
+      const isTargetedNode = highlightIds.length > 0 && isHighlighted;
+      if (isTargetedNode || isSelected || node.riskLevel === 'critical') {
+        ctx.shadowColor = isSelected ? config.accent : (isTargetedNode ? '#38bdf8' : riskColor);
+        ctx.shadowBlur = (isSelected ? 30 : (isTargetedNode ? 24 : 20)) * sc;
         ctx.shadowOffsetY = 4 * sc;
       } else {
         ctx.shadowColor = 'rgba(0, 0, 0, 0.75)';
@@ -264,10 +255,20 @@ export class GraphRenderer {
       ctx.roundRect(pos.x, pos.y, sw, sh, radius);
       ctx.fill();
 
+      // Spotlight Pulsing Aura on Researched Nodes
+      if (isTargetedNode) {
+        const auraPulse = Math.sin(this.particleTime * 5 + node.x * 0.01) * 3 * sc + 4 * sc;
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 1.8 * sc;
+        ctx.beginPath();
+        ctx.roundRect(pos.x - auraPulse, pos.y - auraPulse, sw + auraPulse * 2, sh + auraPulse * 2, radius + auraPulse);
+        ctx.stroke();
+      }
+
       // Card Border
       ctx.shadowColor = 'transparent';
-      ctx.lineWidth = isSelected ? 2.5 : (node.riskLevel === 'critical' ? 2.0 : 1.2);
-      ctx.strokeStyle = isSelected ? config.accent : (node.riskLevel === 'critical' ? '#ef4444' : 'rgba(255, 255, 255, 0.14)');
+      ctx.lineWidth = isSelected ? 2.5 : (isTargetedNode ? 2.0 : (node.riskLevel === 'critical' ? 2.0 : 1.2));
+      ctx.strokeStyle = isSelected ? config.accent : (isTargetedNode ? '#38bdf8' : (node.riskLevel === 'critical' ? '#ef4444' : 'rgba(255, 255, 255, 0.14)'));
       ctx.stroke();
 
       // Title Bar Header
@@ -289,17 +290,19 @@ export class GraphRenderer {
       ctx.fillStyle = '#22c55e';
       ctx.beginPath(); ctx.arc(pos.x + dotPad + 24 * sc, dotY, dotR, 0, Math.PI * 2); ctx.fill();
 
-      // Header Title & Icon
+      // Header Title & Clean Monospace Text
       const headerFontSize = Math.max(9, Math.floor(12 * sc));
       ctx.font = `700 ${headerFontSize}px 'JetBrains Mono', monospace`;
       ctx.fillStyle = isSelected ? '#ffffff' : '#e2e8f0';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
-      ctx.fillText(`${node.icon}  ${node.title}`, pos.x + dotPad + 38 * sc, dotY);
+      ctx.fillText(node.title, pos.x + dotPad + 38 * sc, dotY);
 
-      // Pinned icon indicator
+      // Pinned indicator
       if (node.isPinned) {
-        ctx.fillText('📌', pos.x + sw - 120 * sc, dotY);
+        ctx.font = `700 ${Math.max(7, Math.floor(8 * sc))}px 'JetBrains Mono', monospace`;
+        ctx.fillStyle = config.accent;
+        ctx.fillText('[PIN]', pos.x + sw - 120 * sc, dotY);
       }
 
       // Chain / Category Badge
@@ -318,11 +321,7 @@ export class GraphRenderer {
       ctx.rect(pos.x, bodyY, sw, bodyH);
       ctx.clip();
 
-      if (node.windowContent) {
-        this.drawWindowContent(ctx, node, pos.x, bodyY, sw, bodyH, sc, config);
-      } else {
-        this.drawDeFiContent(ctx, node, pos.x, bodyY, sw, bodyH, sc, riskColor, isSelected);
-      }
+      this.drawDeFiContent(ctx, node, pos.x, bodyY, sw, bodyH, sc, riskColor, isSelected);
 
       ctx.restore();
 
@@ -432,6 +431,19 @@ export class GraphRenderer {
         ctx.fillText(`Collateral: ${node.collateralAsset}`, x + pad, lineY);
         lineY += rowH;
       }
+
+      // Nansen Smart Money Signal Indicator
+      if (node.smartMoneyNetflow24h !== undefined && sc > 0.35) {
+        const isPositive = node.smartMoneyNetflow24h >= 0;
+        ctx.font = `700 ${Math.max(7, Math.floor(9 * sc))}px 'JetBrains Mono', monospace`;
+        ctx.fillStyle = isPositive ? '#10b981' : '#f43f5e';
+        ctx.textAlign = 'left';
+        const smText = isPositive
+          ? `[SM INFLOW: +$${Math.round(node.smartMoneyNetflow24h).toLocaleString()}${node.smartMoneyTraderCount ? ` (${node.smartMoneyTraderCount} traders)` : ''}]`
+          : `[SM OUTFLOW: -$${Math.abs(Math.round(node.smartMoneyNetflow24h)).toLocaleString()}]`;
+        ctx.fillText(smText, x + pad, lineY);
+        lineY += rowH;
+      }
     } else if (node.type === 'wallet') {
       ctx.font = `500 ${Math.max(8, Math.floor(10 * sc))}px 'JetBrains Mono', monospace`;
       ctx.fillStyle = '#94a3b8';
@@ -440,6 +452,13 @@ export class GraphRenderer {
       lineY += rowH;
       ctx.fillText(`Role: ${node.strategy || 'Treasury Vault'}`, x + pad, lineY);
       lineY += rowH;
+
+      if (node.nansenLabel && sc > 0.35) {
+        ctx.font = `700 ${Math.max(7, Math.floor(9 * sc))}px 'JetBrains Mono', monospace`;
+        ctx.fillStyle = '#38bdf8';
+        ctx.fillText(`[NANSEN] ${node.nansenLabel}`, x + pad, lineY);
+        lineY += rowH;
+      }
     }
 
     // Emergency Badge for Critical Nodes
@@ -460,163 +479,7 @@ export class GraphRenderer {
       ctx.fillStyle = '#ef4444';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('⚡ CRITICAL RISK // CLICK TO INSPECT EXIT', x + w / 2, badgeY + badgeH / 2);
-    }
-  }
-
-  private drawWindowContent(
-    ctx: CanvasRenderingContext2D,
-    node: CanvasNode,
-    x: number,
-    y: number,
-    w: number,
-    h: number,
-    sc: number,
-    config: LensConfig
-  ) {
-    const pad = 12 * sc;
-
-    if (node.windowContent === 'terminal') {
-      ctx.font = `${Math.max(7, Math.floor(10 * sc))}px 'JetBrains Mono', monospace`;
-      ctx.fillStyle = config.accent;
-      ctx.fillText("user@aether ~> fastfetch", x + pad, y + pad + 8 * sc);
-      
-      ctx.fillStyle = '#38bdf8';
-      ctx.fillText("   ____  ______ ______ __  __ ______ ____ ", x + pad, y + pad + 24 * sc);
-      ctx.fillText("  / __ \\/ ____//_  __// / / // ____// __ \\", x + pad, y + pad + 38 * sc);
-      ctx.fillText(" / /_/ // __/   / /  / /_/ // __/  / /_/ /", x + pad, y + pad + 52 * sc);
-      ctx.fillText("/ /_/ // /___  / /  / __  // /___ / _, _/ ", x + pad, y + pad + 66 * sc);
-      ctx.fillText("\\____//_____/ /_/  /_/ /_//_____//_/ |_|  ", x + pad, y + pad + 80 * sc);
-
-      ctx.fillStyle = '#cbd5e1';
-      ctx.fillText("OS: Aether Spatial OS (v2.4)", x + pad + 250 * sc, y + pad + 24 * sc);
-      ctx.fillText("Kernel: 6.12.8-aether-crosschain", x + pad + 250 * sc, y + pad + 38 * sc);
-      ctx.fillText("Engine: WebGL 2.0 Barrel Pipeline", x + pad + 250 * sc, y + pad + 52 * sc);
-      ctx.fillText("Portfolio Net: $1.428M (+2.3%)", x + pad + 250 * sc, y + pad + 66 * sc);
-      ctx.fillText("Active Nodes: 12 Connected Objects", x + pad + 250 * sc, y + pad + 80 * sc);
-
-      ctx.fillStyle = config.accent;
-      ctx.fillText("user@aether ~> aether --watch-crosschain-routes", x + pad, y + pad + 120 * sc);
-      ctx.fillStyle = '#4ade80';
-      ctx.fillText("[OK] All bridge & swap routes validated with 0-slippage protection.", x + pad, y + pad + 138 * sc);
-    } else if (node.windowContent === 'code') {
-      ctx.font = `${Math.max(7, Math.floor(10 * sc))}px 'JetBrains Mono', monospace`;
-      const lines = [
-        { n: "1", code: "import { SpatialRouter } from '@aether/execution';", color: "#94a3b8" },
-        { n: "2", code: "import { BarrelLens } from './shaders/barrel';", color: "#94a3b8" },
-        { n: "3", code: "", color: "" },
-        { n: "4", code: "export async function executeIntent(intent: IntentQuery) {", color: "#f59e0b" },
-        { n: "5", code: "    const route = await SpatialRouter.findOptimalRoute(intent);", color: "#e2e8f0" },
-        { n: "6", code: "    const simulation = await route.simulateMevProtection();", color: "#38bdf8" },
-        { n: "7", code: "    if (simulation.healthFactorDelta > 0) {", color: "#38bdf8" },
-        { n: "8", code: "        return await route.broadcastPrivateRpc();", color: "#4ade80" },
-        { n: "9", code: "    }", color: "#f59e0b" },
-        { n: "10", code: "}", color: "#f59e0b" }
-      ];
-
-      lines.forEach((l, idx) => {
-        ctx.fillStyle = '#475569';
-        ctx.fillText(l.n.padStart(2, ' '), x + pad, y + pad + (idx + 1) * 16 * sc);
-        ctx.fillStyle = l.color;
-        ctx.fillText(l.code, x + pad + 28 * sc, y + pad + (idx + 1) * 16 * sc);
-      });
-    } else if (node.windowContent === 'btop') {
-      ctx.font = `700 ${Math.max(7, Math.floor(9 * sc))}px 'JetBrains Mono', monospace`;
-      ctx.fillStyle = config.accent;
-      ctx.fillText("CROSS-CHAIN RPC & RPC LATENCY CLUSTER", x + pad, y + pad + 10 * sc);
-
-      const barW = (w - pad * 2) / this.cpuBars.length - 6 * sc;
-      this.cpuBars.forEach((val, i) => {
-        const bx = x + pad + i * (barW + 6 * sc);
-        const barH = (val / 100) * 100 * sc;
-        const by = y + pad + 125 * sc - barH;
-
-        ctx.fillStyle = val > 80 ? '#ef4444' : (val > 50 ? config.accent : '#22c55e');
-        ctx.fillRect(bx, by, barW, barH);
-
-        ctx.fillStyle = '#64748b';
-        ctx.fillText(`rpc${i}`, bx + 2 * sc, y + pad + 140 * sc);
-      });
-
-      ctx.fillStyle = '#38bdf8';
-      ctx.fillText("SOL RPC: 18ms  |  ARB RPC: 24ms  |  HL RPC: 12ms", x + pad, y + pad + 165 * sc);
-    } else if (node.windowContent === '3d') {
-      // Rotating 3D wireframe mesh
-      const cx = x + w / 2;
-      const cy = y + h / 2;
-      const r = Math.min(w, h) * 0.28;
-
-      ctx.strokeStyle = config.accent;
-      ctx.lineWidth = 1.5;
-      const points: { x: number; y: number }[] = [];
-      const numPts = 16;
-      for (let i = 0; i < numPts; i++) {
-        const theta = (i / numPts) * Math.PI * 2;
-        const px = Math.cos(theta + this.torusRotation) * r;
-        const py = Math.sin(theta + this.torusRotation) * r * Math.sin(this.torusRotation * 0.7);
-        points.push({ x: cx + px, y: cy + py });
-      }
-
-      ctx.beginPath();
-      points.forEach((pt, i) => {
-        if (i === 0) ctx.moveTo(pt.x, pt.y);
-        else ctx.lineTo(pt.x, pt.y);
-        ctx.arc(pt.x, pt.y, 2 * sc, 0, Math.PI * 2);
-      });
-      ctx.closePath();
-      ctx.stroke();
-
-      ctx.font = `600 ${Math.max(7, Math.floor(9 * sc))}px 'JetBrains Mono', monospace`;
-      ctx.fillStyle = '#94a3b8';
-      ctx.fillText(`3D Liquidity Surface Model | Angle: ${(this.torusRotation % (Math.PI * 2)).toFixed(2)} rad`, x + pad, y + h - pad);
-    } else if (node.windowContent === 'music') {
-      const artSize = 80 * sc;
-      ctx.fillStyle = '#1e293b';
-      ctx.fillRect(x + pad, y + pad, artSize, artSize);
-
-      ctx.font = `800 ${Math.max(12, Math.floor(18 * sc))}px sans-serif`;
-      ctx.fillStyle = config.accent;
-      ctx.textAlign = 'center';
-      ctx.fillText("AETHER", x + pad + artSize / 2, y + pad + artSize / 2);
-
-      ctx.textAlign = 'left';
-      ctx.font = `700 ${Math.max(8, Math.floor(12 * sc))}px 'JetBrains Mono', monospace`;
-      ctx.fillStyle = '#ffffff';
-      ctx.fillText("Daft Punk — Veridis Quo", x + pad + artSize + 14 * sc, y + pad + 20 * sc);
-      ctx.fillStyle = '#94a3b8';
-      ctx.font = `${Math.max(7, Math.floor(10 * sc))}px 'JetBrains Mono', monospace`;
-      ctx.fillText("DeFi Focus Soundtrack (Lossless Audio)", x + pad + artSize + 14 * sc, y + pad + 38 * sc);
-
-      this.audioBars.forEach((hVal, i) => {
-        const abw = 12 * sc;
-        const abx = x + pad + i * (abw + 6 * sc);
-        const abh = (hVal / 100) * 70 * sc;
-        ctx.fillStyle = config.accent;
-        ctx.fillRect(abx, y + pad + 105 * sc + (70 * sc - abh), abw, abh);
-      });
-    } else if (node.windowContent === 'chat') {
-      ctx.font = `600 ${Math.max(7, Math.floor(10 * sc))}px 'JetBrains Mono', monospace`;
-      ctx.fillStyle = config.accent;
-      ctx.fillText("#aether-alpha-traders", x + pad, y + pad + 12 * sc);
-
-      const msgs = [
-        { u: "sol_whale", t: "14:20", m: "Kamino vault APY jumped to 28.4%!" },
-        { u: "arb_farmer", t: "14:22", m: "Cross-chain route via deBridge took only 3.2s." },
-        { u: "quant_hl", t: "14:25", m: "Set 1-click emergency kill switch on Drift 10x position." }
-      ];
-
-      msgs.forEach((m, idx) => {
-        ctx.fillStyle = '#38bdf8';
-        ctx.fillText(`${m.u} [${m.t}]:`, x + pad, y + pad + (idx + 1) * 26 * sc + 10 * sc);
-        ctx.fillStyle = '#e2e8f0';
-        ctx.fillText(m.m, x + pad + 130 * sc, y + pad + (idx + 1) * 26 * sc + 10 * sc);
-      });
-    } else {
-      ctx.font = `${Math.max(7, Math.floor(10 * sc))}px 'JetBrains Mono', monospace`;
-      ctx.fillStyle = '#e2e8f0';
-      ctx.fillText(`Window: ${node.title}`, x + pad, y + pad + 16 * sc);
-      ctx.fillStyle = '#64748b';
-      ctx.fillText(`Category: ${node.category} | Chain: ${node.chain}`, x + pad, y + pad + 34 * sc);
+      ctx.fillText('CRITICAL RISK // CLICK TO INSPECT EXIT', x + w / 2, badgeY + badgeH / 2);
     }
   }
 

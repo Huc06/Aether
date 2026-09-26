@@ -1,23 +1,11 @@
 export type RiskLevel = 'safe' | 'medium' | 'high' | 'critical';
 
-export type NodeType = 'wallet' | 'chain' | 'protocol' | 'position' | 'window';
-
-export type WindowContentType = 
-  | 'terminal'
-  | 'code'
-  | 'btop'
-  | 'music'
-  | '3d'
-  | 'browser'
-  | 'chat'
-  | 'defi-chart'
-  | 'orderbook';
+export type NodeType = 'wallet' | 'chain' | 'protocol' | 'position';
 
 export interface RouteStep {
   stepNumber: number;
   type: 'bridge' | 'swap' | 'stake' | 'deposit' | 'withdraw' | 'repay' | 'revoke';
   protocol: string;
-  protocolIcon?: string;
   fromAsset: string;
   toAsset?: string;
   fromChain: string;
@@ -53,10 +41,8 @@ export interface CanvasNode {
   title: string;
   app: string;
   type: NodeType;
-  windowContent?: WindowContentType;
-  category: 'Wallet' | 'Chain' | 'Lending' | 'DEX' | 'Perps' | 'Yield' | 'Staking' | 'Terminal' | 'Development' | 'System' | 'Media' | 'Graphics';
+  category: 'Wallet' | 'Chain' | 'Lending' | 'DEX' | 'Perps' | 'Yield' | 'Staking';
   chain: 'Solana' | 'Arbitrum' | 'Ethereum' | 'Hyperliquid' | 'Berachain';
-  icon: string;
   x: number;
   y: number;
   w: number;
@@ -87,6 +73,14 @@ export interface CanvasNode {
   auditedBy?: string[];
   oracleProvider?: string;
   exitRoutes?: PositionExitRoute[];
+
+  // Nansen Onchain Intelligence Signals
+  nansenLabel?: string;
+  smartMoneyNetflow24h?: number;
+  smartMoneyTraderCount?: number;
+  nansenDivergence?: 'accumulating' | 'distributing' | 'neutral';
+  relationType?: string;
+  transactionHash?: string;
 }
 
 export interface WireConnection {

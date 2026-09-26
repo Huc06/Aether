@@ -1,7 +1,7 @@
 import React from 'react';
 
 interface MorphTabsProps<T extends string> {
-  tabs: { id: T; label: string; icon?: string; badge?: number | string }[];
+  tabs: { id: T; label: string; badge?: number | string }[];
   activeTab: T;
   onChange: (tab: T) => void;
   className?: string;
@@ -32,7 +32,6 @@ export function MorphTabs<T extends string>({
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            {tab.icon && <span>{tab.icon}</span>}
             <span>{tab.label}</span>
             {tab.badge !== undefined && (
               <span className={`text-[10px] px-1.5 py-0.2 rounded font-mono ${

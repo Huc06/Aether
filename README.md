@@ -90,9 +90,29 @@ Aether is intentionally built around a focused, high-density 3-screen workflow:
 ## 🛠️ Architecture & Tech Stack
 
 - **Frontend Core:** React 18, TypeScript, Tailwind CSS, Lucide Icons.
+- **Nansen Onchain Intelligence:** Profiler API, Smart Money Netflows, Token God Mode, and Nansen AI Research Agent (`/api/v1/agent/fast`).
 - **Spatial Shader Engine:** WebGL 2.0 Post-Processing Pipeline (exact mathematical port of `barrel.frag` with golden-angle disc bokeh blur, radial chromatic aberration, and pincushion/barrel distortion).
 - **State & Coordinate System:** Zero-latency 2D camera transform with smooth spring damping physics.
 - **Production Deployment:** Multi-stage Docker container served via Node.js Express on Railway.
+
+---
+
+## 💎 Nansen API Integration (Meridian Buildathon)
+
+Aether connects directly to Nansen's onchain intelligence layer to drive spatial graph generation, smart money divergence alerts, and AI-driven intent routing:
+
+1. **Live Entity & Spatial Graph Profiler (`/api/v1/profiler/*`)**:
+   - Fetches token balances (`/profiler/address/current-balance`) and related wallet clusters (`/profiler/address/related-wallets`).
+   - Automatically constructs the spatial node-wire graph with entity relations (First Funder, Multisig Signer, Token Millionaire).
+2. **Smart Money Flow & Divergence Signals (`/api/v1/smart-money/netflow`)**:
+   - Real-time 24h net inflow/outflow tags and trader counts on canvas token nodes.
+   - Highlights smart money accumulation (`+SM Inflow`) and warns on distribution/dumping.
+3. **Nansen AI Research Agent (`/api/v1/agent/fast`)**:
+   - Streamed natural language onchain intelligence inside the Intent Engine (`Cmd+K`).
+   - Translates questions into reasoning, tool calls, and auto-focuses corresponding portfolio nodes.
+4. **Meridian Buildathon Call Counter & Zero-Crash Architecture**:
+   - Integrated API usage counter tracking progress toward the 1,000 calls requirement.
+   - Secure proxy layer hiding API keys from client exposure + resilient fallback snapshots for 100% uptime.
 
 ---
 
@@ -105,6 +125,10 @@ Aether is intentionally built around a focused, high-density 3-screen workflow:
 # Clone the repository
 git clone https://github.com/Huc06/aether.git
 cd aether
+
+# Configure environment variables
+cp .env.example .env
+# Edit .env and enter your NANSEN_API_KEY (optional: comes pre-configured with demo key)
 
 # Install dependencies
 npm install

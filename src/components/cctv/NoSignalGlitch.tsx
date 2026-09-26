@@ -68,7 +68,7 @@ export const NoSignalGlitch: React.FC<NoSignalGlitchProps> = ({
       <div className="relative z-10 flex flex-col items-center text-center gap-2 py-2">
         <div className="flex items-center gap-2 px-3 py-1 rounded-md bg-rose-500/20 border border-rose-500/60 text-rose-400 font-mono text-xs font-extrabold animate-pulse">
           {isCritical ? <ShieldAlert className="w-4 h-4" /> : <Radio className="w-4 h-4" />}
-          <span>{isCritical ? '⚠️ LIQUIDATION THREAT // ORACLE DESYNC' : 'NO SIGNAL // FEED DISCONNECTED'}</span>
+          <span>{isCritical ? 'LIQUIDATION THREAT // ORACLE DESYNC' : 'NO SIGNAL // FEED DISCONNECTED'}</span>
         </div>
 
         <div className="font-mono text-[11px] text-slate-300 flex flex-col gap-0.5">
@@ -100,7 +100,7 @@ export const NoSignalGlitch: React.FC<NoSignalGlitchProps> = ({
             className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-extrabold flex items-center gap-1.5 shadow-lg shadow-rose-600/40 transition-all text-[11px]"
           >
             <Zap className="w-3.5 h-3.5 fill-white" />
-            <span>⚡ 1-Click Kill</span>
+            <span>1-Click Kill</span>
           </button>
         )}
       </div>

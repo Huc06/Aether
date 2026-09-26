@@ -71,7 +71,6 @@ export const PositionDetailModal: React.FC<PositionDetailModalProps> = ({
         {/* Header Bar */}
         <div className="p-5 border-b border-white/10 bg-slate-900/90 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="text-3xl">{node.icon}</span>
             <div className="flex flex-col">
               <div className="flex items-center gap-2">
                 <h2 className="font-extrabold text-base text-white tracking-wide">
@@ -181,12 +180,20 @@ export const PositionDetailModal: React.FC<PositionDetailModalProps> = ({
               </div>
             </div>
 
-            {/* Smart contract & Oracle verification */}
+            {/* Smart contract, Nansen Intelligence & Oracle verification */}
             <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-white/5 text-[11px] text-slate-400">
               <div className="flex items-center gap-1.5">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Audited by: <strong className="text-slate-300">{node.auditedBy?.join(', ') || 'Top Tier Auditors'}</strong></span>
+                <span>Audited: <strong className="text-slate-300">{node.auditedBy?.join(', ') || 'Top Tier Audited'}</strong></span>
               </div>
+              {node.smartMoneyNetflow24h !== undefined && (
+                <div className="flex items-center gap-1.5">
+                  <Activity className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>Nansen SM 24h: <strong className={node.smartMoneyNetflow24h >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
+                    {node.smartMoneyNetflow24h >= 0 ? '+' : ''}${Math.round(node.smartMoneyNetflow24h).toLocaleString()}
+                  </strong></span>
+                </div>
+              )}
               <div className="flex items-center gap-1.5">
                 <Activity className="w-3.5 h-3.5 text-cyan-400" />
                 <span>Oracle: <strong className="text-slate-300">{node.oracleProvider || 'Chainlink / Pyth Feeds'}</strong></span>
@@ -243,7 +250,7 @@ export const PositionDetailModal: React.FC<PositionDetailModalProps> = ({
               {isExecutingKill && (
                 <div className="p-3 rounded-lg bg-black/60 border border-rose-500/50 flex flex-col gap-2 animate-pulse">
                   <div className="flex items-center justify-between text-xs text-rose-300 font-bold">
-                    <span>⚡ EXECUTING KILL SWITCH PROTOCOL...</span>
+                    <span>EXECUTING KILL SWITCH PROTOCOL...</span>
                     <span>STEP {killStep}/3</span>
                   </div>
                   <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
@@ -270,7 +277,7 @@ export const PositionDetailModal: React.FC<PositionDetailModalProps> = ({
                 <span>
                   {isExecutingKill
                     ? 'Executing Emergency Unwind...'
-                    : `⚡ 1-Click Emergency Kill Switch (Exit to ${node.exitRoutes[selectedExitIndex].targetAsset})`}
+                    : `1-Click Emergency Kill Switch (Exit to ${node.exitRoutes[selectedExitIndex].targetAsset})`}
                 </span>
               </button>
             </div>

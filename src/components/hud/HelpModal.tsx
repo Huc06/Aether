@@ -70,7 +70,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
         </div>
 
         <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-300/90 leading-relaxed font-sans">
-          💡 <strong>Spatial DeFi Tip:</strong> Drag and organize your nodes freely. Your layout automatically persists in your browser. Use the <strong>Radar Minimap</strong> in the bottom right corner to quickly jump anywhere.
+          <strong>Spatial DeFi Tip:</strong> Drag and organize your nodes freely. Your layout automatically persists in your browser.
         </div>
       </div>
     </div>
