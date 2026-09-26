@@ -169,7 +169,8 @@ Aether gives operators three complementary lenses into their portfolio, switchab
 - **DOM Rasterization Pipeline (`src/engine/domRaster.ts`)**: High-performance rasterizer feeding HTML elements directly into WebGL/2D shader render passes.
 
 ### 3. CCTV Surveillance Matrix (`src/components/cctv/ExposureGridFeed.tsx`)
-- **Continuous Multi-Angle Telemetry**: Live security feeds of all portfolio positions, debt vaults, and liquidity pools.
+- **One Camera Per Canvas Node**: Grid cell *N* is bound to canvas node *N*; unbound cells render an SMPTE bar + static `NO SIGNAL // NO CANVAS NODE` channel, and clicking a dead cell re-attempts the feed handshake.
+- **Pixel-Locked Composite Source**: The offscreen composite that feeds the shader matches the WebGL surface backing store exactly (`fit="fill"`), so painted camera frames stay aligned with the shader's grid lines at any viewport aspect.
 - **Custom Glitch & Raster Shader (`ExposureGridShader.tsx`)**: Simulates hardware CRT monitors with chromatic aberration, beam scanlines, and VHS signal jitter.
 - **Live UTC Timecode & Status Headers**: Monitor timestamps, frame rates, and connection status for every active exposure.
 
@@ -343,18 +344,127 @@ npm run build
 ```
 *Compiles via `tsc && vite build` into `dist/` with zero errors.*
 
-### 4. Start Local Development Server
+### 4. Start Full-Stack Dev Environment (Recommended)
 ```bash
-npm run dev
-# Server listening at http://localhost:3000
+npm run dev:full
+# Express bridge listening on http://localhost:3000
+# Vite dev server listening on http://localhost:5199 with dev proxy to 3000
 ```
 
-### 5. Run Production Express Server
+### 5. Start Production Server
 ```bash
 npm start
-# Production server with API proxy and SSE streaming on http://localhost:3000
+# Express production server with API proxy, agent bridge, and SSE streaming on http://localhost:3000
 ```
 
+### 6. Run MCP Server (Stdio)
+```bash
+npm run mcp
+# Stdio JSON-RPC 2.0 MCP server for Claude Desktop / Cursor / Claude Code
+```
+
+---
+
+## Model Context Protocol (MCP) Integration
+
+Aether implements the **Model Context Protocol (MCP)** (`protocolVersion: "2024-11-05"`) over stdio JSON-RPC 2.0. External AI agents (Claude Desktop, Claude Code, Cursor, ChatGPT) can introspect live multi-chain positions, monitor risk metrics, and autonomously drive the spatial workspace UI.
+
+```
+┌─────────────────────────────────┐           stdio JSON-RPC 2.0
+│ Claude Desktop / Cursor / Agent │ ◄────────────────────────────────────► ┌──────────────────────┐
+└─────────────────────────────────┘                                        │  mcp/aether-mcp.mjs  │
+                                                                           └──────────┬───────────┘
+                                                                                      │ HTTP fetch
+                                                                                      │ (Port 3000)
+                                                                                      ▼
+┌─────────────────────────────────┐           SSE Stream / Command Ack     ┌──────────────────────┐
+│  Aether Frontend (Browser)      │ ◄────────────────────────────────────► │  server.js (Bridge)  │
+│  - Spatial WebGL Canvas         │    GET  /api/agent/events              │  - In-memory State   │
+│  - Nymspace Bend Ledger         │    POST /api/agent/state               │  - SSE Dispatcher    │
+│  - CCTV Surveillance Matrix     │    POST /api/agent/ack                 │  - Command Waiters   │
+└─────────────────────────────────┘                                        └──────────────────────┘
+```
+
+### 1. Claude Desktop Setup
+Add the following snippet to your `claude_desktop_config.json`:
+- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+
+```json
+{
+  "mcpServers": {
+    "aether": {
+      "command": "node",
+      "args": ["/ABSOLUTE/PATH/TO/Aether/mcp/aether-mcp.mjs"],
+      "env": {
+        "AETHER_URL": "http://localhost:3000"
+      }
+    }
+  }
+}
+```
+
+### 2. Claude Code Setup
+Aether provides a pre-configured `.mcp.json` at the repo root. To register with Claude Code:
+
+```bash
+claude mcp add aether node mcp/aether-mcp.mjs
+```
+
+Or rely on automatic detection via `.mcp.json`:
+```json
+{
+  "mcpServers": {
+    "aether": {
+      "command": "node",
+      "args": ["mcp/aether-mcp.mjs"],
+      "env": {
+        "AETHER_URL": "http://localhost:3000"
+      }
+    }
+  }
+}
+```
+
+### 3. Cursor IDE Setup
+Configure in `.cursor/mcp.json` or in Cursor Settings $\rightarrow$ Features $\rightarrow$ MCP:
+
+```json
+{
+  "mcpServers": {
+    "aether": {
+      "command": "node",
+      "args": ["mcp/aether-mcp.mjs"],
+      "env": {
+        "AETHER_URL": "http://localhost:3000"
+      }
+    }
+  }
+}
+```
+
+### 4. ChatGPT Desktop / Developer Mode Setup
+In ChatGPT Desktop with developer mode / MCP extensions enabled:
+- **Transport**: `stdio`
+- **Command**: `node`
+- **Arguments**: `["/ABSOLUTE/PATH/TO/Aether/mcp/aether-mcp.mjs"]`
+- **Environment**: `{"AETHER_URL": "http://localhost:3000"}`
+
+### Available MCP Tools
+
+| Tool | Type | Description |
+|---|---|---|
+| `aether_get_state` | Read | Complete workspace snapshot (`viewMode`, `nodes`, `wires`, `totals`, `cctv`, freshness `staleMs`). |
+| `aether_list_positions` | Read | Filter positions by `chain` (`Solana`, `Arbitrum`, `Ethereum`, etc.), `riskLevel` (`safe`, `medium`, `high`, `critical`), and `minValueUsd`. |
+| `aether_get_position` | Read | Deep position inspection by `nodeId` with liquidation distance, APY, debt ratios, and connected wires. |
+| `aether_portfolio_summary` | Read | Aggregate portfolio metrics: exposure USD, 24h PnL, health factor, and risk tier distribution. |
+| `aether_set_view` | Control | Switch active workspace mode (`mode`: `'canvas'`, `'list'`, `'exposure-grid'`). |
+| `aether_focus_node` | Control | Center and zoom spatial canvas camera onto a specific position node (`nodeId`). |
+| `aether_inspect_node` | Control | Open the detailed modal inspector for a node (`nodeId`). |
+| `aether_close_inspector` | Control | Close any active modal inspector. |
+| `aether_kill_switch` | Control | Trigger the 1-click emergency unwind kill switch for a high-risk position (`nodeId`). |
+| `aether_set_cctv` | Control | Reconfigure CCTV layout (`columns`, `rows`) and video shader `treatment` (`chroma`, `exposure`, `monochrome`). |
+| `aether_set_theme` | Control | Toggle workspace theme (`mode`: `'dark'`, `'light'`). |
 ---
 
 ## Judge 5-Minute Walkthrough Flow

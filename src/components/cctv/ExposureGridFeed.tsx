@@ -1,5 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { CanvasNode, PositionExitRoute, LensConfig } from '../../types';
+import { GraphRenderer } from '../../engine/graphRenderer';
+import { DEFAULT_LENS_CONFIG } from '../../data/mockData';
 import { 
   ExposureGridRenderer, 
   ExposureGridTreatment 
@@ -22,9 +24,18 @@ import {
   X
 } from 'lucide-react';
 
+export interface CctvSettings {
+  columns: number;
+  rows: number;
+  treatment: ExposureGridTreatment;
+}
+
 interface ExposureGridFeedProps {
   nodes: CanvasNode[];
   config?: LensConfig;
+  /** Controlled so MCP agents can drive the matrix remotely. */
+  settings: CctvSettings;
+  onChangeSettings: (patch: Partial<CctvSettings>) => void;
   onInspectNode: (node: CanvasNode) => void;
   onFocusNodeOnCanvas: (node: CanvasNode) => void;
   onEmergencyKill: (node: CanvasNode, route: PositionExitRoute) => void;
@@ -33,23 +44,38 @@ interface ExposureGridFeedProps {
 export const ExposureGridFeed: React.FC<ExposureGridFeedProps> = ({
   nodes,
   config,
+  settings,
+  onChangeSettings,
   onInspectNode,
   onFocusNodeOnCanvas,
   onEmergencyKill
 }) => {
-  const [treatment, setTreatment] = useState<ExposureGridTreatment>('chroma');
-  const [gridCols, setGridCols] = useState<number>(3);
-  const [gridRows, setGridRows] = useState<number>(3);
+  const treatment = settings.treatment;
+  const gridCols = settings.columns;
+  const gridRows = settings.rows;
+  const setTreatment = (t: ExposureGridTreatment) => onChangeSettings({ treatment: t });
   const [selectedCellNode, setSelectedCellNode] = useState<CanvasNode | null>(null);
   const [timeString, setTimeString] = useState<string>('');
   const [reconnectingIds, setReconnectingIds] = useState<string[]>([]);
+  const [hoverCell, setHoverCell] = useState<{ col: number; row: number } | null>(null);
   const isLight = config?.themeMode === 'light';
 
-  // Offscreen composite canvas that feeds SolaceUI shader
+  // Offscreen composite canvas that feeds SolaceUI shader. Its backing store is
+  // kept identical to the shader surface so every painted cell lands exactly
+  // inside one shader grid cell (no cover-crop drift).
   const compositeCanvasRef = useRef<HTMLCanvasElement>(document.createElement('canvas'));
+  const noiseCanvasRef = useRef<HTMLCanvasElement>(document.createElement('canvas'));
   const animFrameRef = useRef<number>(0);
   const torusAngleRef = useRef<number>(0);
-  const noiseTimeRef = useRef<number>(0);
+  // Reuse the spatial canvas renderer so each camera frame is a real canvas shot.
+  const cardRendererRef = useRef<GraphRenderer>(new GraphRenderer());
+  const [surface, setSurface] = useState<{ w: number; h: number }>({ w: 1920, h: 1080 });
+  // CCTV monitors are always dark-room optics regardless of app theme.
+  const cardConfig = useMemo(() => ({ ...(config ?? DEFAULT_LENS_CONFIG), themeMode: 'dark' as const }), [config]);
+
+  const handleSurfaceResize = useCallback((w: number, h: number) => {
+    setSurface(prev => (prev.w === w && prev.h === h ? prev : { w, h }));
+  }, []);
 
   // Live UTC Clock
   useEffect(() => {
@@ -69,29 +95,66 @@ export const ExposureGridFeed: React.FC<ExposureGridFeedProps> = ({
     }, 1800);
   };
 
-  const activeCount = nodes.filter(n => n.riskLevel !== 'critical' || reconnectingIds.includes(n.id)).length;
-  const noSignalCount = nodes.filter(n => n.riskLevel === 'critical' && !reconnectingIds.includes(n.id)).length;
+  const slotCount = gridCols * gridRows;
+  // One grid cell == one canvas node. Unassigned cells are dead cameras.
+  const slotNodes = useMemo<(CanvasNode | null)[]>(() => {
+    const live = gridCols * gridRows;
+    return Array.from({ length: live }, (_, i) => nodes[i] ?? null);
+  }, [nodes, gridCols, gridRows]);
+
+  const liveSlots = useMemo(
+    () => slotNodes.map(n => !!n && (n.riskLevel !== 'critical' || reconnectingIds.includes(n.id))),
+    [slotNodes, reconnectingIds]
+  );
+  const activeCount = liveSlots.filter(Boolean).length;
+  const noSignalCount = slotCount - activeCount;
 
   // Render multi-camera feeds onto the offscreen composite canvas
   useEffect(() => {
     const compositeCanvas = compositeCanvasRef.current;
-    compositeCanvas.width = 1920;
-    compositeCanvas.height = 1080;
+    compositeCanvas.width = Math.max(1, surface.w);
+    compositeCanvas.height = Math.max(1, surface.h);
     const ctx = compositeCanvas.getContext('2d');
     if (!ctx) return;
 
+    const noiseCanvas = noiseCanvasRef.current;
+    noiseCanvas.width = 128;
+    noiseCanvas.height = 72;
+    const noiseCtx = noiseCanvas.getContext('2d');
+    const noiseFrame = noiseCtx?.createImageData(noiseCanvas.width, noiseCanvas.height);
+
     let lastTime = performance.now();
+    // Cards are static; only the dead-camera static needs motion. Repaint at
+    // 12fps so the shader samples a stable texture instead of a jittering one.
+    const hasDeadCamera = liveSlots.some(v => !v) || slotNodes.some(n => !n);
+    const minFrameMs = hasDeadCamera ? 1000 / 12 : 1000 / 4;
+    let lastPaint = 0;
 
     const renderComposite = (time: number) => {
+      animFrameRef.current = requestAnimationFrame(renderComposite);
+      if (time - lastPaint < minFrameMs) return;
+      lastPaint = time;
       const dt = Math.min((time - lastTime) / 1000, 0.1);
       lastTime = time;
       torusAngleRef.current += dt * 1.5;
-      noiseTimeRef.current += dt * 8;
+
+      // Regenerate TV static once per frame, shared by every dead camera.
+      if (noiseCtx && noiseFrame) {
+        const data = noiseFrame.data;
+        for (let i = 0; i < data.length; i += 4) {
+          const gray = (Math.random() * 255) | 0;
+          data[i] = gray;
+          data[i + 1] = gray;
+          data[i + 2] = gray;
+          data[i + 3] = 255;
+        }
+        noiseCtx.putImageData(noiseFrame, 0, 0);
+      }
 
       const w = compositeCanvas.width;
       const h = compositeCanvas.height;
 
-      // Clear composite background
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.fillStyle = '#060910';
       ctx.fillRect(0, 0, w, h);
 
@@ -99,193 +162,174 @@ export const ExposureGridFeed: React.FC<ExposureGridFeedProps> = ({
       const rows = gridRows;
       const cellW = w / cols;
       const cellH = h / rows;
+      // Type scale relative to a 640x360 reference camera frame.
+      const s = Math.max(0.5, Math.min(cellW / 640, cellH / 360));
 
-      // Render each camera node into its grid cell
       for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
           const index = r * cols + c;
-          const node = nodes[index % nodes.length];
-          const cellX = c * cellW;
-          const cellY = r * cellH;
+          const node = slotNodes[index] ?? null;
+          const camTag = String(index + 1).padStart(2, '0');
 
           ctx.save();
           ctx.beginPath();
-          ctx.rect(cellX, cellY, cellW, cellH);
+          ctx.rect(c * cellW, r * cellH, cellW, cellH);
           ctx.clip();
+          ctx.translate(c * cellW, r * cellH);
 
-          const isNoSignal = node.riskLevel === 'critical' && !reconnectingIds.includes(node.id);
-          const camTag = String(index + 1).padStart(2, '0');
-
-          if (isNoSignal) {
-            // ── NO SIGNAL GLITCH CAMERA CELL ──
+          if (!liveSlots[index] || !node) {
+            // ── NO SIGNAL CELL: empty channel or oracle desync ──
             ctx.fillStyle = '#0a0305';
-            ctx.fillRect(cellX, cellY, cellW, cellH);
+            ctx.fillRect(0, 0, cellW, cellH);
 
-            // SMPTE Color Bars at top
-            const barH = 22;
+            const barH = 20 * s;
             const barColors = ['#c0c0c0', '#c0c000', '#00c0c0', '#00c000', '#c000c0', '#c00000', '#0000c0'];
             const barW = cellW / barColors.length;
             barColors.forEach((color, bi) => {
               ctx.fillStyle = color;
-              ctx.fillRect(cellX + bi * barW, cellY, barW, barH);
+              ctx.fillRect(bi * barW, 0, barW, barH);
             });
 
-            // TV Static Noise generator
-            const noiseW = Math.floor(cellW / 4);
-            const noiseH = Math.floor(cellH / 4);
-            const imgData = ctx.createImageData(noiseW, noiseH);
-            const data = imgData.data;
-            for (let i = 0; i < data.length; i += 4) {
-              const gray = Math.floor(Math.random() * 255);
-              data[i] = gray;
-              data[i + 1] = gray;
-              data[i + 2] = gray;
-              data[i + 3] = 90;
-            }
-            ctx.putImageData(imgData, cellX / 4, (cellY + barH) / 4);
-            // Re-scale noise
-            ctx.drawImage(compositeCanvas, cellX / 4, (cellY + barH) / 4, noiseW, noiseH, cellX, cellY + barH, cellW, cellH - barH);
+            ctx.globalAlpha = 0.4;
+            ctx.drawImage(noiseCanvas, 0, barH, cellW, cellH - barH);
+            ctx.globalAlpha = 1;
 
-            // Flashing Red Alert Badge
-            ctx.fillStyle = 'rgba(239, 68, 68, 0.85)';
-            ctx.fillRect(cellX + 20, cellY + cellH / 2 - 30, cellW - 40, 48);
-            ctx.font = "800 18px 'JetBrains Mono', monospace";
+            const bannerH = 46 * s;
+            ctx.fillStyle = node ? 'rgba(239, 68, 68, 0.85)' : 'rgba(15, 23, 42, 0.9)';
+            ctx.fillRect(18 * s, cellH / 2 - bannerH * 0.78, cellW - 36 * s, bannerH);
+            ctx.font = `800 ${17 * s}px 'JetBrains Mono', monospace`;
             ctx.fillStyle = '#ffffff';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText('NO SIGNAL // ORACLE DESYNC', cellX + cellW / 2, cellY + cellH / 2 - 6);
+            ctx.fillText(
+              node ? 'NO SIGNAL // ORACLE DESYNC' : 'NO SIGNAL // NO CANVAS NODE',
+              cellW / 2,
+              cellH / 2 - bannerH * 0.28
+            );
 
-            ctx.font = "700 14px 'JetBrains Mono', monospace";
-            ctx.fillStyle = '#fecaca';
-            ctx.fillText(`CAM-${camTag}: ${node.title.toUpperCase()}`, cellX + cellW / 2, cellY + cellH / 2 + 35);
-            ctx.fillText(`LIQ DISTANCE: -${node.liquidationDistancePct?.toFixed(1) || '8.3'}%`, cellX + cellW / 2, cellY + cellH / 2 + 55);
-
+            ctx.font = `700 ${12 * s}px 'JetBrains Mono', monospace`;
+            ctx.fillStyle = node ? '#fecaca' : '#94a3b8';
+            if (node) {
+              ctx.fillText(`CAM-${camTag}: ${node.title.toUpperCase()}`, cellW / 2, cellH / 2 + 32 * s);
+              ctx.fillText(
+                `LIQ DISTANCE: -${node.liquidationDistancePct?.toFixed(1) || '8.3'}%`,
+                cellW / 2,
+                cellH / 2 + 52 * s
+              );
+            } else {
+              ctx.fillText(`CAM-${camTag}: CHANNEL UNASSIGNED`, cellW / 2, cellH / 2 + 32 * s);
+              ctx.fillText('ADD A CANVAS POSITION TO BIND FEED', cellW / 2, cellH / 2 + 52 * s);
+            }
           } else {
             // ── ACTIVE SURVEILLANCE FEED CELL ──
-            // Dark gradient card background
-            const grad = ctx.createLinearGradient(cellX, cellY, cellX, cellY + cellH);
+            const grad = ctx.createLinearGradient(0, 0, 0, cellH);
             grad.addColorStop(0, '#0a101d');
             grad.addColorStop(1, '#050810');
             ctx.fillStyle = grad;
-            ctx.fillRect(cellX, cellY, cellW, cellH);
+            ctx.fillRect(0, 0, cellW, cellH);
 
-            // CRT Scanlines
             ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
-            for (let sy = cellY; sy < cellY + cellH; sy += 4) {
-              ctx.fillRect(cellX, sy, cellW, 1.5);
+            for (let sy = 0; sy < cellH; sy += 4) {
+              ctx.fillRect(0, sy, cellW, 1.5);
             }
 
-            // Top CCTV Metadata Header
+            const headerH = 32 * s;
             ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
-            ctx.fillRect(cellX, cellY, cellW, 36);
+            ctx.fillRect(0, 0, cellW, headerH);
 
-            // Blinking REC Red Dot
             ctx.fillStyle = '#ef4444';
             ctx.beginPath();
-            ctx.arc(cellX + 24, cellY + 18, 5, 0, Math.PI * 2);
+            ctx.arc(20 * s, headerH / 2, 4.5 * s, 0, Math.PI * 2);
             ctx.fill();
 
-            ctx.font = "800 12px 'JetBrains Mono', monospace";
+            ctx.font = `800 ${11 * s}px 'JetBrains Mono', monospace`;
             ctx.fillStyle = '#f87171';
             ctx.textAlign = 'left';
             ctx.textBaseline = 'middle';
-            ctx.fillText('REC', cellX + 36, cellY + 18);
+            ctx.fillText('REC', 31 * s, headerH / 2);
 
-            ctx.font = "700 12px 'JetBrains Mono', monospace";
+            ctx.font = `700 ${11 * s}px 'JetBrains Mono', monospace`;
             ctx.fillStyle = '#ffffff';
-            ctx.fillText(`CAM-${camTag} [${node.chain.toUpperCase()} // ${node.app.toUpperCase()}]`, cellX + 75, cellY + 18);
+            ctx.fillText(
+              `CAM-${camTag} [${node.chain.toUpperCase()} // ${node.app.toUpperCase()}]`,
+              64 * s,
+              headerH / 2
+            );
 
-            ctx.font = "600 11px 'JetBrains Mono', monospace";
+            ctx.font = `600 ${10 * s}px 'JetBrains Mono', monospace`;
             ctx.fillStyle = '#38bdf8';
             ctx.textAlign = 'right';
-            ctx.fillText('60 FPS  1/120s', cellX + cellW - 20, cellY + 18);
+            ctx.fillText('60 FPS  1/120s', cellW - 16 * s, headerH / 2);
+            // ── CAMERA SHOT OF THE SPATIAL CANVAS CARD ──
+            // Same renderer the canvas view uses. Drawn at fixed pixel offsets:
+            // any sub-pixel pan makes the text shimmer through the shader.
+            const frameX = Math.round(10 * s);
+            const frameTop = Math.round(headerH + 8 * s);
+            const footerH = 24 * s;
+            const frameW = Math.round(cellW - frameX * 2);
+            const frameH = Math.round(cellH - frameTop - footerH - 8 * s);
 
-            // Middle Asset Metrics & Visuals
-            const pad = 24;
-            const contentY = cellY + 55;
-
-            ctx.textAlign = 'left';
-            ctx.font = "800 24px 'JetBrains Mono', monospace";
-            ctx.fillStyle = '#ffffff';
-            ctx.fillText(`$${node.valueUsd.toLocaleString()}`, cellX + pad, contentY + 20);
-
-            if (node.pnl24hUsd !== undefined) {
-              const pnlPos = node.pnl24hUsd >= 0;
-              ctx.font = "700 13px 'JetBrains Mono', monospace";
-              ctx.fillStyle = pnlPos ? '#4ade80' : '#f87171';
-              ctx.textAlign = 'right';
-              ctx.fillText(
-                `${pnlPos ? '+' : ''}$${Math.abs(node.pnl24hUsd).toLocaleString()} (${pnlPos ? '+' : ''}${node.pnlPercent}%)`,
-                cellX + cellW - pad,
-                contentY + 20
-              );
-            }
-
-            // Asset Title & Category
-            ctx.textAlign = 'left';
-            ctx.font = "700 14px 'JetBrains Mono', monospace";
-            ctx.fillStyle = '#e2e8f0';
-            ctx.fillText(node.title, cellX + pad, contentY + 55);
-
-            // Telemetry Box
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-            ctx.roundRect(cellX + pad, contentY + 80, cellW - pad * 2, 70, 8);
-            ctx.fill();
-
-            // Telemetry Keys
-            ctx.font = "600 11px 'JetBrains Mono', monospace";
-            ctx.fillStyle = '#94a3b8';
-            ctx.fillText('NET YIELD (APY):', cellX + pad + 14, contentY + 105);
-            ctx.fillStyle = '#4ade80';
-            ctx.fillText(`${node.apy !== undefined ? node.apy + '%' : '18.4%'}`, cellX + pad + 140, contentY + 105);
-
-            ctx.fillStyle = '#94a3b8';
-            ctx.fillText('HEALTH FACTOR:', cellX + pad + 14, contentY + 130);
-            ctx.fillStyle = node.healthFactor && node.healthFactor < 1.3 ? '#f59e0b' : '#38bdf8';
-            ctx.fillText(`${node.healthFactor ? node.healthFactor.toFixed(2) : '2.85 [SAFE]'}`, cellX + pad + 140, contentY + 130);
-
-            // Sub-second Live Waveform Animation
-            const waveY = contentY + 175;
-            ctx.strokeStyle = '#06b6d4';
-            ctx.lineWidth = 2;
+            ctx.save();
             ctx.beginPath();
-            for (let wx = cellX + pad; wx < cellX + cellW - pad; wx += 6) {
-              const relX = (wx - cellX) * 0.08;
-              const wy = waveY + Math.sin(relX + torusAngleRef.current * 3 + index) * 12;
-              if (wx === cellX + pad) ctx.moveTo(wx, wy);
-              else ctx.lineTo(wx, wy);
-            }
+            ctx.rect(frameX, frameTop, frameW, frameH);
+            ctx.clip();
+            cardRendererRef.current.renderNodeCard(
+              ctx,
+              node,
+              frameX,
+              frameTop,
+              frameW,
+              frameH,
+              cardConfig,
+              false
+            );
+            ctx.restore();
+
+            // Camera reticle corners over the shot
+            const tick = 12 * s;
+            ctx.strokeStyle = 'rgba(56, 189, 248, 0.55)';
+            ctx.lineWidth = Math.max(1, 1.5 * s);
+            ctx.beginPath();
+            ctx.moveTo(frameX, frameTop + tick); ctx.lineTo(frameX, frameTop); ctx.lineTo(frameX + tick, frameTop);
+            ctx.moveTo(frameX + frameW - tick, frameTop); ctx.lineTo(frameX + frameW, frameTop); ctx.lineTo(frameX + frameW, frameTop + tick);
+            ctx.moveTo(frameX, frameTop + frameH - tick); ctx.lineTo(frameX, frameTop + frameH); ctx.lineTo(frameX + tick, frameTop + frameH);
+            ctx.moveTo(frameX + frameW - tick, frameTop + frameH); ctx.lineTo(frameX + frameW, frameTop + frameH); ctx.lineTo(frameX + frameW, frameTop + frameH - tick);
             ctx.stroke();
 
-            // Bottom Status Bar
             ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
-            ctx.fillRect(cellX, cellY + cellH - 30, cellW, 30);
-            ctx.font = "700 10px 'JetBrains Mono', monospace";
-            ctx.fillStyle = '#4ade80';
+            ctx.fillRect(0, cellH - footerH, cellW, footerH);
+            ctx.font = `700 ${9 * s}px 'JetBrains Mono', monospace`;
+            ctx.fillStyle = node.riskLevel === 'critical' ? '#f87171' : '#4ade80';
             ctx.textAlign = 'left';
-            ctx.fillText('● ORACLE STREAM: LOCKED', cellX + pad, cellY + cellH - 10);
+            ctx.textBaseline = 'middle';
+            ctx.fillText(
+              `● ORACLE STREAM: LOCKED • RISK ${node.riskLevel.toUpperCase()}`,
+              12 * s,
+              cellH - footerH / 2
+            );
             ctx.fillStyle = '#94a3b8';
             ctx.textAlign = 'right';
-            ctx.fillText(`${node.chain.toUpperCase()} NETWORK &bull; LATENCY 14ms`, cellX + cellW - pad, cellY + cellH - 10);
+            ctx.fillText(`${node.chain.toUpperCase()} NETWORK • LATENCY 14ms`, cellW - 12 * s, cellH - footerH / 2);
           }
 
           ctx.restore();
         }
       }
-
-      animFrameRef.current = requestAnimationFrame(renderComposite);
     };
 
     animFrameRef.current = requestAnimationFrame(renderComposite);
     return () => cancelAnimationFrame(animFrameRef.current);
-  }, [nodes, gridCols, gridRows, reconnectingIds]);
+  }, [slotNodes, liveSlots, gridCols, gridRows, surface, cardConfig]);
 
   const handleCellClick = (col: number, row: number) => {
     const index = row * gridCols + col;
-    if (index < nodes.length) {
-      const node = nodes[index];
-      setSelectedCellNode(node);
+    const node = slotNodes[index];
+    if (!node) return;
+    if (!liveSlots[index]) {
+      handleReconnect(node.id);
+      return;
     }
+    setSelectedCellNode(node);
   };
 
   return (
@@ -360,10 +404,7 @@ export const ExposureGridFeed: React.FC<ExposureGridFeedProps> = ({
               isLight ? 'bg-slate-100 border-slate-300' : 'bg-black/60 border-white/10'
             }`}>
               <button
-                onClick={() => {
-                  setGridCols(2);
-                  setGridRows(2);
-                }}
+                onClick={() => onChangeSettings({ columns: 2, rows: 2 })}
                 className={`px-2 py-1 rounded-md text-[11px] font-bold cursor-pointer ${
                   gridCols === 2 
                     ? (isLight ? 'bg-white text-slate-950 shadow-sm font-extrabold' : 'bg-white/20 text-white') 
@@ -373,10 +414,7 @@ export const ExposureGridFeed: React.FC<ExposureGridFeedProps> = ({
                 2x2
               </button>
               <button
-                onClick={() => {
-                  setGridCols(3);
-                  setGridRows(3);
-                }}
+                onClick={() => onChangeSettings({ columns: 3, rows: 3 })}
                 className={`px-2 py-1 rounded-md text-[11px] font-bold cursor-pointer ${
                   gridCols === 3 
                     ? (isLight ? 'bg-white text-slate-950 shadow-sm font-extrabold' : 'bg-white/20 text-white') 
@@ -397,12 +435,84 @@ export const ExposureGridFeed: React.FC<ExposureGridFeedProps> = ({
             columns={gridCols}
             rows={gridRows}
             onCellClick={handleCellClick}
+            onCellHover={setHoverCell}
+            fit="fill"
+            onSurfaceResize={handleSurfaceResize}
             className="w-full h-full block cursor-crosshair"
           />
 
+          {/* Hovered camera: highlight + in-frame actions */}
+          {hoverCell && (() => {
+            const idx = hoverCell.row * gridCols + hoverCell.col;
+            const node = slotNodes[idx] ?? null;
+            const live = liveSlots[idx];
+            return (
+              <div
+                className="absolute pointer-events-none"
+                style={{
+                  left: `${(hoverCell.col / gridCols) * 100}%`,
+                  top: `${(hoverCell.row / gridRows) * 100}%`,
+                  width: `${100 / gridCols}%`,
+                  height: `${100 / gridRows}%`
+                }}
+                onMouseLeave={() => setHoverCell(null)}
+              >
+                <div className={`absolute inset-1 rounded-lg border-2 transition-colors ${
+                  node ? (live ? 'border-cyan-400/70' : 'border-rose-500/70') : 'border-slate-500/50'
+                }`} />
+
+                <div className="absolute left-2 right-2 bottom-2 flex flex-wrap items-center gap-1.5 pointer-events-auto">
+                  {!node && (
+                    <span className="px-2 py-1 rounded-md bg-black/80 border border-slate-600 text-[10px] font-bold text-slate-300">
+                      CHANNEL UNASSIGNED
+                    </span>
+                  )}
+                  {node && !live && (
+                    <button
+                      onClick={() => handleReconnect(node.id)}
+                      className="px-2.5 py-1 rounded-md bg-rose-600 hover:bg-rose-500 text-white text-[10px] font-extrabold flex items-center gap-1 cursor-pointer shadow"
+                    >
+                      <RefreshCw className="w-3 h-3" /> RECONNECT
+                    </button>
+                  )}
+                  {node && live && (
+                    <>
+                      <button
+                        onClick={() => onInspectNode(node)}
+                        className="px-2.5 py-1 rounded-md bg-amber-500 hover:bg-amber-400 text-black text-[10px] font-extrabold flex items-center gap-1 cursor-pointer shadow"
+                      >
+                        <Eye className="w-3 h-3" /> INSPECT
+                      </button>
+                      <button
+                        onClick={() => onFocusNodeOnCanvas(node)}
+                        className="px-2.5 py-1 rounded-md bg-black/85 hover:bg-white/15 border border-white/20 text-slate-100 text-[10px] font-extrabold flex items-center gap-1 cursor-pointer"
+                      >
+                        <Maximize2 className="w-3 h-3" /> CANVAS
+                      </button>
+                      <button
+                        onClick={() => setSelectedCellNode(node)}
+                        className="px-2.5 py-1 rounded-md bg-black/85 hover:bg-white/15 border border-white/20 text-slate-100 text-[10px] font-extrabold flex items-center gap-1 cursor-pointer"
+                      >
+                        <Layers className="w-3 h-3" /> DETAILS
+                      </button>
+                      {node.riskLevel === 'critical' && node.exitRoutes?.[0] && (
+                        <button
+                          onClick={() => onEmergencyKill(node, node.exitRoutes![0])}
+                          className="px-2.5 py-1 rounded-md bg-rose-600 hover:bg-rose-500 text-white text-[10px] font-extrabold flex items-center gap-1 cursor-pointer shadow"
+                        >
+                          <Zap className="w-3 h-3 fill-white" /> KILL
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
+
           {/* Prompt Tip */}
           <div className="absolute bottom-3 left-4 pointer-events-none text-[10px] text-cyan-300/80 font-mono bg-black/70 px-3 py-1 rounded-md border border-cyan-500/30">
-            <strong>SolaceUI Interaction:</strong> Hover pointer to zoom &amp; trigger photographic ink separation &bull; Click any cell to inspect position
+            <strong>SolaceUI Interaction:</strong> Hover a cell for inline actions &bull; Click a live cell to inspect &bull; Click a dead cell to reconnect &bull; MCP agents can drive this view
           </div>
         </div>
 

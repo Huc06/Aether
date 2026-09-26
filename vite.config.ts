@@ -3,10 +3,7 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, process.cwd(), '');
-  const nansenKey = env.NANSEN_API_KEY || env.VITE_NANSEN_API_KEY || '';
-
+export default defineConfig(() => {
   return {
     plugins: [react()],
     resolve: {
@@ -15,16 +12,16 @@ export default defineConfig(({ mode }) => {
       },
     },
     server: {
-      port: 3000,
+      port: 5199,
       host: true,
       proxy: {
-        '/api/nansen': {
-          target: 'https://api.nansen.ai',
+        '/api/agent': {
+          target: 'http://localhost:3000',
           changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/api\/nansen/, '/api/v1'),
-          headers: {
-            apikey: nansenKey,
-          },
+        },
+        '/api/nansen': {
+          target: 'http://localhost:3000',
+          changeOrigin: true,
         },
       },
     },

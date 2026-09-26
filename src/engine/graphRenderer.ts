@@ -366,6 +366,82 @@ export class GraphRenderer {
     });
   }
 
+  /**
+   * Draws a single node exactly as the spatial canvas draws it, fitted into an
+   * arbitrary rect. Used by the CCTV matrix so each camera frame is a real
+   * shot of the canvas card rather than a separate re-implementation.
+   */
+  renderNodeCard(
+    ctx: CanvasRenderingContext2D,
+    node: CanvasNode,
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    config: LensConfig,
+    isLight: boolean
+  ) {
+    // Scale factor the canvas would use to show this card at this size.
+    const sc = Math.min(w / node.w, h / node.h);
+
+    let riskColor = config.accent;
+    if (node.riskLevel === 'critical') riskColor = '#ef4444';
+    else if (node.riskLevel === 'high') riskColor = '#f97316';
+    else if (node.riskLevel === 'medium') riskColor = '#f59e0b';
+    else riskColor = '#10b981';
+
+    const radius = 10 * sc;
+
+    ctx.save();
+    ctx.fillStyle = isLight ? 'rgba(255, 255, 255, 0.94)' : 'rgba(10, 14, 22, 0.90)';
+    ctx.beginPath();
+    ctx.roundRect(x, y, w, h, radius);
+    ctx.fill();
+
+    ctx.lineWidth = node.riskLevel === 'critical' ? 2.0 : 1.2;
+    ctx.strokeStyle = node.riskLevel === 'critical'
+      ? '#ef4444'
+      : (isLight ? 'rgba(15, 23, 42, 0.12)' : 'rgba(255, 255, 255, 0.14)');
+    ctx.stroke();
+
+    // Title bar with traffic lights, matching the canvas card header
+    const headerH = 34 * sc;
+    ctx.fillStyle = isLight ? 'rgba(248, 250, 252, 0.95)' : 'rgba(15, 21, 32, 0.9)';
+    ctx.beginPath();
+    ctx.roundRect(x, y, w, headerH, [radius, radius, 0, 0]);
+    ctx.fill();
+
+    const dotPad = 12 * sc;
+    const dotY = y + headerH / 2;
+    const dotR = 4 * sc;
+    ctx.fillStyle = '#ef4444';
+    ctx.beginPath(); ctx.arc(x + dotPad, dotY, dotR, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#eab308';
+    ctx.beginPath(); ctx.arc(x + dotPad + 12 * sc, dotY, dotR, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#22c55e';
+    ctx.beginPath(); ctx.arc(x + dotPad + 24 * sc, dotY, dotR, 0, Math.PI * 2); ctx.fill();
+
+    ctx.font = `700 ${Math.max(10, Math.floor(13 * sc))}px Inter, -apple-system, BlinkMacSystemFont, sans-serif`;
+    ctx.fillStyle = isLight ? '#1e293b' : '#e2e8f0';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(node.title, x + dotPad + 38 * sc, dotY);
+
+    ctx.font = `600 ${Math.max(8, Math.floor(10 * sc))}px Inter, -apple-system, sans-serif`;
+    ctx.fillStyle = riskColor;
+    ctx.textAlign = 'right';
+    ctx.fillText(`${node.chain} · ${node.category}`, x + w - 12 * sc, dotY);
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(x, y + headerH, w, h - headerH);
+    ctx.clip();
+    this.drawDeFiContent(ctx, node, x, y + headerH, w, h - headerH, sc, riskColor, false, isLight);
+    ctx.restore();
+
+    ctx.restore();
+  }
+
   private drawDeFiContent(
     ctx: CanvasRenderingContext2D,
     node: CanvasNode,

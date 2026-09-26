@@ -38,12 +38,14 @@ export const SOLACE_SETTINGS: ExposureGridSettings = {
   rows: 3,
   lineWidth: 2.5,
   lineOpacity: 0.65,
-  activity: 0.55,
-  tempo: 1.1,
-  intensity: 0.85,
-  zoom: 0.70,
-  grain: 0.68,
-  interaction: 0.95,
+  // Text-heavy camera frames: slow, low-amplitude sampling so the matrix reads
+  // as surveillance optics instead of strobing.
+  activity: 0.22,
+  tempo: 0.16,
+  intensity: 0.7,
+  zoom: 0.22,
+  grain: 0.16,
+  interaction: 0.85,
   colors: SOLACE_COLORS,
 };
 
@@ -242,6 +244,16 @@ export interface ExposureGridRendererProps {
   colors?: Partial<ExposureGridColors>;
   className?: string;
   onCellClick?: (col: number, row: number) => void;
+  /**
+   * 'cover' keeps the source aspect (photo/video sources).
+   * 'fill' maps the source 1:1 onto the viewport so a composite canvas painted
+   * per grid cell stays pixel-aligned with the shader's cell lines.
+   */
+  fit?: 'cover' | 'fill';
+  /** Backing-store size of the shader surface, so the source can match it exactly. */
+  onSurfaceResize?: (width: number, height: number) => void;
+  /** Fires with the grid cell under the pointer, or null when the pointer leaves. */
+  onCellHover?: (cell: { col: number; row: number } | null) => void;
 }
 
 export const ExposureGridRenderer: React.FC<ExposureGridRendererProps> = ({
@@ -251,9 +263,23 @@ export const ExposureGridRenderer: React.FC<ExposureGridRendererProps> = ({
   rows = 3,
   colors,
   className = 'w-full h-full block cursor-crosshair',
-  onCellClick
+  onCellClick,
+  fit = 'cover',
+  onSurfaceResize,
+  onCellHover
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const fitRef = useRef(fit);
+  const surfaceResizeRef = useRef(onSurfaceResize);
+  const hoverRef = useRef(onCellHover);
+  const gridRef = useRef({ columns, rows });
+  const lastCellRef = useRef<string>('');
+  useEffect(() => {
+    fitRef.current = fit;
+    surfaceResizeRef.current = onSurfaceResize;
+    hoverRef.current = onCellHover;
+    gridRef.current = { columns, rows };
+  }, [fit, onSurfaceResize, onCellHover, columns, rows]);
 
   const resolved = useMemo<ExposureGridSettings>(() => ({
     ...SOLACE_SETTINGS,
@@ -345,12 +371,25 @@ export const ExposureGridRenderer: React.FC<ExposureGridRendererProps> = ({
 
     const move = (event: PointerEvent) => {
       const bounds = canvas.getBoundingClientRect();
-      target.x = (event.clientX - bounds.left) / Math.max(bounds.width, 1);
-      target.y = 1 - (event.clientY - bounds.top) / Math.max(bounds.height, 1);
+      const rx = (event.clientX - bounds.left) / Math.max(bounds.width, 1);
+      const ry = (event.clientY - bounds.top) / Math.max(bounds.height, 1);
+      target.x = rx;
+      target.y = 1 - ry;
       target.strength = 1;
+
+      const { columns: gc, rows: gr } = gridRef.current;
+      const col = Math.min(gc - 1, Math.max(0, Math.floor(rx * gc)));
+      const row = Math.min(gr - 1, Math.max(0, Math.floor(ry * gr)));
+      const key = `${col}:${row}`;
+      if (key !== lastCellRef.current) {
+        lastCellRef.current = key;
+        hoverRef.current?.({ col, row });
+      }
     };
     const leave = () => {
       target.strength = 0;
+      lastCellRef.current = '';
+      hoverRef.current?.(null);
     };
 
     canvas.addEventListener('pointermove', move);
@@ -365,6 +404,7 @@ export const ExposureGridRenderer: React.FC<ExposureGridRendererProps> = ({
         canvas.width = width;
         canvas.height = height;
       }
+      surfaceResizeRef.current?.(width, height);
     };
 
     const observer = new ResizeObserver(resize);
@@ -394,9 +434,10 @@ export const ExposureGridRenderer: React.FC<ExposureGridRendererProps> = ({
       gl.viewport(0, 0, canvas.width, canvas.height);
       gl.useProgram(program);
 
-      const sourceAspect = sourceCanvas && sourceCanvas.height > 0
-        ? sourceCanvas.width / sourceCanvas.height
-        : canvas.width / Math.max(canvas.height, 1);
+      const viewportAspect = canvas.width / Math.max(canvas.height, 1);
+      const sourceAspect = fitRef.current === 'fill' || !sourceCanvas || sourceCanvas.height === 0
+        ? viewportAspect
+        : sourceCanvas.width / sourceCanvas.height;
 
       gl.uniform2f(uniforms.resolution, canvas.width, canvas.height);
       gl.uniform2f(uniforms.pointer, pointer.x, pointer.y);
