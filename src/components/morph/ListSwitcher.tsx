@@ -3,12 +3,9 @@ import { CanvasNode, PositionExitRoute } from '../../types';
 import { NumberFlip } from './NumberFlip';
 import { MorphTabs } from './MorphTabs';
 import { 
-  List as ListIcon, 
   Orbit, 
-  Camera,
   Search, 
-  ChevronRight,
-  Zap
+  ChevronRight
 } from 'lucide-react';
 
 export type PortfolioViewMode = 'canvas' | 'list' | 'exposure-grid';
@@ -87,68 +84,30 @@ export const ListSwitcher: React.FC<ListSwitcherProps> = ({
     <div className="absolute inset-0 z-30 pt-[78px] sm:pt-[84px] md:pt-[92px] px-3 sm:px-4 md:px-8 pb-8 overflow-y-auto bg-[#07090e]/95 backdrop-blur-2xl flex flex-col items-center animate-morph-rise select-none">
       <div className="w-full max-w-6xl flex flex-col gap-5">
         {/* Workspace Control Bar */}
-        <div className="glass-panel p-4 rounded-2xl border border-white/10 flex flex-wrap items-center justify-between gap-4 shadow-2xl">
-          {/* View Mode Switcher Pills */}
-          <div className="flex items-center gap-2">
-            <div className="inline-flex p-1 rounded-xl bg-black/60 border border-white/10">
-              <button
-                onClick={() => onChangeViewMode('canvas')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold flex items-center gap-1.5 transition-all ${
-                  viewMode === 'canvas' ? 'bg-amber-500 text-black shadow' : 'text-slate-400 hover:text-white'
-                }`}
-                title="Spatial Infinite Canvas View"
-              >
-                <Orbit className="w-3.5 h-3.5" />
-                <span>Spatial Canvas</span>
-              </button>
-
-              <button
-                onClick={() => onChangeViewMode('list')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold flex items-center gap-1.5 transition-all ${
-                  viewMode === 'list' ? 'bg-amber-500 text-black shadow' : 'text-slate-400 hover:text-white'
-                }`}
-                title="Dense List / Table View"
-              >
-                <ListIcon className="w-3.5 h-3.5" />
-                <span>Table List</span>
-              </button>
-
-              <button
-                onClick={() => onChangeViewMode('exposure-grid')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold flex items-center gap-1.5 transition-all ${
-                  viewMode === 'exposure-grid' ? 'bg-rose-500 text-white shadow shadow-rose-500/30' : 'text-slate-400 hover:text-white'
-                }`}
-                title="CCTV Surveillance Exposure Grid"
-              >
-                <Camera className="w-3.5 h-3.5" />
-                <span>CCTV Feed</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Quick Search */}
-          <div className="flex items-center gap-2 flex-1 max-w-md min-w-[220px]">
+        <div className="glass-panel p-4 rounded-2xl border border-white/10 flex items-center justify-between gap-4 shadow-2xl">
+          {/* Quick Search (Expanded Full-Width) */}
+          <div className="flex items-center gap-2 flex-1 min-w-[260px]">
             <div className="relative w-full">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Filter assets, vaults, protocols, perps..."
-                className="w-full bg-slate-900/90 border border-white/10 rounded-xl pl-9 pr-3 py-1.5 text-xs text-white placeholder:text-slate-500 font-mono outline-none focus:border-amber-500/60"
+                placeholder="Search assets, vaults, protocols, smart money signals, perps..."
+                className="w-full bg-slate-900/90 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder:text-slate-500 font-mono outline-none focus:border-amber-500/60 transition-colors"
               />
             </div>
           </div>
 
           {/* Sort Selector */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             <span className="text-[11px] font-bold text-slate-400 uppercase font-mono hidden sm:inline">
               Sort by:
             </span>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as any)}
-              className="bg-slate-900 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white font-mono outline-none focus:border-amber-500"
+              className="bg-slate-900 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white font-mono outline-none focus:border-amber-500 transition-colors cursor-pointer"
             >
               <option value="value">Highest Value ($)</option>
               <option value="apy">Highest APY (%)</option>
