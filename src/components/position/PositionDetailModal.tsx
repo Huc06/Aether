@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CanvasNode, PositionExitRoute, LensConfig } from '../../types';
 import { 
   X, 
@@ -26,6 +26,17 @@ export const PositionDetailModal: React.FC<PositionDetailModalProps> = ({
   const [selectedExitIndex, setSelectedExitIndex] = useState(0);
   const [isExecutingKill, setIsExecutingKill] = useState(false);
   const [killStep, setKillStep] = useState(0);
+
+  // Keyboard Escape listener
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
 
   if (!node) return null;
 
@@ -68,17 +79,20 @@ export const PositionDetailModal: React.FC<PositionDetailModalProps> = ({
             : (isLight ? '0 20px 60px rgba(0, 0, 0, 0.15)' : '0 0 50px rgba(16, 185, 129, 0.15), 0 25px 60px rgba(0, 0, 0, 0.9)')
         }}
       >
-        {/* Header Bar */}
-        <div className={`px-4 sm:px-5 py-2.5 sm:py-3 border-b flex items-center justify-between ${
+        {/* Header Bar: Compact, Responsive, Single Unified Close Button */}
+        <div className={`px-4 sm:px-5 py-2.5 sm:py-3 border-b flex items-center justify-between gap-3 shrink-0 ${
           isLight ? 'bg-slate-50/95 border-slate-200' : 'bg-slate-900/90 border-slate-800'
         }`}>
-          <div className="flex items-center gap-3">
-            <div className="flex flex-col">
-              <div className="flex items-center gap-2">
-                <h2 className={`font-black text-sm sm:text-base tracking-wide ${isLight ? 'text-slate-950' : 'text-white'}`}>
+          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+            <div className="flex flex-col min-w-0 flex-1">
+              <div className="flex items-center gap-2 min-w-0">
+                <h2 
+                  title={node.title}
+                  className={`font-black text-sm sm:text-base tracking-wide truncate ${isLight ? 'text-slate-950' : 'text-white'}`}
+                >
                   {node.title}
                 </h2>
-                <span className={`text-[9px] font-mono font-extrabold px-1.5 py-0.5 rounded uppercase border flex items-center gap-1 ${
+                <span className={`shrink-0 text-[9px] font-mono font-extrabold px-1.5 py-0.5 rounded uppercase border flex items-center gap-1 ${
                   isCritical 
                     ? (isLight ? 'bg-rose-100 text-rose-900 border-rose-300' : 'bg-rose-500/20 text-rose-400 border-rose-500/40')
                     : isHigh
@@ -88,57 +102,55 @@ export const PositionDetailModal: React.FC<PositionDetailModalProps> = ({
                   <span className={`w-1.5 h-1.5 rounded-full ${
                     isCritical ? 'bg-rose-500 animate-ping' : isHigh ? 'bg-amber-500' : 'bg-emerald-500'
                   }`} />
-                  {node.riskLevel} Risk
+                  {node.riskLevel}
                 </span>
               </div>
-              <span className={`text-[11px] font-mono font-medium ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+              <span className={`text-[11px] font-mono font-medium truncate ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
                 {node.app} &bull; {node.chain} &bull; {node.category}
               </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <span className={`hidden sm:inline text-[9px] font-mono px-1.5 py-0.5 rounded border ${
-              isLight ? 'bg-slate-100 text-slate-500 border-slate-200' : 'bg-slate-800/60 text-slate-400 border-slate-700/60'
-            }`}>
-              ESC
-            </span>
-            <button
-              onClick={onClose}
-              className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center border transition-all cursor-pointer ${
-                isLight ? 'bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-950 border-slate-300' : 'bg-slate-800/60 hover:bg-slate-800 text-slate-400 hover:text-white border-slate-700'
-              }`}
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          </div>
+          {/* Unified Close Button (Single control, no duplicate Esc / X) */}
+          <button
+            onClick={onClose}
+            title="Close (Esc)"
+            className={`shrink-0 h-7 sm:h-8 px-2 sm:px-2.5 rounded-lg flex items-center gap-1.5 border text-xs font-mono font-semibold transition-all cursor-pointer ${
+              isLight 
+                ? 'bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-950 border-slate-300 shadow-sm' 
+                : 'bg-slate-800/80 hover:bg-slate-800 text-slate-300 hover:text-white border-slate-700'
+            }`}
+          >
+            <span className="text-[10px] opacity-60">Esc</span>
+            <X className="w-3.5 h-3.5" />
+          </button>
         </div>
 
         {/* Modal Scroll Body */}
-        <div className="overflow-y-auto p-3 sm:p-4 flex flex-col gap-2.5">
+        <div className="overflow-y-auto p-3 sm:p-4 flex flex-col gap-2.5 flex-1 min-h-0">
           {/* Top Primary Metrics & Solvency Gauge Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 items-stretch">
             {/* Left Column: Capital, Earnings & Obligations */}
-            <div className={`p-3 rounded-xl border flex flex-col justify-between transition-colors ${
+            <div className={`p-3 rounded-xl border flex flex-col justify-between transition-colors min-w-0 ${
               isLight ? 'bg-slate-50 border-slate-200/90 shadow-sm' : 'bg-slate-950/70 border-slate-800'
             }`}>
-              <div className="flex items-center justify-between">
-                <span className={`text-[10px] font-extrabold uppercase font-mono tracking-wider ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+              <div className="flex items-center justify-between gap-1">
+                <span className={`text-[10px] font-extrabold uppercase font-mono tracking-wider truncate ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
                   Total Position Value
                 </span>
-                <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded border ${
+                <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded border shrink-0 ${
                   isLight ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : 'bg-emerald-950/50 text-emerald-400 border-emerald-800/60'
                 }`}>
                   APY: {node.apy ? `${node.apy}%` : 'N/A'}
                 </span>
               </div>
 
-              <div className="flex items-baseline justify-between mt-1">
-                <span className={`text-xl sm:text-2xl font-black font-mono tracking-tight ${isLight ? 'text-slate-950' : 'text-white'}`}>
+              <div className="flex items-baseline justify-between mt-1 gap-2">
+                <span className={`text-xl sm:text-2xl font-black font-mono tracking-tight truncate ${isLight ? 'text-slate-950' : 'text-white'}`}>
                   ${node.valueUsd.toLocaleString()}
                 </span>
                 {node.pnl24hUsd !== undefined && (
-                  <span className={`text-[11px] font-bold font-mono ${
+                  <span className={`text-[11px] font-bold font-mono shrink-0 ${
                     node.pnl24hUsd >= 0 ? (isLight ? 'text-emerald-700' : 'text-emerald-400') : (isLight ? 'text-rose-700' : 'text-rose-400')
                   }`}>
                     {node.pnl24hUsd >= 0 ? '+' : ''}${node.pnl24hUsd.toLocaleString()} ({node.pnlPercent}%)
@@ -148,15 +160,21 @@ export const PositionDetailModal: React.FC<PositionDetailModalProps> = ({
 
               {/* Collateral & Debt Sub-row */}
               <div className="grid grid-cols-2 gap-2 pt-2 mt-1 border-t border-slate-800/60 text-[11px] font-mono">
-                <div className="flex flex-col">
+                <div className="flex flex-col min-w-0">
                   <span className={`text-[9px] uppercase ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>Collateral</span>
-                  <span className={`font-bold truncate ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                  <span 
+                    title={node.collateralAsset || 'Locked LP Liquidity'}
+                    className={`font-bold truncate ${isLight ? 'text-slate-900' : 'text-white'}`}
+                  >
                     {node.collateralAsset || 'Locked LP'}
                   </span>
                 </div>
-                <div className="flex flex-col">
+                <div className="flex flex-col min-w-0">
                   <span className={`text-[9px] uppercase ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>Debt Obligation</span>
-                  <span className={`font-bold truncate ${isLight ? 'text-rose-700' : 'text-rose-400'}`}>
+                  <span 
+                    title={node.borrowAsset || 'No active debt (Delta-0)'}
+                    className={`font-bold truncate ${isLight ? 'text-rose-700' : 'text-rose-400'}`}
+                  >
                     {node.borrowAsset || 'No Debt (Delta-0)'}
                   </span>
                 </div>
@@ -180,35 +198,38 @@ export const PositionDetailModal: React.FC<PositionDetailModalProps> = ({
           <div className={`p-2.5 sm:p-3 rounded-xl border flex flex-col gap-1.5 transition-colors ${
             isLight ? 'bg-slate-50/80 border-slate-200' : 'bg-slate-950/60 border-slate-800'
           }`}>
-            <div className="flex items-center justify-between text-xs font-mono">
-              <div className={`flex items-center gap-1.5 font-bold uppercase tracking-wider text-[10px] ${isLight ? 'text-slate-900' : 'text-slate-300'}`}>
-                <FileText className={`w-3 h-3 ${isLight ? 'text-amber-600' : 'text-amber-400'}`} />
-                <span>Strategy:</span>
-                <span className={`font-normal normal-case truncate max-w-[280px] sm:max-w-md ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>
-                  {node.strategy || 'Multi-asset liquidity vault participating in automated yield generation.'}
-                </span>
-              </div>
+            <div className="flex items-start gap-1.5 text-xs font-mono min-w-0">
+              <FileText className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${isLight ? 'text-amber-600' : 'text-amber-400'}`} />
+              <span className={`font-bold uppercase tracking-wider text-[10px] shrink-0 ${isLight ? 'text-slate-900' : 'text-slate-300'}`}>
+                Strategy:
+              </span>
+              <span 
+                title={node.strategy || 'Multi-asset liquidity vault participating in automated yield generation.'}
+                className={`font-normal normal-case text-[11px] line-clamp-1 sm:line-clamp-2 min-w-0 flex-1 leading-snug ${isLight ? 'text-slate-700' : 'text-slate-300'}`}
+              >
+                {node.strategy || 'Multi-asset liquidity vault participating in automated yield generation.'}
+              </span>
             </div>
 
             {/* Verification Telemetry Strip */}
             <div className={`flex flex-wrap items-center justify-between gap-2 pt-1.5 border-t text-[10px] font-mono ${
               isLight ? 'border-slate-200 text-slate-600' : 'border-slate-800/80 text-slate-400'
             }`}>
-              <div className="flex items-center gap-1">
-                <ShieldCheck className={`w-3 h-3 ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`} />
-                <span>Audited: <strong className={isLight ? 'text-slate-950' : 'text-slate-300'}>{node.auditedBy?.join(', ') || 'Top Tier Audited'}</strong></span>
+              <div className="flex items-center gap-1 min-w-0 max-w-[48%] sm:max-w-none">
+                <ShieldCheck className={`w-3 h-3 shrink-0 ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`} />
+                <span className="truncate">Audited: <strong title={node.auditedBy?.join(', ') || 'Top Tier Audited'} className={`truncate ${isLight ? 'text-slate-950' : 'text-slate-300'}`}>{node.auditedBy?.join(', ') || 'Top Tier Audited'}</strong></span>
               </div>
               {node.smartMoneyNetflow24h !== undefined && (
-                <div className="flex items-center gap-1">
-                  <Activity className={`w-3 h-3 ${isLight ? 'text-cyan-700' : 'text-cyan-400'}`} />
+                <div className="flex items-center gap-1 shrink-0">
+                  <Activity className={`w-3 h-3 shrink-0 ${isLight ? 'text-cyan-700' : 'text-cyan-400'}`} />
                   <span>Nansen SM 24h: <strong className={node.smartMoneyNetflow24h >= 0 ? (isLight ? 'text-emerald-700' : 'text-emerald-400') : (isLight ? 'text-rose-700' : 'text-rose-400')}>
                     {node.smartMoneyNetflow24h >= 0 ? '+' : ''}${Math.round(node.smartMoneyNetflow24h).toLocaleString()}
                   </strong></span>
                 </div>
               )}
-              <div className="flex items-center gap-1">
-                <Activity className={`w-3 h-3 ${isLight ? 'text-cyan-700' : 'text-cyan-400'}`} />
-                <span>Oracle: <strong className={isLight ? 'text-slate-950' : 'text-slate-300'}>{node.oracleProvider || 'Chainlink / Pyth Feeds'}</strong></span>
+              <div className="flex items-center gap-1 min-w-0 max-w-[48%] sm:max-w-none">
+                <Activity className={`w-3 h-3 shrink-0 ${isLight ? 'text-cyan-700' : 'text-cyan-400'}`} />
+                <span className="truncate">Oracle: <strong title={node.oracleProvider || 'Chainlink / Pyth Feeds'} className={`truncate ${isLight ? 'text-slate-950' : 'text-slate-300'}`}>{node.oracleProvider || 'Chainlink / Pyth Feeds'}</strong></span>
               </div>
             </div>
           </div>
