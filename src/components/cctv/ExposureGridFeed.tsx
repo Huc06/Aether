@@ -265,7 +265,8 @@ export const ExposureGridFeed: React.FC<ExposureGridFeedProps> = ({
               frameW,
               frameH,
               cardConfig,
-              false
+              false,
+              true
             );
             ctx.restore();
 

@@ -379,7 +379,10 @@ export class GraphRenderer {
     w: number,
     h: number,
     config: LensConfig,
-    isLight: boolean
+    isLight: boolean,
+    /** CCTV frames are much taller than a canvas card: extend the key/value
+     *  table with every metric so the frame is filled, same typography. */
+    fillTable = false
   ) {
     // Scale factor the canvas would use to show this card at this size.
     const sc = Math.min(w / node.w, h / node.h);
@@ -436,10 +439,141 @@ export class GraphRenderer {
     ctx.beginPath();
     ctx.rect(x, y + headerH, w, h - headerH);
     ctx.clip();
-    this.drawDeFiContent(ctx, node, x, y + headerH, w, h - headerH, sc, riskColor, false, isLight);
+    if (fillTable) {
+      this.drawFullMetricTable(ctx, node, x, y + headerH, w, h - headerH, sc, riskColor, isLight);
+    } else {
+      this.drawDeFiContent(ctx, node, x, y + headerH, w, h - headerH, sc, riskColor, false, isLight);
+    }
     ctx.restore();
 
     ctx.restore();
+  }
+
+  /**
+   * The canvas card's key/value table, extended with every metric the node
+   * carries so a tall CCTV frame is filled instead of half empty. Typography,
+   * row height and colours match `drawDeFiContent` exactly.
+   */
+  private drawFullMetricTable(
+    ctx: CanvasRenderingContext2D,
+    node: CanvasNode,
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    sc: number,
+    riskColor: string,
+    isLight: boolean
+  ) {
+    const pad = 14 * sc;
+    const labelFont = `600 ${Math.max(8, Math.floor(11 * sc))}px Inter, -apple-system, sans-serif`;
+    const valueFont = `700 ${Math.max(9, Math.floor(12 * sc))}px 'JetBrains Mono', monospace`;
+    const labelColor = isLight ? '#475569' : '#94a3b8';
+    const neutral = isLight ? '#334155' : '#cbd5e1';
+    const positive = isLight ? '#16a34a' : '#4ade80';
+    const negative = isLight ? '#dc2626' : '#f87171';
+
+    ctx.font = `800 ${Math.max(12, Math.floor(20 * sc))}px 'JetBrains Mono', monospace`;
+    ctx.fillStyle = isLight ? '#0f172a' : '#ffffff';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillText(`$${node.valueUsd.toLocaleString()}`, x + pad, y + pad);
+
+    if (node.pnl24hUsd !== undefined) {
+      const pos = node.pnl24hUsd >= 0;
+      ctx.font = `700 ${Math.max(8, Math.floor(11 * sc))}px 'JetBrains Mono', monospace`;
+      ctx.fillStyle = pos ? positive : negative;
+      ctx.textAlign = 'right';
+      ctx.fillText(
+        `${pos ? '+' : ''}$${Math.abs(node.pnl24hUsd).toLocaleString()} (${pos ? '+' : ''}${node.pnlPercent}%)`,
+        x + w - pad,
+        y + pad + 2 * sc
+      );
+    }
+
+    const rows: [string, string, string][] = [];
+    if (node.strategy) rows.push(['Strategy', node.strategy, neutral]);
+    if (node.apy !== undefined) rows.push(['Net Yield (APY)', `${node.apy}%`, positive]);
+    if (node.healthFactor !== undefined) {
+      rows.push(['Health Factor', `${node.healthFactor.toFixed(2)} (${node.riskLevel.toUpperCase()})`, riskColor]);
+    }
+    if (node.liquidationDistancePct !== undefined) {
+      rows.push([
+        'Liquidation Distance',
+        `-${node.liquidationDistancePct.toFixed(1)}%`,
+        node.liquidationDistancePct < 15 ? '#ef4444' : neutral
+      ]);
+    }
+    if (node.liquidationPrice !== undefined) {
+      rows.push([
+        'Liq / Mark Price',
+        `$${node.liquidationPrice.toLocaleString()} / $${(node.currentPrice ?? 0).toLocaleString()}`,
+        neutral
+      ]);
+    }
+    if (node.collateralAsset) rows.push(['Collateral', node.collateralAsset, neutral]);
+    if (node.borrowDebtUsd !== undefined) {
+      rows.push([
+        'Debt Obligation',
+        `$${node.borrowDebtUsd.toLocaleString()}${node.borrowAsset ? ` ${node.borrowAsset}` : ''}`,
+        negative
+      ]);
+    }
+    if (node.debtRatioPct !== undefined) rows.push(['Debt Ratio', `${node.debtRatioPct.toFixed(1)}%`, neutral]);
+    if (node.fees24hUsd !== undefined) rows.push(['Fees 24h', `+$${node.fees24hUsd.toLocaleString()}`, positive]);
+    if (node.smartMoneyNetflow24h !== undefined) {
+      const pos = node.smartMoneyNetflow24h >= 0;
+      rows.push([
+        `Smart Money ${pos ? 'Inflow' : 'Outflow'}`,
+        `${pos ? '+' : '-'}$${Math.abs(Math.round(node.smartMoneyNetflow24h)).toLocaleString()}${node.smartMoneyTraderCount ? ` (${node.smartMoneyTraderCount} funds)` : ''}`,
+        pos ? positive : negative
+      ]);
+    }
+    if (node.oracleProvider) rows.push(['Oracle', node.oracleProvider, isLight ? '#0284c7' : '#7dd3fc']);
+    if (node.nansenLabel) rows.push(['Nansen', node.nansenLabel, isLight ? '#0284c7' : '#38bdf8']);
+    if (node.auditedBy?.length) rows.push(['Audited By', node.auditedBy.join(', '), labelColor]);
+    if (node.type === 'wallet') rows.push(['Status', 'Connected & Live', positive]);
+    rows.push(['Network', `${node.chain} · ${node.category}`, neutral]);
+
+    const top = y + pad + 32 * sc;
+    const bottom = y + h - pad;
+    const rowH = 20 * sc;
+    const visible = Math.max(0, Math.min(rows.length, Math.floor((bottom - top) / rowH)));
+
+    for (let i = 0; i < visible; i++) {
+      const [label, value, color] = rows[i];
+      const lineY = top + i * rowH;
+
+      if (i > 0) {
+        ctx.strokeStyle = isLight ? 'rgba(15, 23, 42, 0.07)' : 'rgba(255, 255, 255, 0.06)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(x + pad, lineY - 5 * sc);
+        ctx.lineTo(x + w - pad, lineY - 5 * sc);
+        ctx.stroke();
+      }
+
+      ctx.font = labelFont;
+      ctx.fillStyle = labelColor;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+      const labelText = `${label}:`;
+      ctx.fillText(labelText, x + pad, lineY);
+      const labelW = ctx.measureText(labelText).width;
+
+      ctx.font = valueFont;
+      ctx.fillStyle = color;
+      ctx.textAlign = 'right';
+      const maxValueW = w - pad * 2 - labelW - 10 * sc;
+      let shown = value;
+      if (ctx.measureText(shown).width > maxValueW) {
+        while (shown.length > 1 && ctx.measureText(`${shown}…`).width > maxValueW) {
+          shown = shown.slice(0, -1);
+        }
+        shown = `${shown}…`;
+      }
+      ctx.fillText(shown, x + w - pad, lineY);
+    }
   }
 
   private drawDeFiContent(
