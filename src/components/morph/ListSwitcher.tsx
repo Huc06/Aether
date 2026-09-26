@@ -111,13 +111,12 @@ export const ListSwitcher: React.FC<ListSwitcherProps> = ({
 
   return (
     <div
-      className={`absolute inset-0 z-30 pt-[78px] sm:pt-[84px] md:pt-[92px] transition-colors duration-200 ${
+      className={`absolute inset-0 z-30 pt-[78px] sm:pt-[84px] md:pt-[92px] flex flex-col overflow-hidden transition-colors duration-200 ${
         isLight ? 'bg-slate-50/95 text-slate-900' : 'bg-[#07090e]/95 text-slate-200'
       }`}
     >
       <DitherDefs idPrefix="ledger" isLight={isLight} />
-      <BendScroll className="h-full">
-        <div className="w-full max-w-6xl mx-auto flex flex-col gap-5 px-3 sm:px-4 md:px-8 pb-8 pt-2 animate-morph-rise select-none">
+      <div className="relative z-10 w-full max-w-6xl mx-auto flex flex-col gap-5 px-3 sm:px-4 md:px-8 pt-2 shrink-0 animate-morph-rise select-none">
           <header className="flex flex-col gap-3">
             <p className={`font-mono text-[10px] uppercase tracking-[0.22em] ${isLight ? 'text-slate-500' : 'text-slate-500'}`}>
               aether · spatial ledger
@@ -193,7 +192,10 @@ export const ListSwitcher: React.FC<ListSwitcherProps> = ({
             caption={`$${shownValue.toLocaleString()} of $${totalValue.toLocaleString()} in view`}
             isLight={isLight}
           />
+      </div>
 
+      <BendScroll className="relative z-0 flex-1 min-h-0">
+        <div className="w-full max-w-6xl mx-auto px-3 sm:px-4 md:px-8 pb-8 pt-3 select-none">
           <Frame
             title="Positions"
             isLight={isLight}
