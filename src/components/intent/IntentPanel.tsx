@@ -30,6 +30,49 @@ interface IntentPanelProps {
   onExecuteRoute: (route: RecommendedRoute) => void;
 }
 
+const SMART_MONEY_ROUTE: RecommendedRoute = {
+  id: 'route-sm-rotation',
+  title: 'Rotate Stables into Smart Money Inflow Signals (QNT / WTAO)',
+  tag: 'RECOMMENDED',
+  estTime: '3.8s',
+  gasCost: '$0.008',
+  netApyImpact: '+24.5% Alpha Capture based on Nansen Netflow',
+  steps: [
+    {
+      stepNumber: 1,
+      type: 'withdraw',
+      protocol: 'Treasury Wallet',
+      fromAsset: 'Idle USDC Balance',
+      fromChain: 'Ethereum',
+      amount: '$45,000 USDC',
+      estTime: '0.8s',
+      gasCost: '$0.002'
+    },
+    {
+      stepNumber: 2,
+      type: 'swap',
+      protocol: '1inch / Uniswap v3',
+      fromAsset: 'USDC',
+      toAsset: 'QNT (Smart Money #1 Inflow)',
+      fromChain: 'Ethereum',
+      amount: '$45,000 Notional',
+      estTime: '1.8s',
+      gasCost: '$0.004',
+      slippage: '0.01%'
+    },
+    {
+      stepNumber: 3,
+      type: 'deposit',
+      protocol: 'Aether Secure Ledger Vault',
+      fromAsset: 'QNT Position',
+      fromChain: 'Ethereum',
+      amount: '32.1 QNT',
+      estTime: '1.2s',
+      gasCost: '$0.002'
+    }
+  ]
+};
+
 export const IntentPanel: React.FC<IntentPanelProps> = ({
   isOpen,
   onClose,
@@ -267,11 +310,12 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
           <button
             onClick={() => {
               setQuery('Which tokens are smart money accumulating on Ethereum today?');
+              setSelectedRoute(SMART_MONEY_ROUTE);
               handleAskNansenAgent('Which tokens are smart money accumulating on Ethereum today?');
             }}
             className="text-xs px-2.5 py-1 rounded-md bg-cyan-950/40 hover:bg-cyan-900/60 border border-cyan-500/40 text-cyan-300 shrink-0 transition-all font-mono flex items-center gap-1.5"
           >
-            <Bot className="w-3 h-3 text-cyan-400" />
+            <Bot className="w-3.5 h-3.5 text-cyan-400" />
             <span>Smart Money Accumulation (Live)</span>
           </button>
           {intentPresets.map((preset) => (
