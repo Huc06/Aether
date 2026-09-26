@@ -598,7 +598,28 @@ export const App: React.FC = () => {
     handleResetPortfolio
   ]);
 
-  // WebGL & Render Loop
+  // Persistent render state ref for 60/120 FPS render loop without context loss
+  const renderStateRef = useRef({
+    nodes,
+    wires,
+    config,
+    highlightNodeIds,
+    focusedNodeId,
+    isSimulatingRoute
+  });
+
+  useEffect(() => {
+    renderStateRef.current = {
+      nodes,
+      wires,
+      config,
+      highlightNodeIds,
+      focusedNodeId,
+      isSimulatingRoute
+    };
+  }, [nodes, wires, config, highlightNodeIds, focusedNodeId, isSimulatingRoute]);
+
+  // WebGL & Render Loop (Initialized once on mount)
   useEffect(() => {
     const canvas = canvasRef.current;
     const offscreen = offscreenCanvasRef.current;
@@ -624,15 +645,34 @@ export const App: React.FC = () => {
     resize();
     window.addEventListener('resize', resize);
 
+    // Direct non-passive wheel event for buttery smooth zero-latency zoom
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const zoomFactor = e.deltaY < 0 ? 1.12 : 0.89;
+      const nextScale = Math.max(0.18, Math.min(2.5, cameraRef.current.state.targetScale * zoomFactor));
+      cameraRef.current.state.targetScale = nextScale;
+
+      if (nextScale < 0.45 && !cameraRef.current.state.isOverview) {
+        cameraRef.current.state.isOverview = true;
+        setIsOverview(true);
+      } else if (nextScale >= 0.75 && cameraRef.current.state.isOverview) {
+        cameraRef.current.state.isOverview = false;
+        setIsOverview(false);
+      }
+    };
+
+    canvas.addEventListener('wheel', onWheel, { passive: false });
+
     const render = (time: number) => {
       const dt = Math.min((time - lastTime) / 1000, 0.1);
       lastTime = time;
 
       const w = offscreen.width;
       const h = offscreen.height;
+      const state = renderStateRef.current;
 
       // Update camera physics
-      cameraRef.current.update(dt, config.cameraSpeed);
+      cameraRef.current.update(dt, state.config.cameraSpeed);
 
       // Render 2D scene onto offscreen canvas
       const ctx = offscreen.getContext('2d');
@@ -642,13 +682,13 @@ export const App: React.FC = () => {
           w,
           h,
           cameraRef.current,
-          nodes,
-          wires,
-          config,
+          state.nodes,
+          state.wires,
+          state.config,
           dt,
-          highlightNodeIds,
-          focusedNodeId,
-          isSimulatingRoute
+          state.highlightNodeIds,
+          state.focusedNodeId,
+          state.isSimulatingRoute
         );
       }
 
@@ -657,7 +697,7 @@ export const App: React.FC = () => {
         offscreen,
         canvas.width,
         canvas.height,
-        config,
+        state.config,
         cameraRef.current.state.transitionProgress
       );
 
@@ -669,8 +709,9 @@ export const App: React.FC = () => {
     return () => {
       cancelAnimationFrame(animationFrameId);
       window.removeEventListener('resize', resize);
+      canvas.removeEventListener('wheel', onWheel);
     };
-  }, [nodes, wires, config, highlightNodeIds, focusedNodeId, isSimulatingRoute]);
+  }, []);
 
   // Canvas Mouse / Touch Handlers
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -805,21 +846,6 @@ export const App: React.FC = () => {
     isMinimapDraggingRef.current = false;
   };
 
-  const handleWheel = (e: React.WheelEvent<HTMLCanvasElement>) => {
-    e.preventDefault();
-    const zoomFactor = e.deltaY < 0 ? 1.14 : 0.88;
-    const nextScale = Math.max(0.18, Math.min(2.5, cameraRef.current.state.targetScale * zoomFactor));
-    cameraRef.current.state.targetScale = nextScale;
-
-    if (nextScale < 0.45 && !cameraRef.current.state.isOverview) {
-      setIsOverview(true);
-      cameraRef.current.state.isOverview = true;
-    } else if (nextScale >= 0.75 && cameraRef.current.state.isOverview) {
-      setIsOverview(false);
-      cameraRef.current.state.isOverview = false;
-    }
-  };
-
   // Dynamic calculations
   const totalValue = nodes.reduce((sum, n) => sum + n.valueUsd, 0);
   const totalPnl = nodes.reduce((sum, n) => sum + (n.pnl24hUsd || 0), 0);
@@ -836,7 +862,6 @@ export const App: React.FC = () => {
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
-        onWheel={handleWheel}
         className="absolute inset-0 w-full h-full block cursor-crosshair"
       />
 
