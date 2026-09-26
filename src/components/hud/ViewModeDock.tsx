@@ -51,9 +51,6 @@ export const ViewModeDock: React.FC<ViewModeDockProps> = ({
                 {item.icon}
               </span>
               <span>{item.label}</span>
-              {isActive && (
-                <span className="w-1.5 h-1.5 rounded-full bg-black absolute bottom-0.5 left-1/2 -translate-x-1/2 opacity-70" />
-              )}
             </button>
           );
         })}
