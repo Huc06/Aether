@@ -22,11 +22,13 @@ body, html {
   overflow: hidden;
   background-color: var(--bg-dark);
   color: var(--text-main);
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   margin: 0;
   padding: 0;
   user-select: none;
   -webkit-user-select: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Custom scrollbars */

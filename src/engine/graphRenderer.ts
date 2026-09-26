@@ -301,9 +301,9 @@ export class GraphRenderer {
       ctx.fillStyle = '#22c55e';
       ctx.beginPath(); ctx.arc(pos.x + dotPad + 24 * sc, dotY, dotR, 0, Math.PI * 2); ctx.fill();
 
-      // Header Title & Clean Monospace Text
-      const headerFontSize = Math.max(9, Math.floor(12 * sc));
-      ctx.font = `700 ${headerFontSize}px 'JetBrains Mono', monospace`;
+      // Header Title & Clean Modern Typography
+      const headerFontSize = Math.max(10, Math.floor(13 * sc));
+      ctx.font = `700 ${headerFontSize}px Inter, -apple-system, BlinkMacSystemFont, sans-serif`;
       ctx.fillStyle = isLight
         ? (isSelected ? '#0f172a' : '#1e293b')
         : (isSelected ? '#ffffff' : '#e2e8f0');
@@ -313,17 +313,17 @@ export class GraphRenderer {
 
       // Pinned indicator
       if (node.isPinned) {
-        ctx.font = `700 ${Math.max(7, Math.floor(8 * sc))}px 'JetBrains Mono', monospace`;
+        ctx.font = `700 ${Math.max(8, Math.floor(9 * sc))}px Inter, -apple-system, sans-serif`;
         ctx.fillStyle = config.accent;
-        ctx.fillText('[PIN]', pos.x + sw - 120 * sc, dotY);
+        ctx.fillText('Pinned', pos.x + sw - 120 * sc, dotY);
       }
 
       // Chain / Category Badge
       if (sc > 0.28) {
-        ctx.font = `700 ${Math.max(7, Math.floor(9 * sc))}px 'JetBrains Mono', monospace`;
+        ctx.font = `600 ${Math.max(8, Math.floor(10 * sc))}px Inter, -apple-system, sans-serif`;
         ctx.fillStyle = riskColor;
         ctx.textAlign = 'right';
-        ctx.fillText(`[${node.chain.toUpperCase()} // ${node.category.toUpperCase()}]`, pos.x + sw - 12 * sc, dotY);
+        ctx.fillText(`${node.chain} · ${node.category}`, pos.x + sw - 12 * sc, dotY);
       }
 
       // Card Content Body Clip
@@ -406,10 +406,11 @@ export class GraphRenderer {
 
     if (node.type === 'position') {
       if (node.apy !== undefined) {
-        ctx.font = `600 ${Math.max(8, Math.floor(10 * sc))}px 'JetBrains Mono', monospace`;
+        ctx.font = `600 ${Math.max(8, Math.floor(11 * sc))}px Inter, -apple-system, sans-serif`;
         ctx.fillStyle = isLight ? '#475569' : '#94a3b8';
         ctx.textAlign = 'left';
         ctx.fillText('Net Yield (APY):', x + pad, lineY);
+        ctx.font = `700 ${Math.max(9, Math.floor(12 * sc))}px 'JetBrains Mono', monospace`;
         ctx.fillStyle = isLight ? '#16a34a' : '#4ade80';
         ctx.textAlign = 'right';
         ctx.fillText(`${node.apy}%`, x + w - pad, lineY);
@@ -417,21 +418,23 @@ export class GraphRenderer {
       }
 
       if (node.healthFactor !== undefined) {
-        ctx.font = `600 ${Math.max(8, Math.floor(10 * sc))}px 'JetBrains Mono', monospace`;
+        ctx.font = `600 ${Math.max(8, Math.floor(11 * sc))}px Inter, -apple-system, sans-serif`;
         ctx.fillStyle = isLight ? '#475569' : '#94a3b8';
         ctx.textAlign = 'left';
         ctx.fillText('Health Factor:', x + pad, lineY);
+        ctx.font = `700 ${Math.max(9, Math.floor(12 * sc))}px 'JetBrains Mono', monospace`;
         ctx.fillStyle = riskColor;
         ctx.textAlign = 'right';
-        ctx.fillText(`${node.healthFactor.toFixed(2)} [${node.riskLevel.toUpperCase()}]`, x + w - pad, lineY);
+        ctx.fillText(`${node.healthFactor.toFixed(2)} (${node.riskLevel.toUpperCase()})`, x + w - pad, lineY);
         lineY += rowH;
       }
 
       if (node.liquidationDistancePct !== undefined) {
-        ctx.font = `600 ${Math.max(8, Math.floor(10 * sc))}px 'JetBrains Mono', monospace`;
+        ctx.font = `600 ${Math.max(8, Math.floor(11 * sc))}px Inter, -apple-system, sans-serif`;
         ctx.fillStyle = isLight ? '#475569' : '#94a3b8';
         ctx.textAlign = 'left';
-        ctx.fillText('Liq Distance:', x + pad, lineY);
+        ctx.fillText('Liquidation Distance:', x + pad, lineY);
+        ctx.font = `700 ${Math.max(9, Math.floor(12 * sc))}px 'JetBrains Mono', monospace`;
         ctx.fillStyle = node.liquidationDistancePct < 15 ? '#ef4444' : (isLight ? '#334155' : '#cbd5e1');
         ctx.textAlign = 'right';
         ctx.fillText(`-${node.liquidationDistancePct.toFixed(1)}%`, x + w - pad, lineY);
@@ -439,8 +442,8 @@ export class GraphRenderer {
       }
 
       if (node.collateralAsset && sc > 0.4) {
-        ctx.font = `500 ${Math.max(7, Math.floor(9 * sc))}px 'JetBrains Mono', monospace`;
-        ctx.fillStyle = isLight ? '#64748b' : '#64748b';
+        ctx.font = `500 ${Math.max(8, Math.floor(10 * sc))}px Inter, -apple-system, sans-serif`;
+        ctx.fillStyle = isLight ? '#64748b' : '#94a3b8';
         ctx.textAlign = 'left';
         ctx.fillText(`Collateral: ${node.collateralAsset}`, x + pad, lineY);
         lineY += rowH;
@@ -449,28 +452,28 @@ export class GraphRenderer {
       // Nansen Smart Money Signal Indicator
       if (node.smartMoneyNetflow24h !== undefined && sc > 0.35) {
         const isPositive = node.smartMoneyNetflow24h >= 0;
-        ctx.font = `700 ${Math.max(7, Math.floor(9 * sc))}px 'JetBrains Mono', monospace`;
+        ctx.font = `700 ${Math.max(8, Math.floor(10 * sc))}px Inter, -apple-system, sans-serif`;
         ctx.fillStyle = isPositive ? (isLight ? '#16a34a' : '#10b981') : (isLight ? '#dc2626' : '#f43f5e');
         ctx.textAlign = 'left';
         const smText = isPositive
-          ? `[SM INFLOW: +$${Math.round(node.smartMoneyNetflow24h).toLocaleString()}${node.smartMoneyTraderCount ? ` (${node.smartMoneyTraderCount} traders)` : ''}]`
-          : `[SM OUTFLOW: -$${Math.abs(Math.round(node.smartMoneyNetflow24h)).toLocaleString()}]`;
+          ? `● Smart Money Inflow: +$${Math.round(node.smartMoneyNetflow24h).toLocaleString()}${node.smartMoneyTraderCount ? ` (${node.smartMoneyTraderCount} funds)` : ''}`
+          : `● Smart Money Outflow: -$${Math.abs(Math.round(node.smartMoneyNetflow24h)).toLocaleString()}`;
         ctx.fillText(smText, x + pad, lineY);
         lineY += rowH;
       }
     } else if (node.type === 'wallet') {
-      ctx.font = `500 ${Math.max(8, Math.floor(10 * sc))}px 'JetBrains Mono', monospace`;
+      ctx.font = `500 ${Math.max(8, Math.floor(11 * sc))}px Inter, -apple-system, sans-serif`;
       ctx.fillStyle = isLight ? '#475569' : '#94a3b8';
       ctx.textAlign = 'left';
-      ctx.fillText('Status: Connected & Streaming', x + pad, lineY);
+      ctx.fillText('Status: Connected & Live', x + pad, lineY);
       lineY += rowH;
       ctx.fillText(`Role: ${node.strategy || 'Treasury Vault'}`, x + pad, lineY);
       lineY += rowH;
 
       if (node.nansenLabel && sc > 0.35) {
-        ctx.font = `700 ${Math.max(7, Math.floor(9 * sc))}px 'JetBrains Mono', monospace`;
+        ctx.font = `700 ${Math.max(8, Math.floor(10 * sc))}px Inter, -apple-system, sans-serif`;
         ctx.fillStyle = isLight ? '#0284c7' : '#38bdf8';
-        ctx.fillText(`[NANSEN] ${node.nansenLabel}`, x + pad, lineY);
+        ctx.fillText(`Nansen: ${node.nansenLabel}`, x + pad, lineY);
         lineY += rowH;
       }
     }
@@ -489,11 +492,11 @@ export class GraphRenderer {
       ctx.fill();
       ctx.stroke();
 
-      ctx.font = `800 ${Math.max(8, Math.floor(10 * sc))}px 'JetBrains Mono', monospace`;
+      ctx.font = `800 ${Math.max(8, Math.floor(11 * sc))}px Inter, -apple-system, sans-serif`;
       ctx.fillStyle = '#ef4444';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('CRITICAL RISK // CLICK TO INSPECT EXIT', x + w / 2, badgeY + badgeH / 2);
+      ctx.fillText('⚡ Liquidation Risk · Click to Inspect Exit', x + w / 2, badgeY + badgeH / 2);
     }
   }
 
