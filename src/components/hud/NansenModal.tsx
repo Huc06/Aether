@@ -45,20 +45,20 @@ export const NansenModal: React.FC<NansenModalProps> = ({
 
   const handleSaveKey = () => {
     setNansenApiKey(apiKey);
-    onShowToast('✓ Nansen API Key saved successfully');
+    onShowToast('Nansen API Key saved successfully');
   };
 
   const handleResetDefaultKey = () => {
     setApiKeyState(DEFAULT_NANSEN_KEY);
     setNansenApiKey(DEFAULT_NANSEN_KEY);
-    onShowToast('✓ Reverted to default Meridian Buildathon API Key');
+    onShowToast('Reverted to default Meridian Buildathon API Key');
   };
 
   const handleSelectPreset = async (preset: typeof PRESET_ENTITIES[0]) => {
     setIsLoadingEntity(true);
     try {
       await onLoadEntity(preset);
-      onShowToast(`✓ Loaded on-chain graph for ${preset.label}`);
+      onShowToast(`Loaded on-chain graph for ${preset.label}`);
       onClose();
     } catch (err: any) {
       onShowToast(`Failed to load: ${err?.message}`);
@@ -78,7 +78,7 @@ export const NansenModal: React.FC<NansenModalProps> = ({
         chain: customChain,
         description: `Custom inspected address on ${customChain}`
       });
-      onShowToast(`✓ Generated spatial graph from Nansen Profiler`);
+      onShowToast('Generated spatial graph from Nansen Profiler');
       onClose();
     } catch (err: any) {
       onShowToast(`Failed to load custom address: ${err?.message}`);
@@ -138,7 +138,7 @@ export const NansenModal: React.FC<NansenModalProps> = ({
                   ? 'bg-emerald-500 text-black shadow shadow-emerald-500/30' 
                   : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
               }`}>
-                {callCount >= qualifiedTarget ? '✓ 1,000+ CALLS QUALIFIED' : `${callCount} / 1,000 CALLS`}
+                {callCount >= qualifiedTarget ? '1,000+ CALLS QUALIFIED' : `${callCount} / 1,000 CALLS`}
               </span>
             </div>
 

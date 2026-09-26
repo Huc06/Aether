@@ -5,13 +5,10 @@ import { CameraController } from './engine/camera';
 import { WebGLShaderPipeline } from './engine/shaderPipeline';
 import { GraphRenderer } from './engine/graphRenderer';
 import { TopBar } from './components/hud/TopBar';
-import { DynamicIsland } from './components/morph/DynamicIsland';
 import { ListSwitcher, PortfolioViewMode } from './components/morph/ListSwitcher';
 import { ExposureGridFeed } from './components/cctv/ExposureGridFeed';
 import { IntentPanel } from './components/intent/IntentPanel';
 import { PositionDetailModal } from './components/position/PositionDetailModal';
-import { SpawnWindowModal } from './components/hud/SpawnWindowModal';
-import { RecentWindowsOverlay } from './components/hud/RecentWindowsOverlay';
 import { LiveTuner } from './components/hud/LiveTuner';
 import { HelpModal } from './components/hud/HelpModal';
 import { NansenModal } from './components/hud/NansenModal';
@@ -56,12 +53,9 @@ export const App: React.FC = () => {
   const [viewMode, setViewMode] = useState<PortfolioViewMode>('canvas');
   const [isOverview, setIsOverview] = useState(false);
   const [isIntentOpen, setIsIntentOpen] = useState(false);
-  const [isSpawnOpen, setIsSpawnOpen] = useState(false);
   const [isNansenOpen, setIsNansenOpen] = useState(false);
   const [isTunerOpen, setIsTunerOpen] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
-  const [isAltTabOpen, setIsAltTabOpen] = useState(false);
-  const [altTabIndex, setAltTabIndex] = useState(0);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isSimulatingRoute, setIsSimulatingRoute] = useState(false);
 
@@ -111,50 +105,6 @@ export const App: React.FC = () => {
     }
   }, [nodes]);
 
-  // Spawn New Window / DeFi Position Node
-  const handleSpawnNode = useCallback((nodeData: Partial<CanvasNode>) => {
-    recordHistory();
-    const id = `node-${Date.now()}`;
-    const cx = cameraRef.current.state.x;
-    const cy = cameraRef.current.state.y;
-
-    const newNode: CanvasNode = {
-      id,
-      title: nodeData.title || 'New Window',
-      app: nodeData.app || 'App',
-      type: nodeData.type || 'position',
-      windowContent: nodeData.windowContent,
-      category: nodeData.category || 'Yield',
-      chain: nodeData.chain || 'Solana',
-      icon: nodeData.icon || '📦',
-      x: cx - 200 + (Math.random() - 0.5) * 120,
-      y: cy - 140 + (Math.random() - 0.5) * 120,
-      w: nodeData.w || 460,
-      h: nodeData.h || 300,
-      valueUsd: nodeData.valueUsd || 25000,
-      pnl24hUsd: nodeData.pnl24hUsd || 450,
-      pnlPercent: nodeData.pnlPercent || 1.8,
-      apy: nodeData.apy || 18.2,
-      healthFactor: nodeData.healthFactor || 2.4,
-      liquidationDistancePct: nodeData.liquidationDistancePct || 52.0,
-      riskLevel: nodeData.riskLevel || 'safe',
-      strategy: nodeData.strategy || 'Custom created position node.',
-      exitRoutes: [
-        {
-          targetAsset: 'Native USDC',
-          estReturn: `${nodeData.valueUsd?.toLocaleString() || 25000} USDC`,
-          fee: '$2.50',
-          timeSeconds: 3,
-          routeSummary: 'Instant Unwind -> Safe Wallet'
-        }
-      ]
-    };
-
-    setNodes(prev => [...prev, newNode]);
-    focusNode(newNode.id, true);
-    showToast(`Spawned window: ${newNode.title}`);
-  }, [recordHistory, focusNode, showToast]);
-
   // Load Nansen Entity & Build Dynamic Spatial Graph
   const handleLoadNansenEntity = useCallback(async (entity: typeof PRESET_ENTITIES[0]) => {
     recordHistory();
@@ -169,7 +119,7 @@ export const App: React.FC = () => {
         cameraRef.current.state.y = newNodes[0].y;
         cameraRef.current.state.targetX = newNodes[0].x;
         cameraRef.current.state.targetY = newNodes[0].y;
-        showToast(`✓ Generated live spatial graph for ${entity.label}`);
+        showToast(`Generated live spatial graph for ${entity.label}`);
       }
     } catch (e: any) {
       console.error('Failed to load Nansen graph:', e);
@@ -357,13 +307,13 @@ export const App: React.FC = () => {
     setTimeout(() => {
       setIsSimulatingRoute(false);
       setIsIntentOpen(false);
-      showToast('✓ Route Executed & Settled Successfully!');
+      showToast('Route Executed & Settled Successfully!');
     }, 4000);
   }, [showToast]);
 
   // Handle Kill Switch
   const handleKillSwitch = useCallback((node: CanvasNode, route: PositionExitRoute) => {
-    showToast(`⚡ KILL SWITCH ACTIVATED: Unwound ${node.title} -> ${route.targetAsset}`);
+    showToast(`KILL SWITCH ACTIVATED: Unwound ${node.title} -> ${route.targetAsset}`);
     setNodes(prev => prev.map(n => {
       if (n.id === node.id) {
         return {
@@ -385,21 +335,6 @@ export const App: React.FC = () => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
       if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return;
-
-      // Spawn Window: N or +
-      if (e.key.toLowerCase() === 'n' && !e.ctrlKey && !e.metaKey) {
-        e.preventDefault();
-        setIsSpawnOpen(true);
-        return;
-      }
-
-      // Alt + Tab -> Recent Windows Switcher
-      if (e.altKey && e.key === 'Tab') {
-        e.preventDefault();
-        setIsAltTabOpen(true);
-        setAltTabIndex(prev => (e.shiftKey ? (prev - 1 + nodes.length) % nodes.length : (prev + 1) % nodes.length));
-        return;
-      }
 
       // Super + T -> Toggle Fill
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 't') {
@@ -473,7 +408,6 @@ export const App: React.FC = () => {
       // Escape -> Dismiss panels / reset camera
       if (e.key === 'Escape') {
         setIsIntentOpen(false);
-        setIsSpawnOpen(false);
         setIsNansenOpen(false);
         setIsTunerOpen(false);
         setIsHelpOpen(false);
@@ -485,37 +419,20 @@ export const App: React.FC = () => {
       }
     };
 
-    const handleKeyUp = (e: KeyboardEvent) => {
-      if (e.key === 'Alt') {
-        if (isAltTabOpen) {
-          setIsAltTabOpen(false);
-          const target = nodes[altTabIndex];
-          if (target) {
-            focusNode(target.id, true);
-          }
-        }
-      }
-    };
-
     window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
     };
   }, [
     nodes,
     focusedNodeId,
-    altTabIndex,
-    isAltTabOpen,
     toggleOverviewMode,
     handleSmartArrange,
     handleUndo,
     handleToggleFill,
     handleTogglePin,
     handleNudge,
-    handleFocusNearest,
-    focusNode
+    handleFocusNearest
   ]);
 
   // WebGL & Render Loop
@@ -767,29 +684,14 @@ export const App: React.FC = () => {
         onChangeViewMode={setViewMode}
         onToggleOverview={() => toggleOverviewMode()}
         onSmartArrange={handleSmartArrange}
-        onOpenSpawn={() => setIsSpawnOpen(true)}
         onOpenNansen={() => setIsNansenOpen(true)}
         onOpenTuner={() => setIsTunerOpen(true)}
         onOpenHelp={() => setIsHelpOpen(true)}
         onFilterRisk={handleFilterRisk}
       />
 
-      {/* Morph UI: Dynamic Island Adaptive HUD Pill */}
-      {viewMode === 'canvas' && !isOverview && (
-        <DynamicIsland
-          totalValue={totalValue}
-          totalPnl={totalPnl}
-          pnlPercent={pnlPercent}
-          healthFactor={2.18}
-          criticalCount={criticalCount}
-          isSimulating={isSimulatingRoute}
-          onOpenIntent={() => toggleOverviewMode(true)}
-          onFilterRisk={handleFilterRisk}
-        />
-      )}
-
-      {/* Morph UI: List Switcher (Morphing Cards Grid & Dense List View) */}
-      {(viewMode === 'cards' || viewMode === 'list') && (
+      {/* Morph UI: List Switcher (Dense Table List View) */}
+      {viewMode === 'list' && (
         <ListSwitcher
           nodes={nodes}
           viewMode={viewMode}
@@ -834,20 +736,6 @@ export const App: React.FC = () => {
         onKillSwitch={handleKillSwitch}
       />
 
-      {/* Spawn New Window / Position Modal */}
-      <SpawnWindowModal
-        isOpen={isSpawnOpen}
-        onClose={() => setIsSpawnOpen(false)}
-        onSpawn={handleSpawnNode}
-      />
-
-      {/* Alt+Tab Recent Windows Switcher */}
-      <RecentWindowsOverlay
-        isOpen={isAltTabOpen}
-        nodes={nodes}
-        selectedIndex={altTabIndex}
-      />
-
       {/* Live CRT Lens Tuner */}
       <LiveTuner
         isOpen={isTunerOpen}
@@ -878,7 +766,7 @@ export const App: React.FC = () => {
       <div className="absolute bottom-5 left-6 font-mono text-[10px] text-slate-500 tracking-wider pointer-events-none flex flex-col gap-1 drop-shadow">
         <span>CAM_POS: [X: {Math.round(cameraRef.current?.state.x || 0)}, Y: {Math.round(cameraRef.current?.state.y || 0)}]</span>
         <span>ZOOM_SCALE: {(cameraRef.current?.state.scale || 1.0).toFixed(2)}x &bull; NODES: {nodes.length} &bull; WIRES: {wires.length}</span>
-        <span className="text-amber-500 font-bold">PRESS N FOR NEW WINDOW &bull; ⌘K FOR INTENT ENGINE &bull; ALT+TAB SWITCH</span>
+        <span className="text-amber-500 font-bold">⌘K INTENT ENGINE &bull; ^A ARRANGE &bull; TAB VIEW SWITCH</span>
       </div>
     </div>
   );

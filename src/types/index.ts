@@ -1,17 +1,6 @@
 export type RiskLevel = 'safe' | 'medium' | 'high' | 'critical';
 
-export type NodeType = 'wallet' | 'chain' | 'protocol' | 'position' | 'window';
-
-export type WindowContentType = 
-  | 'terminal'
-  | 'code'
-  | 'btop'
-  | 'music'
-  | '3d'
-  | 'browser'
-  | 'chat'
-  | 'defi-chart'
-  | 'orderbook';
+export type NodeType = 'wallet' | 'chain' | 'protocol' | 'position';
 
 export interface RouteStep {
   stepNumber: number;
@@ -53,10 +42,9 @@ export interface CanvasNode {
   title: string;
   app: string;
   type: NodeType;
-  windowContent?: WindowContentType;
-  category: 'Wallet' | 'Chain' | 'Lending' | 'DEX' | 'Perps' | 'Yield' | 'Staking' | 'Terminal' | 'Development' | 'System' | 'Media' | 'Graphics';
+  category: 'Wallet' | 'Chain' | 'Lending' | 'DEX' | 'Perps' | 'Yield' | 'Staking';
   chain: 'Solana' | 'Arbitrum' | 'Ethereum' | 'Hyperliquid' | 'Berachain';
-  icon: string;
+  icon?: string;
   x: number;
   y: number;
   w: number;

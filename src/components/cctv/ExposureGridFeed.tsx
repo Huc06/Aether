@@ -151,7 +151,7 @@ export const ExposureGridFeed: React.FC<ExposureGridFeedProps> = ({
             ctx.fillStyle = '#ffffff';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText('⚠️ NO SIGNAL // ORACLE DESYNC', cellX + cellW / 2, cellY + cellH / 2 - 6);
+            ctx.fillText('NO SIGNAL // ORACLE DESYNC', cellX + cellW / 2, cellY + cellH / 2 - 6);
 
             ctx.font = "700 14px 'JetBrains Mono', monospace";
             ctx.fillStyle = '#fecaca';
@@ -380,7 +380,7 @@ export const ExposureGridFeed: React.FC<ExposureGridFeedProps> = ({
 
           {/* Prompt Tip */}
           <div className="absolute bottom-3 left-4 pointer-events-none text-[10px] text-cyan-300/80 font-mono bg-black/70 px-3 py-1 rounded-md border border-cyan-500/30">
-            💡 <strong>SolaceUI Interaction:</strong> Hover pointer to zoom &amp; trigger photographic ink separation &bull; Click any cell to inspect position
+            <strong>SolaceUI Interaction:</strong> Hover pointer to zoom &amp; trigger photographic ink separation &bull; Click any cell to inspect position
           </div>
         </div>
 
@@ -388,7 +388,9 @@ export const ExposureGridFeed: React.FC<ExposureGridFeedProps> = ({
         {selectedCellNode && (
           <div className="glass-panel p-4 rounded-xl border border-amber-500/50 flex items-center justify-between gap-4 animate-in slide-in-from-bottom-3 duration-150 bg-slate-950/95">
             <div className="flex items-center gap-3">
-              <span className="text-2xl">{selectedCellNode.icon}</span>
+              <span className="px-2 py-1 rounded bg-black/40 border border-white/10 text-xs font-bold text-amber-400">
+                [{selectedCellNode.icon || selectedCellNode.chain.slice(0, 3).toUpperCase()}]
+              </span>
               <div className="flex flex-col">
                 <div className="flex items-center gap-2">
                   <span className="font-extrabold text-white text-sm">
@@ -426,7 +428,7 @@ export const ExposureGridFeed: React.FC<ExposureGridFeedProps> = ({
                   className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-xs flex items-center gap-1 shadow-lg shadow-rose-600/40"
                 >
                   <Zap className="w-3.5 h-3.5 fill-white" />
-                  <span>⚡ Kill Switch</span>
+                  <span>Kill Switch</span>
                 </button>
               )}
 

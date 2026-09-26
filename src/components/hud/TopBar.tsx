@@ -11,11 +11,10 @@ import {
   TrendingUp, 
   Activity, 
   Search, 
-  PlusCircle, 
   Orbit, 
-  List as ListIcon,
-  Camera,
-  Database
+  List as ListIcon, 
+  Camera, 
+  Database 
 } from 'lucide-react';
 
 interface TopBarProps {
@@ -26,7 +25,6 @@ interface TopBarProps {
   onChangeViewMode: (mode: PortfolioViewMode) => void;
   onToggleOverview: () => void;
   onSmartArrange: () => void;
-  onOpenSpawn: () => void;
   onOpenTuner: () => void;
   onOpenHelp: () => void;
   onFilterRisk: () => void;
@@ -41,7 +39,6 @@ export const TopBar: React.FC<TopBarProps> = ({
   onChangeViewMode,
   onToggleOverview,
   onSmartArrange,
-  onOpenSpawn,
   onOpenTuner,
   onOpenHelp,
   onFilterRisk,
@@ -82,10 +79,10 @@ export const TopBar: React.FC<TopBarProps> = ({
         {/* Nansen Intelligence & API Call Qualification Tracker */}
         <button
           onClick={onOpenNansen}
-          className="glass-badge rounded-lg px-3 py-1.5 hidden xl:flex items-center gap-2 border border-cyan-500/40 hover:border-cyan-400 text-xs shadow-lg transition-all group"
+          className="glass-badge rounded-lg px-3 py-1.5 hidden xl:flex items-center gap-2 border border-cyan-500/40 hover:border-cyan-400 text-xs shadow-lg transition-all group cursor-pointer"
           title="Nansen Meridian Buildathon API Intelligence & Entity Switcher"
         >
-          <Database className="w-3.5 h-3.5 text-cyan-400 group-hover:animate-bounce" />
+          <Database className="w-3.5 h-3.5 text-cyan-400 group-hover:scale-110 transition-transform" />
           <div className="flex flex-col text-left">
             <div className="flex items-center gap-1.5">
               <span className="text-[10px] text-cyan-300 font-bold uppercase tracking-wider">NANSEN API</span>
@@ -106,7 +103,7 @@ export const TopBar: React.FC<TopBarProps> = ({
               <Activity className="w-3 h-3 text-slate-400" />
               Total Exposure
             </div>
-            <div className="font-bold text-sm text-white tracking-tight">
+            <div className="font-bold text-sm text-white tracking-tight font-mono">
               <NumberFlip value={totalValue} prefix="$" />
             </div>
           </div>
@@ -118,7 +115,7 @@ export const TopBar: React.FC<TopBarProps> = ({
               <TrendingUp className="w-3 h-3 text-emerald-400" />
               24h Net PnL
             </div>
-            <div className={`font-bold text-sm tracking-tight ${totalPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+            <div className={`font-bold text-sm tracking-tight font-mono ${totalPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
               <NumberFlip 
                 value={Math.abs(totalPnl)} 
                 prefix={totalPnl >= 0 ? '+$' : '-$'} 
@@ -132,7 +129,7 @@ export const TopBar: React.FC<TopBarProps> = ({
             <div className="text-[10px] text-slate-400 uppercase font-semibold">
               Net Health Factor
             </div>
-            <div className="font-bold text-sm text-amber-400 tracking-tight flex items-center gap-1">
+            <div className="font-bold text-sm text-amber-400 tracking-tight font-mono flex items-center gap-1">
               2.18 <span className="text-[10px] text-slate-400 font-normal">[SAFE]</span>
             </div>
           </div>
@@ -155,25 +152,14 @@ export const TopBar: React.FC<TopBarProps> = ({
           </button>
 
           <button
-            onClick={() => onChangeViewMode('cards')}
-            className={`px-2.5 py-1 rounded text-xs font-bold flex items-center gap-1 transition-all ${
-              viewMode === 'cards' ? 'bg-amber-500 text-black shadow' : 'text-slate-400 hover:text-white'
-            }`}
-            title="Morphing Cards Grid"
-          >
-            <LayoutGrid className="w-3.5 h-3.5" />
-            <span className="hidden md:inline">Cards</span>
-          </button>
-
-          <button
             onClick={() => onChangeViewMode('list')}
             className={`px-2.5 py-1 rounded text-xs font-bold flex items-center gap-1 transition-all ${
               viewMode === 'list' ? 'bg-amber-500 text-black shadow' : 'text-slate-400 hover:text-white'
             }`}
-            title="Dense List View"
+            title="Dense Table List View"
           >
             <ListIcon className="w-3.5 h-3.5" />
-            <span className="hidden md:inline">List</span>
+            <span className="hidden md:inline">Table List</span>
           </button>
 
           <button
@@ -184,7 +170,7 @@ export const TopBar: React.FC<TopBarProps> = ({
             title="CCTV Surveillance Exposure Grid"
           >
             <Camera className="w-3.5 h-3.5 text-rose-300" />
-            <span className="hidden md:inline">CCTV</span>
+            <span className="hidden md:inline">CCTV Feed</span>
           </button>
         </div>
 
@@ -200,22 +186,13 @@ export const TopBar: React.FC<TopBarProps> = ({
         )}
 
         <button
-          onClick={onOpenNansen}
-          className="glass-badge flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-cyan-300 hover:text-white hover:border-cyan-500/60 border border-white/10 shadow-lg transition-all"
-          title="Open Nansen Onchain Intelligence & Profiler Graph"
-        >
-          <Database className="w-3.5 h-3.5 text-cyan-400" />
-          <span className="hidden sm:inline">Nansen</span>
-        </button>
-
-        <button
           onClick={onToggleOverview}
-          className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold border transition-all shadow-lg ${
+          className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold border transition-all shadow-lg cursor-pointer ${
             isOverview 
               ? 'bg-amber-500/25 border-amber-500 text-amber-400 shadow-amber-500/20'
               : 'glass-badge border-white/10 text-slate-200 hover:border-amber-500/60 hover:text-white'
           }`}
-          title="Toggle Intent Search & Macro Overview (SUPER+CTRL+G / Cmd+K)"
+          title="Toggle Intent Search & Macro Overview (Cmd+K / /)"
         >
           <Search className="w-3.5 h-3.5" />
           <span>Intent &amp; Search</span>
@@ -225,20 +202,8 @@ export const TopBar: React.FC<TopBarProps> = ({
         </button>
 
         <button
-          onClick={onOpenSpawn}
-          className="glass-badge flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-amber-300 hover:text-white hover:border-amber-500/60 border border-white/10 shadow-lg transition-all"
-          title="Spawn a new interactive window / DeFi position (N / +)"
-        >
-          <PlusCircle className="w-3.5 h-3.5 text-amber-400" />
-          <span className="hidden sm:inline">New Window</span>
-          <kbd className="text-[9px] px-1.5 py-0.5 rounded bg-black/40 text-amber-400 border border-white/10 font-mono">
-            N
-          </kbd>
-        </button>
-
-        <button
           onClick={onSmartArrange}
-          className="glass-badge flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:border-white/30 border border-white/10 shadow-lg transition-all"
+          className="glass-badge flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:border-white/30 border border-white/10 shadow-lg transition-all cursor-pointer"
           title="Smart arrange nodes by chain clusters (Ctrl+A)"
         >
           <LayoutGrid className="w-3.5 h-3.5" />
@@ -250,7 +215,7 @@ export const TopBar: React.FC<TopBarProps> = ({
 
         <button
           onClick={onOpenTuner}
-          className="glass-badge flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:border-white/30 border border-white/10 shadow-lg transition-all"
+          className="glass-badge flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:border-white/30 border border-white/10 shadow-lg transition-all cursor-pointer"
           title="Live Lens & CRT Shader Tuner (Ctrl+,)"
         >
           <Sliders className="w-3.5 h-3.5" />
@@ -259,7 +224,7 @@ export const TopBar: React.FC<TopBarProps> = ({
 
         <button
           onClick={onOpenHelp}
-          className="glass-badge flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-white border border-white/10 shadow-lg transition-all"
+          className="glass-badge flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-white border border-white/10 shadow-lg transition-all cursor-pointer"
           title="Keyboard shortcuts & help (F1)"
         >
           <HelpCircle className="w-4 h-4" />

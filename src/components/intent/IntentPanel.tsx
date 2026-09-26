@@ -284,7 +284,7 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
                   <span className="text-[10px] text-slate-500 font-bold uppercase">Tools Used:</span>
                   {agentToolCalls.map((t, idx) => (
                     <span key={idx} className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-950 border border-cyan-800 text-cyan-300 font-mono">
-                      ⚙️ {t}
+                      [TOOL: {t}]
                     </span>
                   ))}
                 </div>
@@ -380,7 +380,7 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
               {/* Simulation Action Bar */}
               <div className="pt-2 flex items-center justify-between border-t border-white/10">
                 <div className="text-xs text-emerald-400 font-mono font-semibold">
-                  {selectedRoute.netApyImpact || selectedRoute.riskChange || '✓ Validated against MEV & Slippage'}
+                  {selectedRoute.netApyImpact || selectedRoute.riskChange || 'Validated against MEV & Slippage'}
                 </div>
                 <button
                   disabled={isSimulating}
@@ -412,7 +412,9 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
                   className="p-3 rounded-lg bg-slate-900/60 hover:bg-slate-800/80 border border-white/10 hover:border-amber-500/50 cursor-pointer flex items-center justify-between transition-all group"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="text-xl">{node.icon}</span>
+                    <span className="px-2 py-0.5 rounded bg-black/40 border border-white/10 text-[10px] font-bold text-amber-400">
+                      [{node.icon || node.chain.slice(0, 3).toUpperCase()}]
+                    </span>
                     <div className="flex flex-col">
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-xs text-white group-hover:text-amber-300">

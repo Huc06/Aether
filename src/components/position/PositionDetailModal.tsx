@@ -251,7 +251,7 @@ export const PositionDetailModal: React.FC<PositionDetailModalProps> = ({
               {isExecutingKill && (
                 <div className="p-3 rounded-lg bg-black/60 border border-rose-500/50 flex flex-col gap-2 animate-pulse">
                   <div className="flex items-center justify-between text-xs text-rose-300 font-bold">
-                    <span>⚡ EXECUTING KILL SWITCH PROTOCOL...</span>
+                    <span>EXECUTING KILL SWITCH PROTOCOL...</span>
                     <span>STEP {killStep}/3</span>
                   </div>
                   <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
@@ -278,7 +278,7 @@ export const PositionDetailModal: React.FC<PositionDetailModalProps> = ({
                 <span>
                   {isExecutingKill
                     ? 'Executing Emergency Unwind...'
-                    : `⚡ 1-Click Emergency Kill Switch (Exit to ${node.exitRoutes[selectedExitIndex].targetAsset})`}
+                    : `1-Click Emergency Kill Switch (Exit to ${node.exitRoutes[selectedExitIndex].targetAsset})`}
                 </span>
               </button>
             </div>
