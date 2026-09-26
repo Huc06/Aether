@@ -28,6 +28,7 @@ interface IntentPanelProps {
   onSelectNode: (node: CanvasNode) => void;
   onHighlightNodes: (nodeIds: string[]) => void;
   onExecuteRoute: (route: RecommendedRoute) => void;
+  onApplyDynamicResearchGraph?: (prompt: string) => Promise<void>;
 }
 
 const SMART_MONEY_ROUTE: RecommendedRoute = {
@@ -80,7 +81,8 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
   intentPresets,
   onSelectNode,
   onHighlightNodes,
-  onExecuteRoute
+  onExecuteRoute,
+  onApplyDynamicResearchGraph
 }) => {
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -205,6 +207,10 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
           } else {
             onHighlightNodes(nodes.slice(0, 4).map(n => n.id));
           }
+
+          if (onApplyDynamicResearchGraph) {
+            onApplyDynamicResearchGraph(promptToUse);
+          }
         },
         (err) => {
           setIsAgentStreaming(false);
@@ -213,6 +219,9 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
           const matched = matchNodesFromResearch(fallbackText);
           if (matched.length > 0) {
             onHighlightNodes(matched.map(n => n.id));
+          }
+          if (onApplyDynamicResearchGraph) {
+            onApplyDynamicResearchGraph(promptToUse);
           }
         }
       );
@@ -376,11 +385,15 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
                     Intelligence indexed &bull; Wires energized
                   </span>
                   <button
-                    onClick={() => {
-                      const matched = matchNodesFromResearch(agentResponse);
-                      const targetNodes = matched.length > 0 ? matched : nodes;
-                      onHighlightNodes(targetNodes.map(n => n.id));
-                      onSelectNode(targetNodes[0]);
+                    onClick={async () => {
+                      if (onApplyDynamicResearchGraph) {
+                        await onApplyDynamicResearchGraph(query.trim() || 'Smart Money Netflow');
+                      } else {
+                        const matched = matchNodesFromResearch(agentResponse);
+                        const targetNodes = matched.length > 0 ? matched : nodes;
+                        onHighlightNodes(targetNodes.map(n => n.id));
+                        onSelectNode(targetNodes[0]);
+                      }
                       onClose();
                     }}
                     className="px-3 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-black font-extrabold text-xs font-mono flex items-center gap-1.5 transition-all shadow cursor-pointer"

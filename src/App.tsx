@@ -13,7 +13,7 @@ import { LiveTuner } from './components/hud/LiveTuner';
 import { HelpModal } from './components/hud/HelpModal';
 import { NansenModal } from './components/hud/NansenModal';
 import { Toast } from './components/hud/Toast';
-import { buildNansenSpatialGraph, PRESET_ENTITIES } from './services/nansenApi';
+import { buildNansenSpatialGraph, buildNansenResearchSubgraph, PRESET_ENTITIES } from './services/nansenApi';
 
 export const App: React.FC = () => {
   // Application Data & State
@@ -298,6 +298,24 @@ export const App: React.FC = () => {
     toggleOverviewMode(true);
     showToast(`Spotlighting ${criticalNodes.length} High-Risk Positions`);
   }, [nodes, toggleOverviewMode, showToast]);
+
+  // Dynamically generate and inject research graph & animated wires
+  const handleApplyDynamicResearchGraph = useCallback(async (prompt: string) => {
+    try {
+      const res = await buildNansenResearchSubgraph(prompt, nodes, wires);
+      setNodes(res.nodes);
+      setWires(res.wires);
+      setHighlightNodeIds(res.highlightIds);
+
+      const targetNode = res.nodes.find(n => n.id === res.primaryTargetId) || res.nodes[0];
+      if (targetNode) {
+        focusNode(targetNode.id, true);
+      }
+      showToast(`Energized dynamic flow graph with ${res.highlightIds.length} nodes & wires`);
+    } catch (err: any) {
+      console.warn('Failed to apply dynamic research graph:', err);
+    }
+  }, [nodes, wires, focusNode, showToast]);
 
   // Handle Route Execution Simulation
   const handleExecuteRoute = useCallback((route: RecommendedRoute) => {
@@ -726,6 +744,7 @@ export const App: React.FC = () => {
         onSelectNode={(node) => handleFocusNode(node, true)}
         onHighlightNodes={setHighlightNodeIds}
         onExecuteRoute={handleExecuteRoute}
+        onApplyDynamicResearchGraph={handleApplyDynamicResearchGraph}
       />
 
       {/* Screen 3: Position Detail Deep Focus & 1-Click Kill Switch */}
