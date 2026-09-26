@@ -926,6 +926,7 @@ export const App: React.FC = () => {
       {/* Screen 3: Position Detail Deep Focus & 1-Click Kill Switch */}
       <PositionDetailModal
         node={selectedNode}
+        config={config}
         onClose={() => setSelectedNode(null)}
         onKillSwitch={handleKillSwitch}
       />
@@ -942,6 +943,7 @@ export const App: React.FC = () => {
       {/* Nansen Intelligence & Profiler Modal */}
       <NansenModal
         isOpen={isNansenOpen}
+        config={config}
         onClose={() => setIsNansenOpen(false)}
         onLoadEntity={handleLoadNansenEntity}
         onShowToast={showToast}

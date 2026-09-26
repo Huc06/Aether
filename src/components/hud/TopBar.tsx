@@ -237,39 +237,39 @@ export const TopBar: React.FC<TopBarProps> = ({
 
         <button
           onClick={onOpenTuner}
-          className={`glass-badge flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold border shadow-lg transition-all cursor-pointer ${
+          className={`glass-badge flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border shadow-lg transition-all cursor-pointer ${
             isLight 
-              ? 'bg-white border-slate-300 text-slate-800 hover:text-slate-950 hover:border-slate-400' 
+              ? 'bg-white border-slate-300 text-slate-800 hover:text-slate-950 hover:border-slate-400 hover:shadow-sm' 
               : 'border-white/10 text-slate-300 hover:text-white hover:border-white/30'
           }`}
           title="Live Lens & CRT Shader Tuner (Ctrl+,)"
         >
-          <Sliders className="w-3.5 h-3.5" />
-          <span className="hidden xl:inline">Lens</span>
+          <Sliders className={`w-3.5 h-3.5 ${isLight ? 'text-amber-600' : 'text-amber-400'}`} />
+          <span className="hidden md:inline">Lens</span>
         </button>
 
         <button
           onClick={onToggleThemeMode}
-          className={`glass-badge flex items-center justify-center w-7 h-7 rounded-lg border shadow-lg transition-all cursor-pointer ${
+          className={`glass-badge flex items-center justify-center w-8 h-8 rounded-lg border shadow-lg transition-all cursor-pointer ${
             isLight 
-              ? 'bg-white border-slate-300 text-amber-600 hover:bg-amber-50' 
-              : 'border-white/10 text-slate-300 hover:text-amber-400'
+              ? 'bg-white border-slate-300 text-amber-600 hover:bg-amber-50 hover:border-slate-400' 
+              : 'border-white/10 text-slate-300 hover:text-amber-400 hover:border-white/30'
           }`}
           title={isLight ? "Switch to Dark Mode (Cyberpunk)" : "Switch to Light Mode (Clean Slate)"}
         >
-          {isLight ? <Sun className="w-3.5 h-3.5 text-amber-600" /> : <Moon className="w-3.5 h-3.5 text-cyan-400" />}
+          {isLight ? <Sun className="w-4 h-4 text-amber-500" /> : <Moon className="w-4 h-4 text-cyan-400" />}
         </button>
 
         <button
           onClick={onOpenHelp}
-          className={`glass-badge flex items-center justify-center w-7 h-7 rounded-lg border shadow-lg transition-all cursor-pointer ${
+          className={`glass-badge flex items-center justify-center w-8 h-8 rounded-lg border shadow-lg transition-all cursor-pointer ${
             isLight 
-              ? 'bg-white border-slate-300 text-slate-700 hover:text-slate-950' 
-              : 'border-white/10 text-slate-400 hover:text-white'
+              ? 'bg-white border-slate-300 text-slate-800 hover:text-slate-950 hover:border-slate-400' 
+              : 'border-white/10 text-slate-300 hover:text-white hover:border-white/30'
           }`}
           title="Keyboard shortcuts & help (F1)"
         >
-          <HelpCircle className="w-3.5 h-3.5" />
+          <HelpCircle className="w-4 h-4" />
         </button>
       </div>
     </header>
