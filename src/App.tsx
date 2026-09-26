@@ -877,7 +877,9 @@ export const App: React.FC = () => {
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
-        className="absolute inset-0 w-full h-full block cursor-crosshair"
+        className={`absolute inset-0 w-full h-full block cursor-crosshair ${
+          viewMode === 'canvas' ? '' : 'invisible pointer-events-none'
+        }`}
       />
 
       {/* Screen 1: Top Bar & Portfolio Exposure HUD */}
@@ -983,6 +985,7 @@ export const App: React.FC = () => {
       />
 
       {/* Corner HUD coordinates & camera state readout */}
+      {viewMode === 'canvas' && (
       <div className="absolute bottom-5 left-6 font-mono text-[10px] text-slate-500 tracking-wider pointer-events-none flex flex-col gap-1 drop-shadow">
         <span>CAM_POS: [X: {Math.round(cameraRef.current?.state.x || 0)}, Y: {Math.round(cameraRef.current?.state.y || 0)}]</span>
         <span>ZOOM_SCALE: {(cameraRef.current?.state.scale || 1.0).toFixed(2)}x &bull; NODES: {nodes.length} &bull; WIRES: {wires.length}</span>
@@ -997,6 +1000,7 @@ export const App: React.FC = () => {
           ↺ RESET TO DEFAULT PORTFOLIO
         </button>
       </div>
+      )}
     </div>
   );
 };

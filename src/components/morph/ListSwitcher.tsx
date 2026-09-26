@@ -112,7 +112,7 @@ export const ListSwitcher: React.FC<ListSwitcherProps> = ({
   return (
     <div
       className={`absolute inset-0 z-30 pt-[78px] sm:pt-[84px] md:pt-[92px] flex flex-col overflow-hidden transition-colors duration-200 ${
-        isLight ? 'bg-slate-50/95 text-slate-900' : 'bg-[#07090e]/95 text-slate-200'
+        isLight ? 'bg-slate-50 text-slate-900' : 'bg-[#07090e] text-slate-200'
       }`}
     >
       <DitherDefs idPrefix="ledger" isLight={isLight} />
