@@ -651,6 +651,14 @@ export const App: React.FC = () => {
       const zoomFactor = e.deltaY < 0 ? 1.12 : 0.89;
       const nextScale = Math.max(0.18, Math.min(2.5, cameraRef.current.state.targetScale * zoomFactor));
       cameraRef.current.state.targetScale = nextScale;
+
+      if (nextScale < 0.45 && !cameraRef.current.state.isOverview) {
+        cameraRef.current.state.isOverview = true;
+        setIsOverview(true);
+      } else if (nextScale >= 0.75 && cameraRef.current.state.isOverview) {
+        cameraRef.current.state.isOverview = false;
+        setIsOverview(false);
+      }
     };
 
     canvas.addEventListener('wheel', onWheel, { passive: false });
