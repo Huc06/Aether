@@ -13,7 +13,7 @@ import { LiveTuner } from './components/hud/LiveTuner';
 import { HelpModal } from './components/hud/HelpModal';
 import { NansenModal } from './components/hud/NansenModal';
 import { Toast } from './components/hud/Toast';
-import { buildNansenSpatialGraph, buildNansenResearchSubgraph, PRESET_ENTITIES } from './services/nansenApi';
+import { buildNansenSpatialGraph, buildNansenResearchSubgraph, PRESET_ENTITIES, NansenEntityTarget } from './services/nansenApi';
 
 export const App: React.FC = () => {
   // Application Data & State
@@ -74,6 +74,17 @@ export const App: React.FC = () => {
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isSimulatingRoute, setIsSimulatingRoute] = useState(false);
+  const [activeNansenEntity, setActiveNansenEntity] = useState<NansenEntityTarget | null>(() => {
+    const saved = localStorage.getItem('aether_active_entity_v1');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error('Failed to parse saved Nansen entity', e);
+      }
+    }
+    return null;
+  });
 
   // History for Undo
   const historyRef = useRef<string[]>([]);
@@ -107,6 +118,74 @@ export const App: React.FC = () => {
     localStorage.setItem('aether_config_v1', JSON.stringify(config));
   }, [config]);
 
+  useEffect(() => {
+    localStorage.setItem('aether_wires_v1', JSON.stringify(wires));
+  }, [wires]);
+
+  useEffect(() => {
+    if (activeNansenEntity) {
+      localStorage.setItem('aether_active_entity_v1', JSON.stringify(activeNansenEntity));
+    } else {
+      localStorage.removeItem('aether_active_entity_v1');
+    }
+  }, [activeNansenEntity]);
+
+  // Drop dangling wires whose endpoints no longer exist (refresh / undo / node close)
+  useEffect(() => {
+    const nodeIds = new Set(nodes.map(n => n.id));
+    setWires(prev => {
+      const next = prev.filter(w => nodeIds.has(w.fromId) && nodeIds.has(w.toId));
+      return next.length === prev.length ? prev : next;
+    });
+  }, [nodes]);
+
+  // Restore camera on mount & persist it continuously (survives F5)
+  useEffect(() => {
+    const cam = cameraRef.current;
+    try {
+      const saved = localStorage.getItem('aether_camera_v1');
+      if (saved) {
+        const p = JSON.parse(saved);
+        if (typeof p.x === 'number' && typeof p.y === 'number' && typeof p.scale === 'number') {
+          cam.state.x = p.x;
+          cam.state.y = p.y;
+          cam.state.targetX = p.x;
+          cam.state.targetY = p.y;
+          cam.state.scale = p.scale;
+          cam.state.targetScale = p.scale;
+          if (p.isOverview) {
+            cam.state.isOverview = true;
+            cam.state.transitionProgress = 1;
+            setIsOverview(true);
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Failed to restore camera state', e);
+    }
+
+    const saveCamera = () => {
+      try {
+        localStorage.setItem('aether_camera_v1', JSON.stringify({
+          x: cam.state.x,
+          y: cam.state.y,
+          scale: cam.state.scale,
+          isOverview: cam.state.isOverview
+        }));
+      } catch (e) {
+        console.error('Failed to save camera state', e);
+      }
+    };
+
+    const interval = window.setInterval(saveCamera, 1000);
+    window.addEventListener('beforeunload', saveCamera);
+    return () => {
+      saveCamera();
+      window.clearInterval(interval);
+      window.removeEventListener('beforeunload', saveCamera);
+    };
+  }, []);
+
   const recordHistory = useCallback(() => {
     historyRef.current.push(JSON.stringify(nodes));
     if (historyRef.current.length > 20) historyRef.current.shift();
@@ -130,6 +209,7 @@ export const App: React.FC = () => {
       if (newNodes.length > 0) {
         setNodes(newNodes);
         setWires(newWires);
+        setActiveNansenEntity(entity);
         focusNode(newNodes[0].id, true);
         cameraRef.current.state.x = newNodes[0].x;
         cameraRef.current.state.y = newNodes[0].y;
@@ -372,6 +452,39 @@ export const App: React.FC = () => {
     }));
   }, [showToast]);
 
+  // Reset to Default Portfolio (Ctrl+Shift+R or HUD button)
+  const handleResetPortfolio = useCallback(() => {
+    [
+      'aether_nodes_v1',
+      'phantomat_nodes_v1',
+      'aether_wires_v1',
+      'aether_camera_v1',
+      'aether_active_entity_v1'
+    ].forEach(k => localStorage.removeItem(k));
+
+    historyRef.current = [];
+    setNodes(JSON.parse(JSON.stringify(INITIAL_NODES)));
+    setWires(JSON.parse(JSON.stringify(INITIAL_WIRES)));
+    setActiveNansenEntity(null);
+    setHighlightNodeIds([]);
+    setSelectedNode(null);
+    setFocusedNodeId(INITIAL_NODES[0]?.id || 'wallet-ledger');
+
+    const cam = cameraRef.current;
+    cam.state.isOverview = false;
+    cam.state.transitionProgress = 0;
+    cam.state.x = 0;
+    cam.state.y = 0;
+    cam.state.targetX = 0;
+    cam.state.targetY = 0;
+    cam.state.scale = config.normalScale;
+    cam.state.targetScale = config.normalScale;
+    setIsOverview(false);
+    setIsIntentOpen(false);
+
+    showToast('Reset to Default Portfolio');
+  }, [config.normalScale, showToast]);
+
   // Global Keyboard Shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -447,6 +560,13 @@ export const App: React.FC = () => {
         return;
       }
 
+      // Ctrl/Cmd + Shift + R -> Reset to Default Portfolio
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'r') {
+        e.preventDefault();
+        handleResetPortfolio();
+        return;
+      }
+
       // Escape -> Dismiss panels / reset camera
       if (e.key === 'Escape') {
         setIsIntentOpen(false);
@@ -474,7 +594,8 @@ export const App: React.FC = () => {
     handleToggleFill,
     handleTogglePin,
     handleNudge,
-    handleFocusNearest
+    handleFocusNearest,
+    handleResetPortfolio
   ]);
 
   // WebGL & Render Loop
@@ -815,7 +936,16 @@ export const App: React.FC = () => {
       <div className="absolute bottom-5 left-6 font-mono text-[10px] text-slate-500 tracking-wider pointer-events-none flex flex-col gap-1 drop-shadow">
         <span>CAM_POS: [X: {Math.round(cameraRef.current?.state.x || 0)}, Y: {Math.round(cameraRef.current?.state.y || 0)}]</span>
         <span>ZOOM_SCALE: {(cameraRef.current?.state.scale || 1.0).toFixed(2)}x &bull; NODES: {nodes.length} &bull; WIRES: {wires.length}</span>
+        {activeNansenEntity && (
+          <span className="text-cyan-400 font-bold">NANSEN_CTX: {activeNansenEntity.label} [{activeNansenEntity.chain}]</span>
+        )}
         <span className="text-amber-500 font-bold">⌘K INTENT ENGINE &bull; ^A ARRANGE &bull; TAB VIEW SWITCH</span>
+        <button
+          onClick={handleResetPortfolio}
+          className="pointer-events-auto mt-1 self-start px-2 py-1 rounded border border-white/15 bg-white/5 hover:bg-amber-500/20 hover:border-amber-400/60 text-slate-400 hover:text-amber-300 text-[10px] font-bold tracking-wider transition-all cursor-pointer"
+        >
+          ↺ RESET TO DEFAULT PORTFOLIO
+        </button>
       </div>
     </div>
   );

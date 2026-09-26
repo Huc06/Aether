@@ -84,6 +84,12 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose, config })
             <div className={`flex items-center justify-between p-2 rounded border ${
               isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/5'
             }`}>
+              <span className={isLight ? 'text-slate-700 font-semibold' : 'text-slate-300'}>Ctrl + Shift + R</span>
+              <span className={`font-bold ${isLight ? 'text-amber-700' : 'text-amber-300'}`}>Reset Portfolio</span>
+            </div>
+            <div className={`flex items-center justify-between p-2 rounded border ${
+              isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/5'
+            }`}>
               <span className={isLight ? 'text-slate-700 font-semibold' : 'text-slate-300'}>Esc</span>
               <span className={`font-bold ${isLight ? 'text-amber-700' : 'text-amber-300'}`}>Reset / Dismiss</span>
             </div>
@@ -93,7 +99,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose, config })
         <div className={`p-3 rounded-lg text-[11px] leading-relaxed font-sans border ${
           isLight ? 'bg-amber-50 border-amber-300 text-amber-950 font-medium' : 'bg-amber-500/10 border-amber-500/20 text-amber-300/90'
         }`}>
-          <strong>Spatial DeFi Tip:</strong> Drag and organize your nodes freely. Your layout automatically persists in your browser.
+          <strong>Spatial DeFi Tip:</strong> Drag and organize your nodes freely. Your layout, wires, camera position, and Nansen context automatically persist in your browser across refreshes.
         </div>
       </div>
     </div>
