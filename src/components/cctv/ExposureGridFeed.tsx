@@ -287,7 +287,7 @@ export const ExposureGridFeed: React.FC<ExposureGridFeedProps> = ({
   };
 
   return (
-    <div className="absolute inset-0 z-30 pt-[84px] md:pt-[92px] px-4 md:px-8 pb-5 overflow-hidden bg-[#04070c] text-slate-200 font-mono select-none animate-morph-rise flex flex-col items-center">
+    <div className="absolute inset-0 z-30 pt-[78px] sm:pt-[84px] md:pt-[92px] px-3 sm:px-4 md:px-8 pb-4 overflow-hidden bg-[#04070c] text-slate-200 font-mono select-none animate-morph-rise flex flex-col items-center">
       <div className="w-full max-w-7xl h-full flex flex-col gap-2.5">
         {/* Surveillance Control Sub-Header */}
         <div className="glass-panel px-4 py-2 rounded-xl border border-white/10 flex flex-wrap items-center justify-between gap-3 shadow-xl bg-slate-950/90 backdrop-blur-xl shrink-0">
