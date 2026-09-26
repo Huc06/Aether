@@ -448,7 +448,7 @@ export const ExposureGridFeed: React.FC<ExposureGridFeedProps> = ({
             const live = liveSlots[idx];
             return (
               <div
-                className="absolute pointer-events-none"
+                className="absolute pointer-events-none z-20"
                 style={{
                   left: `${(hoverCell.col / gridCols) * 100}%`,
                   top: `${(hoverCell.row / gridRows) * 100}%`,
@@ -461,7 +461,11 @@ export const ExposureGridFeed: React.FC<ExposureGridFeedProps> = ({
                   node ? (live ? 'border-cyan-400/70' : 'border-rose-500/70') : 'border-slate-500/50'
                 }`} />
 
-                <div className="absolute left-2 right-2 bottom-2 flex flex-wrap items-center gap-1.5 pointer-events-auto">
+                {/* Bottom-row cells flip the toolbar to the top so the tip bar
+                    never swallows the buttons. */}
+                <div className={`absolute left-2 right-2 flex flex-wrap items-center gap-1.5 pointer-events-auto ${
+                  hoverCell.row === gridRows - 1 ? 'top-9' : 'bottom-2'
+                }`}>
                   {!node && (
                     <span className="px-2 py-1 rounded-md bg-black/80 border border-slate-600 text-[10px] font-bold text-slate-300">
                       CHANNEL UNASSIGNED
@@ -511,7 +515,7 @@ export const ExposureGridFeed: React.FC<ExposureGridFeedProps> = ({
           })()}
 
           {/* Prompt Tip */}
-          <div className="absolute bottom-3 left-4 pointer-events-none text-[10px] text-cyan-300/80 font-mono bg-black/70 px-3 py-1 rounded-md border border-cyan-500/30">
+          <div className={`absolute bottom-3 left-4 z-10 pointer-events-none text-[10px] text-cyan-300/80 font-mono bg-black/70 px-3 py-1 rounded-md border border-cyan-500/30 transition-opacity duration-150 ${hoverCell ? 'opacity-0' : 'opacity-100'}`}>
             <strong>SolaceUI Interaction:</strong> Hover a cell for inline actions &bull; Click a live cell to inspect &bull; Click a dead cell to reconnect &bull; MCP agents can drive this view
           </div>
         </div>
