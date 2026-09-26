@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://github.com/Huc06/Aether">
-    <img src="https://raw.githubusercontent.com/Huc06/Aether/main/docs/brand/aether-banner.svg" alt="Aether Spatial DeFi Workspace Banner" width="100%" onerror="this.style.display='none'" />
+    <img src="docs/brand/aether-banner.png" alt="Aether Spatial DeFi Workspace Banner" width="100%" />
   </a>
 </p>
 
@@ -118,15 +118,15 @@ Aether gives operators three complementary lenses into their portfolio, switchab
 
 | 1. Spatial WebGL Canvas (Amber Cyberpunk) | 2. Nymspace Bend Ledger (Curved Scroll) |
 |:---:|:---:|
-| <a href="docs/screenshots/01-spatial-canvas-overview.svg"><img src="docs/screenshots/01-spatial-canvas-overview.svg" alt="Aether Spatial WebGL Canvas" width="100%" /></a> | <a href="docs/screenshots/02-nymspace-bend-ledger.svg"><img src="docs/screenshots/02-nymspace-bend-ledger.svg" alt="Nymspace Bend Ledger" width="100%" /></a> |
+| <a href="docs/screenshots/01-spatial-canvas-overview.png"><img src="docs/screenshots/01-spatial-canvas-overview.png" alt="Aether Spatial WebGL Canvas" width="100%" /></a> | <a href="docs/screenshots/02-nymspace-bend-ledger.png"><img src="docs/screenshots/02-nymspace-bend-ledger.png" alt="Nymspace Bend Ledger" width="100%" /></a> |
 
 | 3. CCTV Surveillance Matrix (CRT Telemetry) | 4. Nansen Live Entity Profiler (vitalik.eth) |
 |:---:|:---:|
-| <a href="docs/screenshots/03-cctv-exposure-grid.svg"><img src="docs/screenshots/03-cctv-exposure-grid.svg" alt="CCTV Surveillance Feed" width="100%" /></a> | <a href="docs/screenshots/04-nansen-profiler-graph.svg"><img src="docs/screenshots/04-nansen-profiler-graph.svg" alt="Nansen Live Entity Profiler" width="100%" /></a> |
+| <a href="docs/screenshots/03-cctv-exposure-grid.png"><img src="docs/screenshots/03-cctv-exposure-grid.png" alt="CCTV Surveillance Feed" width="100%" /></a> | <a href="docs/screenshots/04-nansen-profiler-graph.png"><img src="docs/screenshots/04-nansen-profiler-graph.png" alt="Nansen Live Entity Profiler" width="100%" /></a> |
 
 | 5. Nansen AI Agent & Route Pipeline (Cmd+K) | 6. Clean Slate Light Mode (High Contrast) |
 |:---:|:---:|
-| <a href="docs/screenshots/05-intent-agent-stream.svg"><img src="docs/screenshots/05-intent-agent-stream.svg" alt="Nansen AI Research Agent" width="100%" /></a> | <a href="docs/screenshots/06-clean-slate-light-mode.svg"><img src="docs/screenshots/06-clean-slate-light-mode.svg" alt="Clean Slate Light Mode" width="100%" /></a> |
+| <a href="docs/screenshots/05-intent-agent-stream.png"><img src="docs/screenshots/05-intent-agent-stream.png" alt="Nansen AI Research Agent" width="100%" /></a> | <a href="docs/screenshots/06-clean-slate-light-mode.png"><img src="docs/screenshots/06-clean-slate-light-mode.png" alt="Clean Slate Light Mode" width="100%" /></a> |
 
 ---
 
