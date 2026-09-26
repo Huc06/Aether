@@ -704,7 +704,6 @@ export const App: React.FC = () => {
         onOpenNansen={() => setIsNansenOpen(true)}
         onOpenTuner={() => setIsTunerOpen(true)}
         onOpenHelp={() => setIsHelpOpen(true)}
-        onFilterRisk={handleFilterRisk}
       />
 
       {/* Morph UI: List Switcher (Dense Table List View) */}

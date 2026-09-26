@@ -7,7 +7,6 @@ import {
   LayoutGrid, 
   Sliders, 
   HelpCircle, 
-  ShieldAlert, 
   TrendingUp, 
   Activity, 
   Search, 
@@ -27,7 +26,6 @@ interface TopBarProps {
   onSmartArrange: () => void;
   onOpenTuner: () => void;
   onOpenHelp: () => void;
-  onFilterRisk: () => void;
   onOpenNansen: () => void;
 }
 
@@ -41,14 +39,12 @@ export const TopBar: React.FC<TopBarProps> = ({
   onSmartArrange,
   onOpenTuner,
   onOpenHelp,
-  onFilterRisk,
   onOpenNansen
 }) => {
   // Aggregate portfolio metrics
   const totalValue = nodes.reduce((sum, n) => sum + n.valueUsd, 0);
   const totalPnl = nodes.reduce((sum, n) => sum + (n.pnl24hUsd || 0), 0);
   const pnlPercent = totalValue > 0 ? (totalPnl / (totalValue - totalPnl)) * 100 : 0;
-  const criticalCount = nodes.filter(n => n.riskLevel === 'critical' || n.riskLevel === 'high').length;
   const callCount = getApiCallCount();
 
   return (
@@ -167,17 +163,6 @@ export const TopBar: React.FC<TopBarProps> = ({
             <span>CCTV Feed</span>
           </button>
         </div>
-
-        {criticalCount > 0 && (
-          <button
-            onClick={onFilterRisk}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/50 text-rose-400 text-xs font-semibold shadow-lg transition-all animate-pulse cursor-pointer"
-            title="Highlight high-risk & near liquidation positions"
-          >
-            <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />
-            <span>{criticalCount} ALERT</span>
-          </button>
-        )}
 
         <button
           onClick={onToggleOverview}
