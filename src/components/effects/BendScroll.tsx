@@ -90,7 +90,7 @@ export const BendScroll: React.FC<BendScrollProps> = ({
       <canvas
         ref={outputRef}
         aria-hidden
-        className="pointer-events-none absolute inset-0 h-full w-full"
+        className="pointer-events-none absolute inset-0 z-0 h-full w-full"
       />
     </div>
   );
