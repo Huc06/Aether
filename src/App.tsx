@@ -13,6 +13,7 @@ import { LiveTuner } from './components/hud/LiveTuner';
 import { HelpModal } from './components/hud/HelpModal';
 import { NansenModal } from './components/hud/NansenModal';
 import { Toast } from './components/hud/Toast';
+import { ViewModeDock } from './components/hud/ViewModeDock';
 import { buildNansenSpatialGraph, buildNansenResearchSubgraph, PRESET_ENTITIES, NansenEntityTarget } from './services/nansenApi';
 
 export const App: React.FC = () => {
@@ -505,6 +506,20 @@ export const App: React.FC = () => {
         return;
       }
 
+      // View dock shortcuts (1: Canvas, 2: Table List, 3: CCTV Feed)
+      if (e.key === '1' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        setViewMode('canvas');
+        return;
+      }
+      if (e.key === '2' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        setViewMode('list');
+        return;
+      }
+      if (e.key === '3' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        setViewMode('exposure-grid');
+        return;
+      }
+
       // Super + Shift + Arrows -> Nudge window
       if ((e.metaKey || e.ctrlKey) && e.shiftKey) {
         if (e.key === 'ArrowLeft') { e.preventDefault(); handleNudge(-1, 0); return; }
@@ -870,8 +885,6 @@ export const App: React.FC = () => {
         config={config}
         nodes={nodes}
         isOverview={isOverview}
-        viewMode={viewMode}
-        onChangeViewMode={setViewMode}
         onToggleOverview={() => toggleOverviewMode()}
         onSmartArrange={handleSmartArrange}
         onOpenNansen={() => setIsNansenOpen(true)}
@@ -953,6 +966,13 @@ export const App: React.FC = () => {
       <HelpModal
         isOpen={isHelpOpen}
         onClose={() => setIsHelpOpen(false)}
+        config={config}
+      />
+
+      {/* macOS-style Floating Workspace Dock */}
+      <ViewModeDock
+        viewMode={viewMode}
+        onChangeViewMode={setViewMode}
         config={config}
       />
 

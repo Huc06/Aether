@@ -1,6 +1,5 @@
 import React from 'react';
 import { LensConfig, CanvasNode } from '../../types';
-import { PortfolioViewMode } from '../morph/ListSwitcher';
 import { NumberFlip } from '../morph/NumberFlip';
 import { getApiCallCount } from '../../services/nansenApi';
 import { 
@@ -10,9 +9,6 @@ import {
   TrendingUp, 
   Activity, 
   Search, 
-  Orbit, 
-  List as ListIcon, 
-  Camera, 
   Database,
   Sun,
   Moon
@@ -22,8 +18,6 @@ interface TopBarProps {
   config: LensConfig;
   nodes: CanvasNode[];
   isOverview: boolean;
-  viewMode: PortfolioViewMode;
-  onChangeViewMode: (mode: PortfolioViewMode) => void;
   onToggleOverview: () => void;
   onSmartArrange: () => void;
   onOpenTuner: () => void;
@@ -36,8 +30,6 @@ export const TopBar: React.FC<TopBarProps> = ({
   config,
   nodes,
   isOverview,
-  viewMode,
-  onChangeViewMode,
   onToggleOverview,
   onSmartArrange,
   onOpenTuner,
@@ -151,52 +143,8 @@ export const TopBar: React.FC<TopBarProps> = ({
         </div>
       </div>
 
-      {/* Action Controls & Layout Switcher */}
+      {/* Action Controls */}
       <div className="flex items-center gap-2 pointer-events-auto shrink-0">
-        {/* Layout View Switcher */}
-        <div className={`glass-badge rounded-lg p-1 flex items-center gap-1 border shadow-lg ${
-          isLight ? 'bg-white/95 border-slate-300' : 'border-white/10'
-        }`}>
-          <button
-            onClick={() => onChangeViewMode('canvas')}
-            className={`px-2.5 py-1 rounded text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
-              viewMode === 'canvas' 
-                ? 'bg-amber-500 text-black shadow font-extrabold' 
-                : (isLight ? 'text-slate-700 hover:text-slate-950 hover:bg-slate-100' : 'text-slate-400 hover:text-white')
-            }`}
-            title="Spatial Canvas (Infinite Plane)"
-          >
-            <Orbit className="w-3.5 h-3.5" />
-            <span>Canvas</span>
-          </button>
-
-          <button
-            onClick={() => onChangeViewMode('list')}
-            className={`px-2.5 py-1 rounded text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
-              viewMode === 'list' 
-                ? 'bg-amber-500 text-black shadow font-extrabold' 
-                : (isLight ? 'text-slate-700 hover:text-slate-950 hover:bg-slate-100' : 'text-slate-400 hover:text-white')
-            }`}
-            title="Dense Table List View"
-          >
-            <ListIcon className="w-3.5 h-3.5" />
-            <span>Table List</span>
-          </button>
-
-          <button
-            onClick={() => onChangeViewMode('exposure-grid')}
-            className={`px-2.5 py-1 rounded text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
-              viewMode === 'exposure-grid' 
-                ? 'bg-rose-500 text-white shadow shadow-rose-500/40 font-extrabold' 
-                : (isLight ? 'text-slate-700 hover:text-slate-950 hover:bg-slate-100' : 'text-slate-400 hover:text-white')
-            }`}
-            title="CCTV Surveillance Exposure Grid"
-          >
-            <Camera className="w-3.5 h-3.5" />
-            <span>CCTV Feed</span>
-          </button>
-        </div>
-
         <button
           onClick={onToggleOverview}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border transition-all shadow-lg cursor-pointer ${

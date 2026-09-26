@@ -13,7 +13,7 @@ export const Toast: React.FC<ToastProps> = ({ message, isLight = false }) => {
   const isAlert = message.includes('⚡') || message.toLowerCase().includes('kill') || message.toLowerCase().includes('alert') || message.toLowerCase().includes('critical') || message.toLowerCase().includes('error');
 
   return (
-    <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[60] pointer-events-none flex items-center justify-center max-w-lg w-auto px-4 animate-in fade-in slide-in-from-bottom-3 duration-200">
+    <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-[60] pointer-events-none flex items-center justify-center max-w-lg w-auto px-4 animate-in fade-in slide-in-from-bottom-3 duration-200">
       <div className={`px-4 py-2.5 rounded-xl text-xs font-mono flex items-center gap-2.5 transition-colors select-none ${
         isLight
           ? 'bg-white/98 text-slate-950 border border-slate-300 shadow-[0_12px_40px_rgba(0,0,0,0.18)]'
