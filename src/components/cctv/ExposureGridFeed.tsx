@@ -7,6 +7,7 @@ import {
   ExposureGridTreatment 
 } from './ExposureGridShader';
 import { Eye, Maximize2, RefreshCw, Zap, Layers, ChevronRight, X } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger } from '../ui/tabs';
 
 export interface CctvSettings {
   columns: number;
@@ -349,65 +350,66 @@ export const ExposureGridFeed: React.FC<ExposureGridFeedProps> = ({
             <div className={`inline-flex p-0.5 rounded-lg border ${
               isLight ? 'bg-slate-100 border-slate-300' : 'bg-black/60 border-white/10'
             }`}>
-              <button
-                onClick={() => setTreatment('chroma')}
-                className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all cursor-pointer ${
-                  treatment === 'chroma' 
-                    ? 'bg-amber-500 text-black shadow font-extrabold' 
-                    : (isLight ? 'text-slate-700 hover:text-slate-950' : 'text-slate-400 hover:text-white')
-                }`}
-                title="Photographic Ink Separation (Chroma)"
+              <Tabs
+                value={treatment}
+                onValueChange={(v) => setTreatment(v as ExposureGridTreatment)}
+                variant="segment"
               >
-                Chroma Ink
-              </button>
-              <button
-                onClick={() => setTreatment('exposure')}
-                className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all cursor-pointer ${
-                  treatment === 'exposure' 
-                    ? 'bg-amber-500 text-black shadow font-extrabold' 
-                    : (isLight ? 'text-slate-700 hover:text-slate-950' : 'text-slate-400 hover:text-white')
-                }`}
-                title="Dynamic Exposure Shifts"
-              >
-                Exposure
-              </button>
-              <button
-                onClick={() => setTreatment('monochrome')}
-                className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all cursor-pointer ${
-                  treatment === 'monochrome' 
-                    ? 'bg-emerald-500 text-black shadow font-extrabold' 
-                    : (isLight ? 'text-slate-700 hover:text-slate-950' : 'text-slate-400 hover:text-white')
-                }`}
-                title="Night-Vision CCTV Monochrome"
-              >
-                Night-Vision
-              </button>
+                <TabsList
+                  className="p-0"
+                  indicatorClassName={treatment === 'monochrome' ? 'bg-emerald-500' : 'bg-amber-500'}
+                >
+                  <TabsTrigger
+                    value="chroma"
+                    className={`px-2.5 py-1 text-[11px] font-bold ${isLight ? 'text-slate-700 hover:text-slate-950' : 'text-slate-400 hover:text-white'}`}
+                  >
+                    Chroma Ink
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="exposure"
+                    className={`px-2.5 py-1 text-[11px] font-bold ${isLight ? 'text-slate-700 hover:text-slate-950' : 'text-slate-400 hover:text-white'}`}
+                  >
+                    Exposure
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="monochrome"
+                    className={`px-2.5 py-1 text-[11px] font-bold ${isLight ? 'text-slate-700 hover:text-slate-950' : 'text-slate-400 hover:text-white'}`}
+                  >
+                    Night-Vision
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
             </div>
 
             {/* Grid Density */}
             <div className={`inline-flex p-0.5 rounded-lg border ${
               isLight ? 'bg-slate-100 border-slate-300' : 'bg-black/60 border-white/10'
             }`}>
-              <button
-                onClick={() => onChangeSettings({ columns: 2, rows: 2 })}
-                className={`px-2 py-1 rounded-md text-[11px] font-bold cursor-pointer ${
-                  gridCols === 2 
-                    ? (isLight ? 'bg-white text-slate-950 shadow-sm font-extrabold' : 'bg-white/20 text-white') 
-                    : (isLight ? 'text-slate-600 hover:text-slate-950' : 'text-slate-400 hover:text-white')
-                }`}
+              <Tabs
+                value={`${gridCols}x${gridRows}`}
+                onValueChange={(v) => {
+                  const n = v === '2x2' ? 2 : 3;
+                  onChangeSettings({ columns: n, rows: n });
+                }}
+                variant="segment"
               >
-                2x2
-              </button>
-              <button
-                onClick={() => onChangeSettings({ columns: 3, rows: 3 })}
-                className={`px-2 py-1 rounded-md text-[11px] font-bold cursor-pointer ${
-                  gridCols === 3 
-                    ? (isLight ? 'bg-white text-slate-950 shadow-sm font-extrabold' : 'bg-white/20 text-white') 
-                    : (isLight ? 'text-slate-600 hover:text-slate-950' : 'text-slate-400 hover:text-white')
-                }`}
-              >
-                3x3
-              </button>
+                <TabsList className="p-0" indicatorClassName={isLight ? 'bg-white shadow-sm' : 'bg-white/25'}>
+                  <TabsTrigger
+                    value="2x2"
+                    className={`px-2 py-1 text-[11px] font-bold ${isLight ? 'text-slate-600 hover:text-slate-950' : 'text-slate-400 hover:text-white'}`}
+                    activeClassName={isLight ? 'text-slate-950 font-extrabold' : 'text-white font-extrabold'}
+                  >
+                    2x2
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="3x3"
+                    className={`px-2 py-1 text-[11px] font-bold ${isLight ? 'text-slate-600 hover:text-slate-950' : 'text-slate-400 hover:text-white'}`}
+                    activeClassName={isLight ? 'text-slate-950 font-extrabold' : 'text-white font-extrabold'}
+                  >
+                    3x3
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
             </div>
           </div>
         </div>

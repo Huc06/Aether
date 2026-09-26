@@ -7,7 +7,8 @@ import { AreaChart } from '../data/AreaChart';
 import { BarRanking } from '../data/BarRanking';
 import { MarkdownTable } from '../data/MarkdownTable';
 import { derivePortfolioExposureSeries, derivePortfolioPnlSeries } from '../data/series';
-import { Orbit, Camera, AlertTriangle, ShieldCheck, TrendingUp, Layers } from 'lucide-react';
+import { Orbit, Camera, List as ListIcon, AlertTriangle, ShieldCheck, TrendingUp, Layers } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger } from '../ui/tabs';
 
 export type PortfolioViewMode = 'canvas' | 'list' | 'exposure-grid';
 
@@ -83,33 +84,40 @@ export const ListSwitcher: React.FC<ListSwitcherProps> = ({
             <WordTiles sentence="onchain exposure ledger" />
           </div>
 
-          {/* Quick View Jumper Buttons */}
-          <div className="flex items-center gap-2 shrink-0 text-xs">
-            <button
-              type="button"
-              onClick={() => onChangeViewMode('canvas')}
-              className={`px-2.5 py-1.5 border font-bold flex items-center gap-1.5 transition-colors cursor-pointer ${
-                isLight
-                  ? 'bg-white hover:bg-slate-100 text-slate-800 border-slate-300'
-                  : 'bg-white/5 hover:bg-white/10 text-slate-200 border-white/15'
-              }`}
+          {/* Workspace switch (beui underline tabs) */}
+          <Tabs
+            value="list"
+            onValueChange={(v) => onChangeViewMode(v as PortfolioViewMode)}
+            variant="underline"
+            className="shrink-0"
+          >
+            <TabsList
+              className={isLight ? 'border-slate-300' : 'border-white/10'}
+              indicatorClassName="bg-amber-500"
             >
-              <Orbit className="w-3.5 h-3.5 text-amber-500" />
-              <span>Canvas (1)</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => onChangeViewMode('exposure-grid')}
-              className={`px-2.5 py-1.5 border font-bold flex items-center gap-1.5 transition-colors cursor-pointer ${
-                isLight
-                  ? 'bg-white hover:bg-slate-100 text-slate-800 border-slate-300'
-                  : 'bg-white/5 hover:bg-white/10 text-slate-200 border-white/15'
-              }`}
-            >
-              <Camera className="w-3.5 h-3.5 text-cyan-400" />
-              <span>CCTV Feed (3)</span>
-            </button>
-          </div>
+              <TabsTrigger
+                value="canvas"
+                className={`px-3 pb-2 pt-1 text-xs font-bold ${isLight ? 'text-slate-600 hover:text-slate-950' : 'text-slate-400 hover:text-white'}`}
+              >
+                <Orbit className="w-3.5 h-3.5 text-amber-500" />
+                <span>Canvas (1)</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="list"
+                className={`px-3 pb-2 pt-1 text-xs font-bold ${isLight ? 'text-slate-950' : 'text-white'}`}
+              >
+                <ListIcon className="w-3.5 h-3.5 text-amber-500" />
+                <span>Table List (2)</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="exposure-grid"
+                className={`px-3 pb-2 pt-1 text-xs font-bold ${isLight ? 'text-slate-600 hover:text-slate-950' : 'text-slate-400 hover:text-white'}`}
+              >
+                <Camera className="w-3.5 h-3.5 text-cyan-400" />
+                <span>CCTV Feed (3)</span>
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
         </header>
 
         {/* Top KPI Metric Cards (Dashed Borders) */}
