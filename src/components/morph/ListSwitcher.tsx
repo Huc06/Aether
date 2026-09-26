@@ -64,7 +64,7 @@ export const ListSwitcher: React.FC<ListSwitcherProps> = ({
 
   return (
     <div
-      className={`absolute inset-0 z-30 pt-[78px] sm:pt-[84px] md:pt-[92px] pb-28 overflow-y-auto font-mono transition-colors duration-200 ${
+      className={`absolute inset-0 z-30 pt-[78px] sm:pt-[84px] md:pt-[92px] pb-28 overflow-y-auto overflow-x-hidden font-mono transition-colors duration-200 ${
         isLight ? 'bg-slate-50 text-slate-900' : 'bg-[#07090e] text-slate-100'
       }`}
     >

@@ -6,23 +6,7 @@ import {
   ExposureGridRenderer, 
   ExposureGridTreatment 
 } from './ExposureGridShader';
-import { 
-  Camera, 
-  Eye, 
-  Maximize2, 
-  Minimize2, 
-  Radio, 
-  ShieldAlert, 
-  ShieldCheck, 
-  RefreshCw, 
-  Zap, 
-  Sliders, 
-  LayoutGrid, 
-  Layers, 
-  ChevronRight, 
-  ExternalLink,
-  X
-} from 'lucide-react';
+import { Eye, Maximize2, RefreshCw, Zap, Layers, ChevronRight, X } from 'lucide-react';
 
 export interface CctvSettings {
   columns: number;
@@ -461,10 +445,10 @@ export const ExposureGridFeed: React.FC<ExposureGridFeedProps> = ({
                   node ? (live ? 'border-cyan-400/70' : 'border-rose-500/70') : 'border-slate-500/50'
                 }`} />
 
-                {/* Bottom-row cells flip the toolbar to the top so the tip bar
-                    never swallows the buttons. */}
+                {/* Bottom-row cells lift the bar above the interaction tip so it
+                    stays clickable without covering the card header. */}
                 <div className={`absolute left-2 right-2 flex flex-wrap items-center gap-1.5 pointer-events-auto ${
-                  hoverCell.row === gridRows - 1 ? 'top-9' : 'bottom-2'
+                  hoverCell.row === gridRows - 1 ? 'bottom-10' : 'bottom-2'
                 }`}>
                   {!node && (
                     <span className="px-2 py-1 rounded-md bg-black/80 border border-slate-600 text-[10px] font-bold text-slate-300">

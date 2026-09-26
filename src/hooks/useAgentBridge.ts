@@ -49,9 +49,11 @@ export function useAgentBridge(snapshot: AgentBridgeSnapshot, handlers: AgentBri
   snapshotRef.current = snapshot;
   handlersRef.current = handlers;
 
-  // Push state on change (throttled to one write per second).
+  // Publish state to the bridge; backs off to 30s while the bridge is offline.
   useEffect(() => {
     let cancelled = false;
+    let failures = 0;
+    let timer = 0;
     const push = async () => {
       const snap = snapshotRef.current;
       const totals = snap.nodes.reduce(
@@ -63,7 +65,7 @@ export function useAgentBridge(snapshot: AgentBridgeSnapshot, handlers: AgentBri
         { exposureUsd: 0, pnl24hUsd: 0 }
       );
       try {
-        await fetch(STATE_URL, {
+        const res = await fetch(STATE_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -79,12 +81,14 @@ export function useAgentBridge(snapshot: AgentBridgeSnapshot, handlers: AgentBri
             ts: Date.now()
           })
         });
+        failures = res.ok ? 0 : failures + 1;
       } catch {
-        // Bridge offline (pure Vite dev without the Express server) — ignore.
+        // Bridge offline (pure Vite dev without the Express server).
+        failures += 1;
       }
-      if (!cancelled) timer = window.setTimeout(push, 2000);
+      if (!cancelled) timer = window.setTimeout(push, failures > 2 ? 30000 : 2000);
     };
-    let timer = window.setTimeout(push, 250);
+    timer = window.setTimeout(push, 250);
     return () => {
       cancelled = true;
       window.clearTimeout(timer);
