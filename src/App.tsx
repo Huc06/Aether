@@ -21,7 +21,10 @@ export const App: React.FC = () => {
     const saved = localStorage.getItem('aether_nodes_v1') || localStorage.getItem('phantomat_nodes_v1');
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
       } catch (e) {
         console.error('Failed to parse saved nodes', e);
       }
@@ -29,7 +32,20 @@ export const App: React.FC = () => {
     return INITIAL_NODES;
   });
 
-  const [wires, setWires] = useState<WireConnection[]>(INITIAL_WIRES);
+  const [wires, setWires] = useState<WireConnection[]>(() => {
+    const saved = localStorage.getItem('aether_wires_v1');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      } catch (e) {
+        console.error('Failed to parse saved wires', e);
+      }
+    }
+    return INITIAL_WIRES;
+  });
   const [config, setConfig] = useState<LensConfig>(() => {
     const saved = localStorage.getItem('aether_config_v1') || localStorage.getItem('phantomat_config_v1');
     if (saved) {
@@ -788,6 +804,7 @@ export const App: React.FC = () => {
       <HelpModal
         isOpen={isHelpOpen}
         onClose={() => setIsHelpOpen(false)}
+        config={config}
       />
 
       {/* Status Toast */}
