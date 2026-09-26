@@ -229,8 +229,8 @@ body, html {
 
 .bend-page {
   position: relative;
+  height: 100%;
   overflow: hidden;
-  min-height: 0;
 }
 
 .bend-scroll {
