@@ -8,7 +8,6 @@ import {
   HelpCircle, 
   TrendingUp, 
   Activity, 
-  Search, 
   Database,
   Sun,
   Moon
@@ -17,8 +16,6 @@ import {
 interface TopBarProps {
   config: LensConfig;
   nodes: CanvasNode[];
-  isOverview: boolean;
-  onToggleOverview: () => void;
   onSmartArrange: () => void;
   onOpenTuner: () => void;
   onOpenHelp: () => void;
@@ -29,8 +26,6 @@ interface TopBarProps {
 export const TopBar: React.FC<TopBarProps> = ({
   config,
   nodes,
-  isOverview,
-  onToggleOverview,
   onSmartArrange,
   onOpenTuner,
   onOpenHelp,
@@ -132,26 +127,6 @@ export const TopBar: React.FC<TopBarProps> = ({
 
       {/* Action Controls */}
       <div className="flex items-center gap-1 sm:gap-2 pointer-events-auto shrink-0">
-        <button
-          onClick={onToggleOverview}
-          className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-xl text-xs font-bold border transition-all shadow-lg cursor-pointer ${
-            isOverview 
-              ? 'bg-amber-500/25 border-amber-500 text-amber-500 shadow-amber-500/20 font-extrabold' 
-              : (isLight 
-                  ? 'bg-white border-slate-300 text-slate-800 hover:border-amber-500 hover:text-amber-800 hover:shadow-sm' 
-                  : 'glass-badge border-white/10 text-slate-200 hover:border-amber-500/60 hover:text-white')
-          }`}
-          title="Toggle Intent Search & Macro Overview (Cmd+K / /)"
-        >
-          <Search className="w-3.5 h-3.5" />
-          <span className="hidden md:inline">Intent</span>
-          <kbd className={`hidden sm:inline text-[9px] px-1 py-0.2 rounded font-mono font-bold border ${
-            isLight ? 'bg-slate-100 text-amber-700 border-slate-300' : 'bg-black/40 text-amber-400 border-white/10'
-          }`}>
-            ⌘K
-          </kbd>
-        </button>
-
         <button
           onClick={onSmartArrange}
           className={`glass-badge hidden sm:flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold border shadow-lg transition-all cursor-pointer ${
