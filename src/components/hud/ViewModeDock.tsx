@@ -37,7 +37,7 @@ export const ViewModeDock: React.FC<ViewModeDockProps> = ({
           : 'opacity-100 scale-100'
       }`}
     >
-      <div className={`p-1 rounded-2xl border shadow-2xl backdrop-blur-2xl transition-all ${
+      <div className={`p-1.5 rounded-2xl border flex items-center gap-1.5 shadow-2xl backdrop-blur-2xl transition-all ${
         isLight
           ? 'bg-white/95 border-slate-300 shadow-[0_12px_40px_rgba(0,0,0,0.14)]'
           : 'glass-badge bg-slate-950/90 border-white/15 shadow-[0_16px_50px_rgba(0,0,0,0.85)]'
