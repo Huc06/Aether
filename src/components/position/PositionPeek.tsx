@@ -34,7 +34,7 @@ export const PositionPeek: React.FC<PositionPeekProps> = ({
 
   return (
     <div
-      className="fixed z-[45] top-24 left-1/2 -translate-x-1/2 w-[min(360px,calc(100vw-1.5rem))] animate-in fade-in zoom-in-95 duration-150"
+      className="fixed z-[45] top-16 sm:top-20 right-3 sm:right-6 w-[min(380px,calc(100vw-1.5rem))] animate-in fade-in slide-in-from-right-4 duration-150"
       role="dialog"
       aria-label={`Peek ${node.title}`}
     >

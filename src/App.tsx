@@ -618,7 +618,7 @@ export const App: React.FC = () => {
     }
   }, [showToast]);
 
-  // Toggle Overview & Intent
+  // Overview zoom — may open Intent when entering, always clears Intent when leaving
   const toggleOverviewMode = useCallback((enable?: boolean) => {
     const nextState = enable !== undefined ? enable : !cameraRef.current.state.isOverview;
     cameraRef.current.setOverview(
@@ -635,6 +635,26 @@ export const App: React.FC = () => {
       setIsIntentOpen(false);
     }
   }, [config.overviewScale, config.normalScale]);
+
+  /** Mission Control: ensure overview + open Spotlight (canvas stays visible underneath) */
+  const openIntentMissionControl = useCallback(() => {
+    if (!cameraRef.current.state.isOverview) {
+      cameraRef.current.setOverview(
+        true,
+        config.overviewScale,
+        config.normalScale,
+        0,
+        0
+      );
+      setIsOverview(true);
+    }
+    setIsIntentOpen(true);
+  }, [config.overviewScale, config.normalScale]);
+
+  /** Soft-close Spotlight only — keep overview so demo pan/zoom of the map continues */
+  const closeIntentSpotlight = useCallback(() => {
+    setIsIntentOpen(false);
+  }, []);
 
   const openPositionDetail = useCallback((node: CanvasNode) => {
     setSelectedNode(node);
@@ -834,14 +854,18 @@ export const App: React.FC = () => {
         if (e.key === 'ArrowDown') { e.preventDefault(); handleFocusNearest('down'); return; }
       }
 
-      // Cmd+K / SUPER+CTRL+G / / -> Toggle Intent
+      // Cmd+K / SUPER+CTRL+G / / -> Mission Control Spotlight (soft toggle)
       if (
         ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') ||
         ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'g') ||
         e.key === '/'
       ) {
         e.preventDefault();
-        toggleOverviewMode();
+        if (isIntentOpen) {
+          closeIntentSpotlight();
+        } else {
+          openIntentMissionControl();
+        }
         return;
       }
 
@@ -899,9 +923,12 @@ export const App: React.FC = () => {
         return;
       }
 
-      // Escape -> Dismiss panels / reset camera / clear stuck drag
+      // Escape -> staged dismiss: Spotlight first, then overview / other panels
       if (e.key === 'Escape') {
-        setIsIntentOpen(false);
+        if (isIntentOpen) {
+          closeIntentSpotlight();
+          return;
+        }
         setIsNansenOpen(false);
         setIsTunerOpen(false);
         setIsHelpOpen(false);
@@ -928,7 +955,10 @@ export const App: React.FC = () => {
   }, [
     nodes,
     focusedNodeId,
+    isIntentOpen,
     toggleOverviewMode,
+    openIntentMissionControl,
+    closeIntentSpotlight,
     detailPhase,
     closeDetailLayer,
     handleSmartArrange,
@@ -1291,7 +1321,11 @@ export const App: React.FC = () => {
         config={config}
         nodes={nodes}
         isOverview={isOverview}
-        onToggleOverview={() => toggleOverviewMode()}
+        onToggleOverview={() => {
+          if (isIntentOpen) closeIntentSpotlight();
+          else if (isOverview) toggleOverviewMode(false);
+          else openIntentMissionControl();
+        }}
         onSmartArrange={handleSmartArrange}
         onOpenNansen={() => setIsNansenOpen(true)}
         onOpenTuner={() => setIsTunerOpen(true)}
@@ -1332,7 +1366,7 @@ export const App: React.FC = () => {
       {/* Screen 2: Natural Language Intent & Route Preview Panel */}
       <IntentPanel
         isOpen={isIntentOpen}
-        onClose={() => toggleOverviewMode(false)}
+        onClose={closeIntentSpotlight}
         nodes={nodes}
         intentPresets={INTENT_PRESETS}
         config={config}
