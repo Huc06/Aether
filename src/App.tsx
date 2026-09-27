@@ -615,7 +615,7 @@ export const App: React.FC = () => {
         return;
       }
 
-      // Escape -> Dismiss panels / reset camera
+      // Escape -> Dismiss panels / reset camera / clear stuck drag
       if (e.key === 'Escape') {
         setIsIntentOpen(false);
         setIsNansenOpen(false);
@@ -623,6 +623,10 @@ export const App: React.FC = () => {
         setIsHelpOpen(false);
         setSelectedNode(null);
         setHighlightNodeIds([]);
+        isDraggingNodeRef.current = false;
+        draggedNodeRef.current = null;
+        isPanningRef.current = false;
+        isMinimapDraggingRef.current = false;
         if (cameraRef.current.state.isOverview) {
           toggleOverviewMode(false);
         }
@@ -832,8 +836,10 @@ export const App: React.FC = () => {
           return;
         }
 
+        // Inspect opens a modal that steals mouseup — never arm drag in the same gesture.
         if (e.detail === 2 || node.type === 'position') {
           setSelectedNode(node);
+          return;
         }
 
         isDraggingNodeRef.current = true;
@@ -887,12 +893,27 @@ export const App: React.FC = () => {
     }
   };
 
-  const handleMouseUp = () => {
+  const clearPointerInteraction = useCallback(() => {
     isDraggingNodeRef.current = false;
     draggedNodeRef.current = null;
     isPanningRef.current = false;
     isMinimapDraggingRef.current = false;
+  }, []);
+
+  const handleMouseUp = () => {
+    clearPointerInteraction();
   };
+
+  // Safety net: modal/overlay can steal canvas mouseup and leave drag armed.
+  useEffect(() => {
+    const onPointerUp = () => clearPointerInteraction();
+    window.addEventListener('mouseup', onPointerUp);
+    window.addEventListener('pointerup', onPointerUp);
+    return () => {
+      window.removeEventListener('mouseup', onPointerUp);
+      window.removeEventListener('pointerup', onPointerUp);
+    };
+  }, [clearPointerInteraction]);
 
   // Dynamic calculations
   const totalValue = nodes.reduce((sum, n) => sum + n.valueUsd, 0);
