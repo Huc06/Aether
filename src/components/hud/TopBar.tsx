@@ -159,10 +159,10 @@ export const TopBar: React.FC<TopBarProps> = ({
               ? 'bg-white border-slate-300 text-slate-800 hover:text-slate-950 hover:border-slate-400 hover:shadow-sm' 
               : 'border-white/10 text-slate-300 hover:text-white hover:border-white/30'
           }`}
-          title="Smart arrange nodes by chain clusters (Ctrl+A)"
+          title="Tidy canvas into a dashboard grid (Ctrl+A)"
         >
           <LayoutGrid className="w-3.5 h-3.5" />
-          <span className="hidden md:inline">Arrange</span>
+          <span className="hidden md:inline">Tidy</span>
           <kbd className={`text-[9px] px-1 py-0.2 rounded font-mono font-bold border ${
             isLight ? 'bg-slate-100 text-slate-700 border-slate-300' : 'bg-black/40 text-slate-400 border-white/10'
           }`}>
