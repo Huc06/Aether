@@ -136,7 +136,7 @@ Aether gives operators three complementary lenses into their portfolio, switchab
 | Spatial WebGL Canvas & Nansen Live Entity Profiler (`vitalik.eth`) |
 |:---:|
 | <a href="docs/screenshots/01-chapter1-spatial-nansen-profiler.png"><img src="docs/screenshots/01-chapter1-spatial-nansen-profiler.png" alt="Chapter 1: Spatial Canvas & Live Nansen Profiler" width="100%" /></a> |
-| **Interactive Flow:** Rê chuột lia nhẹ trên WebGL 2.0 Barrel Shader $\rightarrow$ Click `[NANSEN API]` $\rightarrow$ Chọn `vitalik.eth` $\rightarrow$ Camera glide mượt mà về `(0, 0)`, orbital tokens (`WHITE`, `MOODENG`, `ETH`) bung ra với giá live, dây nối tím lần theo nguồn gốc `First Funder` và `Multisig Signer`. |
+| **Interactive Flow:** Pan smoothly across WebGL 2.0 Barrel Shader $\rightarrow$ Click `[NANSEN API]` in TopBar $\rightarrow$ Select `vitalik.eth` $\rightarrow$ Camera glides seamlessly to `(0, 0)`, orbital token nodes (`WHITE`, `MOODENG`, `ETH`) dynamically unpack with live valuations, and violet lineage wires connect to genesis `First Funder` and `Multisig Signers`. |
 
 ---
 
@@ -146,7 +146,7 @@ Aether gives operators three complementary lenses into their portfolio, switchab
 | Dual-Cockpit: Nansen AI Fast Agent & Thesis Desk Interrogator (`Cmd+K`) |
 |:---:|
 | <a href="docs/screenshots/02-chapter2-nansen-ai-thesis-interrogator.png"><img src="docs/screenshots/02-chapter2-nansen-ai-thesis-interrogator.png" alt="Chapter 2: Nansen AI Research Agent & Thesis Desk" width="100%" /></a> |
-| **Interactive Flow:** Nhấn `Cmd + K` mở Mission Control $\rightarrow$ Click `[Thesis Desk]` & `[Smart Money Accumulation]` $\rightarrow$ Luồng SSE stream đổ về từng chữ với `[tool: token_discovery_screener]`, bảng MDX Dashed Table (`mdxcn`) nét đứt hiện ra, Canvas tự động spotlight các node token và kích hoạt `Simulate Route` nổ confetti. |
+| **Interactive Flow:** Press `Cmd + K` to open Mission Control $\rightarrow$ Click `[Thesis Desk]` & `[Smart Money Accumulation]` $\rightarrow$ Real-time SSE stream unpacks from `/api/v1/agent/fast` with `[tool: token_discovery_screener]`, dashed MDX screener table renders with `DrawablyHighlight`, canvas auto-spotlights researched token nodes, and `Simulate Route` triggers celebratory confetti. |
 
 ---
 
@@ -156,7 +156,7 @@ Aether gives operators three complementary lenses into their portfolio, switchab
 | Dashed-Frame Data Ledger (Area Charts, Sparklines & Cylindrical Scroll) |
 |:---:|
 | <a href="docs/screenshots/03-chapter3-nymspace-bend-analytics.png"><img src="docs/screenshots/03-chapter3-nymspace-bend-analytics.png" alt="Chapter 3: Nymspace 3D Bend Ledger & MDX Analytics" width="100%" /></a> |
-| **Interactive Flow:** Nhấn phím `2` chuyển sang Ledger $\rightarrow$ Cuộn chuột xem hiệu ứng uốn cong trang giấy 3D $\rightarrow$ Rê chuột xem mini chart Sparkline 60fps và vệt dạ quang `DrawablyHighlight` trên nhãn `+SM $45k` $\rightarrow$ Click Sun/Moon chuyển Clean Slate Light Mode chuẩn WCAG AA. |
+| **Interactive Flow:** Press `2` to switch to Dashed-Frame Ledger $\rightarrow$ Scroll down to observe 3D cylindrical page-bend deformation (`bendEngine.ts`) $\rightarrow$ Hover over rows to view 60fps Liveline sparklines and `DrawablyHighlight` on `+SM $45k` badges $\rightarrow$ Toggle Sun/Moon to switch to Clean Slate Light Mode with full WCAG AA contrast compliance. |
 
 ---
 
@@ -166,7 +166,7 @@ Aether gives operators three complementary lenses into their portfolio, switchab
 | Position Cockpit Deck, Solvency Gauge & 1.2s Hold-to-Unwind |
 |:---:|
 | <a href="docs/screenshots/04-chapter4-hero-mev-hold-unwind.png"><img src="docs/screenshots/04-chapter4-hero-mev-hold-unwind.png" alt="Chapter 4: Position Cockpit & Emergency Unwind Protocol" width="100%" /></a> |
-| **Interactive Flow:** Phím `1` về Canvas $\rightarrow$ Double click vị thế đỏ `Drift SOL-PERP 10x Long` $\rightarrow$ Bảng Solvency Gauge báo động đỏ (`HF 1.08`), RoutePipelineFlow 3 bước $\rightarrow$ Nhấn giữ `Hold 1.2s to Emergency Unwind` (hoặc đè phím `Space`) $\rightarrow$ Kích hoạt Private Builder RPCs và xuất Onchain Settlement Receipt. |
+| **Interactive Flow:** Press `1` to return to Canvas $\rightarrow$ Double-click critical node `Drift SOL-PERP 10x Long` $\rightarrow$ Solvency Gauge indicates red alert (`HF 1.08`), 3-step `RoutePipelineFlow` displays $\rightarrow$ Hold `Space` or mouse for 1.2s to trigger Emergency Unwind $\rightarrow$ Activates private builder RPCs to eliminate MEV sandwich attacks and outputs Onchain Settlement Receipt. |
 
 ---
 
@@ -175,12 +175,12 @@ Aether gives operators three complementary lenses into their portfolio, switchab
 | Star Focus Cluster & Shift+F Fit | CCTV Surveillance Operations Matrix |
 |:---:|:---:|
 | <a href="docs/screenshots/05-star-focus-cluster.png"><img src="docs/screenshots/05-star-focus-cluster.png" alt="Star Focus Cluster Layout" width="100%" /></a> | <a href="docs/screenshots/06-cctv-surveillance-matrix.png"><img src="docs/screenshots/06-cctv-surveillance-matrix.png" alt="CCTV Surveillance Feed Matrix" width="100%" /></a> |
-| **Star Focus Cluster:** Click bất kỳ node nào để cô lập vị thế ở trung tâm và xếp vệ tinh tỏa tròn; `Shift+F` tự động fit toàn màn hình. | **CCTV Telemetry Wall:** Render trực tiếp bảng chỉ số rủi ro thẻ canvas (`fillTable`), sóng tĩnh SMPTE `NO SIGNAL` và CRT scanlines. |
+| **Star Focus Cluster:** Single-click any node to isolate the position at the center and radially arrange direct dependencies; `Shift+F` automatically fits the cluster to the live viewport. | **CCTV Telemetry Wall:** Mirrored live canvas node cards rendered in `fillTable` mode with SMPTE `NO SIGNAL` channels and CRT scanline glitch shaders. |
 
 | Clean Slate Light Mode (High-Contrast Slate Optics) |
 |:---:|
 | <a href="docs/screenshots/07-clean-slate-light-mode.png"><img src="docs/screenshots/07-clean-slate-light-mode.png" alt="Clean Slate Light Mode" width="100%" /></a> |
-| **Dual Theme Engine:** Nền `#f8fafc`, typography slate tương phản cao, dây neon sắc nét và shader thích ứng thời gian thực. |
+| **Dual Theme Engine:** Ultra-crisp `#f8fafc` canvas, bold slate typography, refined neon amber/cyan accents, and real-time adapted shader contrast. |
 
 ---
 
