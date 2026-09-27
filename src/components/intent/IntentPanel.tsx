@@ -99,16 +99,61 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
   const [isAgentStreaming, setIsAgentStreaming] = useState(false);
   const [agentResponse, setAgentResponse] = useState<string | null>(null);
   const [agentToolCalls, setAgentToolCalls] = useState<string[]>([]);
+  const [panelOffset, setPanelOffset] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const dragRef = useRef<{ ox: number; oy: number; sx: number; sy: number } | null>(null);
 
   useEffect(() => {
     if (isOpen) {
+      setPanelOffset({ x: 0, y: 0 });
       setTimeout(() => {
         inputRef.current?.focus();
         inputRef.current?.select();
       }, 50);
+    } else {
+      dragRef.current = null;
+      setIsDragging(false);
     }
   }, [isOpen]);
+
+  const onDragHandlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    e.stopPropagation();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    dragRef.current = {
+      ox: panelOffset.x,
+      oy: panelOffset.y,
+      sx: e.clientX,
+      sy: e.clientY,
+    };
+    setIsDragging(true);
+  };
+
+  const onDragHandlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const drag = dragRef.current;
+    if (!drag) return;
+    const nextX = drag.ox + (e.clientX - drag.sx);
+    const nextY = drag.oy + (e.clientY - drag.sy);
+    const maxX = Math.max(0, window.innerWidth - 360);
+    const maxY = Math.max(0, window.innerHeight - 140);
+    setPanelOffset({
+      x: Math.min(maxX, Math.max(-24, nextX)),
+      y: Math.min(maxY, Math.max(-60, nextY)),
+    });
+  };
+
+  const onDragHandlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!dragRef.current) return;
+    dragRef.current = null;
+    setIsDragging(false);
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {
+      /* already released */
+    }
+  };
 
   // Match nodes and intent presets against query
   const filteredNodes = nodes.filter(n => {
@@ -263,20 +308,61 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 bg-black/60 backdrop-blur-md transition-all">
-      <div 
-        className={`w-full max-w-2xl rounded-2xl border shadow-2xl overflow-hidden flex flex-col max-h-[84vh] animate-in fade-in slide-in-from-top-3 duration-150 transition-colors ${
-          isLight 
-            ? 'bg-white/98 text-slate-900 border-slate-300 shadow-2xl' 
-            : 'glass-panel text-slate-200 border-amber-500/50'
+    /* Spotlight shell: pass pointer events through so canvas stays pan/zoomable */
+    <div className="fixed inset-0 z-50 flex items-start justify-start pt-16 sm:pt-20 pl-3 sm:pl-6 lg:pl-8 pr-3 pointer-events-none">
+      <div
+        role="dialog"
+        aria-modal="false"
+        aria-label="Intent spotlight"
+        className={`pointer-events-auto w-full max-w-[min(560px,calc(100vw-1.5rem))] sm:max-w-[480px] lg:max-w-[540px] xl:max-w-[580px] rounded-2xl border overflow-hidden flex flex-col max-h-[min(82vh,48rem)] ${
+          isDragging ? '' : 'animate-in fade-in slide-in-from-left-4 duration-150'
+        } ${
+          isLight
+            ? 'bg-white/85 text-slate-900 border-slate-200/90 backdrop-blur-2xl'
+            : 'bg-slate-950/80 text-slate-200 border-white/15 backdrop-blur-2xl'
         }`}
         style={{
-          boxShadow: isLight ? '0 20px 60px rgba(0, 0, 0, 0.15)' : '0 0 50px rgba(245, 158, 11, 0.25), 0 25px 60px rgba(0, 0, 0, 0.9)'
+          transform: `translate(${panelOffset.x}px, ${panelOffset.y}px)`,
+          boxShadow: isLight
+            ? '0 18px 50px rgba(15, 23, 42, 0.18), 0 0 0 1px rgba(15, 23, 42, 0.04)'
+            : '0 24px 60px rgba(0, 0, 0, 0.65), 0 0 40px rgba(245, 158, 11, 0.12)',
         }}
+        onMouseDown={(e) => e.stopPropagation()}
+        onWheel={(e) => e.stopPropagation()}
       >
+        {/* Mission Control Spotlight Header & Drag Handle */}
+        <div
+          className={`flex items-center justify-between px-3 py-1.5 border-b select-none touch-none ${
+            isDragging ? 'cursor-grabbing' : 'cursor-grab'
+          } ${isLight ? 'bg-white/60 border-slate-200/80 text-slate-600' : 'bg-white/[0.04] border-white/10 text-slate-400'}`}
+          onPointerDown={onDragHandlePointerDown}
+          onPointerMove={onDragHandlePointerMove}
+          onPointerUp={onDragHandlePointerUp}
+          onPointerCancel={onDragHandlePointerUp}
+          title="Drag anywhere to reposition"
+        >
+          <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold tracking-wider uppercase text-amber-500/90">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+            <span>MISSION CONTROL // INTENT</span>
+          </div>
+
+          <div className="flex items-center gap-1">
+            <span className={`block w-8 h-1 rounded-full ${isLight ? 'bg-slate-300' : 'bg-white/20'}`} />
+          </div>
+
+          <div className="flex items-center gap-2 text-[10px] font-mono">
+            <span className={`hidden sm:inline ${isLight ? 'text-slate-500' : 'text-slate-500'}`}>DRAG TO MOVE</span>
+            <kbd className={`px-1.5 py-0.5 rounded border text-[9px] font-bold ${
+              isLight ? 'bg-slate-100 border-slate-300 text-slate-700' : 'bg-slate-900 border-white/10 text-slate-400'
+            }`}>
+              ESC
+            </kbd>
+          </div>
+        </div>
+
         {/* Search Header Bar */}
         <div className={`p-3.5 border-b flex items-center gap-2.5 flex-nowrap ${
-          isLight ? 'bg-slate-50/95 border-slate-200' : 'bg-slate-900/90 border-white/10'
+          isLight ? 'bg-white/50 border-slate-200/80' : 'bg-white/[0.04] border-white/10'
         }`}>
           <span className="text-amber-500 font-extrabold text-base shrink-0 select-none">&gt;</span>
           <input
@@ -329,7 +415,7 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
 
         {/* Intent Presets Pills */}
         <div className={`p-3 border-b flex items-center gap-2 overflow-x-auto no-scrollbar ${
-          isLight ? 'bg-slate-100/90 border-slate-200' : 'bg-slate-950/70 border-white/5'
+          isLight ? 'bg-slate-50/60 border-slate-200/80' : 'bg-black/20 border-white/5'
         }`}>
           <span className={`text-[10px] font-extrabold uppercase flex items-center gap-1 shrink-0 ${
             isLight ? 'text-slate-700' : 'text-slate-400'

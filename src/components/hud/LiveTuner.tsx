@@ -43,7 +43,7 @@ export const LiveTuner: React.FC<LiveTunerProps> = ({
   };
 
   return (
-    <div className={`fixed top-16 right-4 z-50 w-80 max-h-[85vh] overflow-y-auto rounded-xl border p-4 flex flex-col gap-4 text-xs select-none shadow-2xl animate-in fade-in duration-150 transition-colors ${
+    <div className={`fixed top-16 sm:top-20 right-4 sm:right-6 z-50 w-80 max-h-[85vh] overflow-y-auto rounded-xl border p-4 flex flex-col gap-4 text-xs select-none shadow-2xl animate-in fade-in slide-in-from-right-3 duration-150 transition-colors ${
       isLight ? 'bg-white/98 text-slate-900 border-slate-300 shadow-2xl' : 'glass-panel text-slate-200 border-white/15'
     }`}>
       {/* Header */}

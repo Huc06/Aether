@@ -35,12 +35,12 @@ export const PositionCommandSheet: React.FC<PositionCommandSheetProps> = ({
 
   return (
     <div
-      className="fixed z-[46] inset-x-0 bottom-0 pb-[max(0.75rem,env(safe-area-inset-bottom))] px-3 sm:px-4 animate-in slide-in-from-bottom-4 duration-200"
+      className="fixed z-[46] bottom-0 sm:bottom-6 inset-x-0 sm:inset-x-auto sm:right-4 lg:right-6 w-full sm:w-[min(520px,calc(100vw-2rem))] pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:pb-0 px-3 sm:px-0 animate-in slide-in-from-bottom-4 sm:slide-in-from-right-4 duration-200"
       role="dialog"
       aria-label={`Command sheet ${node.title}`}
     >
       <div
-        className={`mx-auto w-full max-w-3xl rounded-t-2xl border-2 shadow-2xl p-3 sm:p-4 flex flex-col gap-3 ${
+        className={`w-full rounded-2xl border-2 shadow-2xl p-3 sm:p-4 flex flex-col gap-3 ${
           isLight
             ? 'bg-white border-rose-500 text-slate-900'
             : 'bg-slate-950/95 border-rose-500/70 text-slate-200 backdrop-blur-md'

@@ -43,7 +43,7 @@ export const PositionInspector: React.FC<PositionInspectorProps> = ({
 
   return (
     <div
-      className={`fixed z-[47] top-[72px] sm:top-[78px] bottom-0 right-0 w-full sm:w-[min(420px,100vw)] flex flex-col border-l rounded-tl-xl shadow-2xl animate-in slide-in-from-right-4 duration-200 ${
+      className={`fixed z-[47] top-[64px] sm:top-[72px] bottom-0 right-0 w-full sm:w-[min(440px,100vw)] lg:w-[420px] flex flex-col border-l rounded-tl-2xl shadow-2xl animate-in slide-in-from-right-4 duration-200 ${
         isLight
           ? 'bg-white/98 border-slate-300 text-slate-900'
           : 'bg-[#0a0d14]/96 border-white/10 text-slate-200 backdrop-blur-xl'
