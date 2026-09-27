@@ -8,7 +8,11 @@ import { TopBar } from './components/hud/TopBar';
 import { ListSwitcher, PortfolioViewMode } from './components/morph/ListSwitcher';
 import { ExposureGridFeed } from './components/cctv/ExposureGridFeed';
 import { IntentPanel } from './components/intent/IntentPanel';
-import { PositionDetailModal } from './components/position/PositionDetailModal';
+import { PositionPeek } from './components/position/PositionPeek';
+import { PositionCommandSheet } from './components/position/PositionCommandSheet';
+import { PositionInspector } from './components/position/PositionInspector';
+import { UnwindConfirmModal } from './components/position/UnwindConfirmModal';
+import { DetailPhase, initialPhaseForNode } from './components/position/detailPhase';
 import { LiveTuner } from './components/hud/LiveTuner';
 import { HelpModal } from './components/hud/HelpModal';
 import { NansenModal } from './components/hud/NansenModal';
@@ -80,6 +84,9 @@ export const App: React.FC = () => {
     }
     return null;
   });
+  const [detailPhase, setDetailPhase] = useState<DetailPhase>('none');
+  const [confirmRouteIndex, setConfirmRouteIndex] = useState(0);
+  const [confirmReturnPhase, setConfirmReturnPhase] = useState<'peek' | 'sheet' | 'inspect'>('inspect');
   const [viewMode, setViewMode] = useState<PortfolioViewMode>(() => {
     const params = new URLSearchParams(window.location.search);
     const v = params.get('view');
@@ -565,15 +572,44 @@ export const App: React.FC = () => {
     }
   }, [config.overviewScale, config.normalScale]);
 
+  const openPositionDetail = useCallback((node: CanvasNode) => {
+    setSelectedNode(node);
+    setFocusedNodeId(node.id);
+    setDetailPhase(initialPhaseForNode(node));
+  }, []);
+
+  const clearPositionDetail = useCallback(() => {
+    setSelectedNode(null);
+    setDetailPhase('none');
+  }, []);
+
+  const closeDetailLayer = useCallback(() => {
+    if (detailPhase === 'confirm') {
+      setDetailPhase(confirmReturnPhase);
+      return;
+    }
+    if (detailPhase === 'inspect') {
+      setDetailPhase(selectedNode?.riskLevel === 'critical' ? 'sheet' : 'peek');
+      return;
+    }
+    clearPositionDetail();
+  }, [detailPhase, confirmReturnPhase, selectedNode, clearPositionDetail]);
+
+  const requestUnwind = useCallback((returnPhase: 'peek' | 'sheet' | 'inspect', routeIndex = 0) => {
+    setConfirmReturnPhase(returnPhase);
+    setConfirmRouteIndex(routeIndex);
+    setDetailPhase('confirm');
+  }, []);
+
   const handleFocusNode = useCallback((node: CanvasNode, openDetail = false) => {
     focusNode(node.id, true);
     cameraRef.current.state.isOverview = false;
     setIsOverview(false);
     setIsIntentOpen(false);
     if (openDetail) {
-      setSelectedNode(node);
+      openPositionDetail(node);
     }
-  }, [focusNode]);
+  }, [focusNode, openPositionDetail]);
 
   // Filter high-risk positions
   const handleFilterRisk = useCallback(() => {
@@ -659,7 +695,7 @@ export const App: React.FC = () => {
     setWires(JSON.parse(JSON.stringify(INITIAL_WIRES)));
     setActiveNansenEntity(null);
     setHighlightNodeIds([]);
-    setSelectedNode(null);
+    clearPositionDetail();
     setFocusedNodeId(INITIAL_NODES[0]?.id || 'wallet-ledger');
 
     const cam = cameraRef.current;
@@ -675,7 +711,14 @@ export const App: React.FC = () => {
     setIsIntentOpen(false);
 
     showToast('Reset to Default Portfolio');
-  }, [config.normalScale, showToast]);
+  }, [config.normalScale, showToast, clearPositionDetail]);
+
+  useEffect(() => {
+    if (selectedNode && detailPhase === 'none') {
+      setDetailPhase(initialPhaseForNode(selectedNode));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- URL bootstrap only
+  }, []);
 
   // Global Keyboard Shortcuts
   useEffect(() => {
@@ -779,7 +822,7 @@ export const App: React.FC = () => {
         setIsNansenOpen(false);
         setIsTunerOpen(false);
         setIsHelpOpen(false);
-        setSelectedNode(null);
+        if (detailPhase !== 'none') return;
         setHighlightNodeIds([]);
         cancelPendingClick();
         pendingInspectRef.current = null;
@@ -803,6 +846,8 @@ export const App: React.FC = () => {
     nodes,
     focusedNodeId,
     toggleOverviewMode,
+    detailPhase,
+    closeDetailLayer,
     handleSmartArrange,
     handleUndo,
     handleToggleFill,
@@ -1102,11 +1147,11 @@ export const App: React.FC = () => {
 
     if (!clusterId && !inspectNode) return;
 
-    // Double-click: run immediately (cluster + inspect).
+    // Double-click: run immediately (cluster + progressive detail).
     if (inspectNode) {
       cancelPendingClick();
       layoutFocusCluster(clusterId || inspectNode.id);
-      setSelectedNode(inspectNode);
+      openPositionDetail(inspectNode);
       return;
     }
 
@@ -1116,7 +1161,7 @@ export const App: React.FC = () => {
       clickTimerRef.current = null;
       layoutFocusCluster(clusterId!);
     }, DOUBLE_CLICK_DELAY_MS);
-  }, [layoutFocusCluster, cancelPendingClick]);
+  }, [layoutFocusCluster, cancelPendingClick, openPositionDetail]);
 
   const handleMouseUp = () => {
     clearPointerInteraction();
@@ -1179,7 +1224,7 @@ export const App: React.FC = () => {
             setViewMode('canvas');
             handleFocusNode(node, false);
           }}
-          onInspectNode={(node) => setSelectedNode(node)}
+          onInspectNode={openPositionDetail}
           onEmergencyKill={handleKillSwitch}
         />
       )}
@@ -1189,7 +1234,7 @@ export const App: React.FC = () => {
         <ExposureGridFeed
           nodes={nodes}
           config={config}
-          onInspectNode={(node) => setSelectedNode(node)}
+          onInspectNode={openPositionDetail}
           onFocusNodeOnCanvas={(node) => {
             setViewMode('canvas');
             handleFocusNode(node, false);
@@ -1211,13 +1256,45 @@ export const App: React.FC = () => {
         onApplyDynamicResearchGraph={handleApplyDynamicResearchGraph}
       />
 
-      {/* Screen 3: Position Detail Deep Focus & 1-Click Kill Switch */}
-      <PositionDetailModal
-        node={selectedNode}
-        config={config}
-        onClose={() => setSelectedNode(null)}
-        onKillSwitch={handleKillSwitch}
-      />
+      {/* Progressive position detail: peek → sheet → inspector → confirm */}
+      {selectedNode && detailPhase === 'peek' && (
+        <PositionPeek
+          node={selectedNode}
+          config={config}
+          onInspect={() => setDetailPhase('inspect')}
+          onUnwind={() => requestUnwind('peek')}
+          onClose={clearPositionDetail}
+        />
+      )}
+      {selectedNode && detailPhase === 'sheet' && (
+        <PositionCommandSheet
+          node={selectedNode}
+          config={config}
+          onInspect={() => setDetailPhase('inspect')}
+          onUnwind={() => requestUnwind('sheet')}
+          onClose={clearPositionDetail}
+        />
+      )}
+      {selectedNode && detailPhase === 'inspect' && (
+        <PositionInspector
+          node={selectedNode}
+          config={config}
+          onClose={closeDetailLayer}
+          onRequestUnwind={(routeIndex) => requestUnwind('inspect', routeIndex)}
+        />
+      )}
+      {selectedNode && detailPhase === 'confirm' && (
+        <UnwindConfirmModal
+          node={selectedNode}
+          config={config}
+          initialRouteIndex={confirmRouteIndex}
+          onClose={() => setDetailPhase(confirmReturnPhase)}
+          onKillSwitch={(node, route) => {
+            handleKillSwitch(node, route);
+            clearPositionDetail();
+          }}
+        />
+      )}
 
       {/* Live CRT Lens Tuner */}
       <LiveTuner
