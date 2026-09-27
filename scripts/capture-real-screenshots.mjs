@@ -17,40 +17,40 @@ const chromePath = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome
 
 const targets = [
   {
-    name: '01-spatial-canvas-overview.png',
-    url: 'http://localhost:4173/?view=canvas',
+    name: '01-star-focus-cluster.png',
+    url: 'http://localhost:4173/?cluster=pos-drift-perp',
     size: '1600,900',
-    dest: path.join(screenshotsDir, '01-spatial-canvas-overview.png')
+    dest: path.join(screenshotsDir, '01-star-focus-cluster.png')
   },
   {
-    name: '02-dashed-frame-ledger.png',
-    url: 'http://localhost:4173/?view=list',
-    size: '1600,900',
-    dest: path.join(screenshotsDir, '02-dashed-frame-ledger.png')
-  },
-  {
-    name: '03-cctv-exposure-grid.png',
-    url: 'http://localhost:4173/?view=exposure-grid',
-    size: '1600,900',
-    dest: path.join(screenshotsDir, '03-cctv-exposure-grid.png')
-  },
-  {
-    name: '04-nansen-profiler-graph.png',
-    url: 'http://localhost:4173/?nansen=1',
-    size: '1600,900',
-    dest: path.join(screenshotsDir, '04-nansen-profiler-graph.png')
-  },
-  {
-    name: '05-intent-agent-stream.png',
+    name: '02-nansen-thesis-interrogator.png',
     url: 'http://localhost:4173/?intent=1',
     size: '1600,900',
-    dest: path.join(screenshotsDir, '05-intent-agent-stream.png')
+    dest: path.join(screenshotsDir, '02-nansen-thesis-interrogator.png')
   },
   {
-    name: '06-position-cockpit-inspector.png',
+    name: '03-nansen-entity-profiler.png',
+    url: 'http://localhost:4173/?nansen=1',
+    size: '1600,900',
+    dest: path.join(screenshotsDir, '03-nansen-entity-profiler.png')
+  },
+  {
+    name: '04-position-cockpit-inspector.png',
     url: 'http://localhost:4173/?node=pos-drift-perp',
     size: '1600,900',
-    dest: path.join(screenshotsDir, '06-position-cockpit-inspector.png')
+    dest: path.join(screenshotsDir, '04-position-cockpit-inspector.png')
+  },
+  {
+    name: '05-cctv-surveillance-matrix.png',
+    url: 'http://localhost:4173/?view=exposure-grid',
+    size: '1600,900',
+    dest: path.join(screenshotsDir, '05-cctv-surveillance-matrix.png')
+  },
+  {
+    name: '06-dashed-frame-ledger.png',
+    url: 'http://localhost:4173/?view=list',
+    size: '1600,900',
+    dest: path.join(screenshotsDir, '06-dashed-frame-ledger.png')
   },
   {
     name: '07-clean-slate-light-mode.png',
@@ -60,7 +60,7 @@ const targets = [
   },
   {
     name: 'aether-banner.png',
-    url: 'http://localhost:4173/?view=canvas',
+    url: 'http://localhost:4173/?cluster=pos-drift-perp',
     size: '1600,680',
     dest: path.join(brandDir, 'aether-banner.png')
   }
@@ -94,7 +94,7 @@ try {
       t.url
     ], { stdio: 'ignore' });
 
-    // Poll until file is written
+    // Poll until file is written and stable
     let captured = false;
     for (let i = 0; i < 40; i++) {
       await new Promise(r => setTimeout(r, 250));
