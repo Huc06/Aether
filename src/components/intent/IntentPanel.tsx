@@ -14,7 +14,8 @@ import {
   X, 
   Terminal, 
   Activity,
-  Cpu 
+  Cpu,
+  Compass 
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { streamNansenAgent } from '../../services/nansenApi';
@@ -336,6 +337,21 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
             <Zap className="w-3 h-3 text-amber-500 fill-amber-500" />
             Suggested:
           </span>
+          <button
+            onClick={() => {
+              setQuery('Thesis Desk: Interrogate trade thesis against Smart Money netflows and onchain holdings');
+              setSelectedRoute(SMART_MONEY_ROUTE);
+              handleAskNansenAgent('Thesis Desk: Interrogate trade thesis against Smart Money netflows and onchain holdings');
+            }}
+            className={`text-xs px-2.5 py-1 rounded-md border shrink-0 transition-all font-mono font-bold flex items-center gap-1.5 cursor-pointer ${
+              isLight 
+                ? 'bg-amber-50 hover:bg-amber-100 border-amber-300 text-amber-950' 
+                : 'bg-amber-950/40 hover:bg-amber-900/60 border-amber-500/40 text-amber-300'
+            }`}
+          >
+            <Compass className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+            <span>Thesis Desk</span>
+          </button>
           <button
             onClick={() => {
               setQuery('Which tokens are smart money accumulating on Ethereum today?');

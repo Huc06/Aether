@@ -418,6 +418,57 @@ export const INITIAL_WIRES: WireConnection[] = [
 
 export const INTENT_PRESETS: IntentQuery[] = [
   {
+    id: 'intent-thesis-desk',
+    query: 'Thesis Desk: Interrogate trade thesis against Smart Money netflows',
+    description: 'Nansen Thesis Interrogator: Evaluates market conviction, accumulation signals, and distribution divergence across chains.',
+    category: 'SEARCH',
+    highlightNodeIds: ['wallet-arbitrum', 'pos-kamino-sol-usdc', 'pos-drift-perp'],
+    recommendedRoutes: [
+      {
+        id: 'route-thesis-rotation',
+        title: 'Rotate Stables into Smart Money Inflow Signals (QNT / WTAO)',
+        tag: 'RECOMMENDED',
+        estTime: '3.8s',
+        gasCost: '$0.008',
+        netApyImpact: '+24.5% Alpha Capture based on Nansen Netflow',
+        steps: [
+          {
+            stepNumber: 1,
+            type: 'withdraw',
+            protocol: 'Treasury Wallet',
+            fromAsset: 'Idle USDC Balance',
+            fromChain: 'Ethereum',
+            amount: '$45,000 USDC',
+            estTime: '0.8s',
+            gasCost: '$0.002'
+          },
+          {
+            stepNumber: 2,
+            type: 'swap',
+            protocol: '1inch Aggregator',
+            fromAsset: 'USDC',
+            toAsset: 'QNT (Smart Money Netflow Top 1)',
+            fromChain: 'Ethereum',
+            amount: '$45,000 USDC -> 472.4 QNT',
+            estTime: '2.2s',
+            gasCost: '$0.004',
+            slippage: '0.02%'
+          },
+          {
+            stepNumber: 3,
+            type: 'deposit',
+            protocol: 'Ledger Vault Cold Storage',
+            fromAsset: '472.4 QNT',
+            fromChain: 'Ethereum',
+            amount: '$45,000 Value',
+            estTime: '0.8s',
+            gasCost: '$0.002'
+          }
+        ]
+      }
+    ]
+  },
+  {
     id: 'intent-risk',
     query: 'Show high-risk assets & near-liquidation positions',
     description: 'Filter and spotlight positions with health factor < 1.2 or liquidation distance < 15%.',
