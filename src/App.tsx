@@ -140,6 +140,7 @@ export const App: React.FC = () => {
   const pointerDownClientRef = useRef({ x: 0, y: 0 });
   const didDragRef = useRef(false);
   const pendingInspectRef = useRef<CanvasNode | null>(null);
+  const pendingFocusClusterRef = useRef<string | null>(null);
   const CLICK_DRAG_THRESHOLD_PX = 6;
 
   const showToast = useCallback((msg: string) => {
@@ -356,6 +357,89 @@ export const App: React.FC = () => {
     }
   }, [nodes, focusedNodeId, focusNode]);
 
+  // Click a window → star cluster: selected center, linked nodes around, others parked+dimmed
+  const layoutFocusCluster = useCallback((centerId: string) => {
+    const center = nodes.find(n => n.id === centerId);
+    if (!center) return;
+
+    const relatedIds = new Set<string>([centerId]);
+    wires.forEach(w => {
+      if (w.fromId === centerId) relatedIds.add(w.toId);
+      if (w.toId === centerId) relatedIds.add(w.fromId);
+    });
+
+    const nodeById = new Map(nodes.map(n => [n.id, n]));
+    const neighbors = [...relatedIds]
+      .filter(id => id !== centerId)
+      .map(id => nodeById.get(id)!)
+      .filter(Boolean);
+    const others = nodes.filter(n => !relatedIds.has(n.id));
+
+    recordHistory();
+
+    const cx = 0;
+    const cy = 0;
+    const maxNeighborSpan = neighbors.reduce(
+      (m, n) => Math.max(m, n.w, n.h),
+      Math.max(center.w, center.h)
+    );
+    const radius = Math.max(460, maxNeighborSpan * 0.7 + 300);
+
+    const posById = new Map<string, { x: number; y: number }>();
+    posById.set(centerId, { x: cx - center.w / 2, y: cy - center.h / 2 });
+
+    if (neighbors.length === 1) {
+      const n = neighbors[0];
+      posById.set(n.id, { x: cx - n.w / 2, y: cy - radius - n.h / 2 });
+    } else if (neighbors.length === 2) {
+      neighbors.forEach((n, i) => {
+        const side = i === 0 ? -1 : 1;
+        posById.set(n.id, {
+          x: cx + side * radius * 0.95 - n.w / 2,
+          y: cy - n.h / 2,
+        });
+      });
+    } else {
+      neighbors.forEach((n, i) => {
+        const angle = -Math.PI / 2 + (2 * Math.PI * i) / neighbors.length;
+        const rx = radius * 1.2;
+        const ry = radius * 0.95;
+        posById.set(n.id, {
+          x: cx + Math.cos(angle) * rx - n.w / 2,
+          y: cy + Math.sin(angle) * ry - n.h / 2,
+        });
+      });
+    }
+
+    const parkX = cx + radius * 1.2 + Math.max(center.w, 480) + 120;
+    const parkGap = 200;
+    const parkY0 = cy - ((others.length - 1) * parkGap) / 2;
+    others.forEach((n, i) => {
+      posById.set(n.id, {
+        x: parkX,
+        y: parkY0 + i * parkGap - n.h / 2,
+      });
+    });
+
+    setNodes(prev => prev.map(n => {
+      const next = posById.get(n.id);
+      return next ? { ...n, x: next.x, y: next.y } : n;
+    }));
+    setHighlightNodeIds([...relatedIds]);
+    setFocusedNodeId(centerId);
+
+    const fitScale = Math.min(
+      config.normalScale,
+      Math.max(0.42, Math.min(1100 / (radius * 2.6 + center.w), 0.85))
+    );
+    cameraRef.current.flyTo(cx, cy, fitScale);
+    showToast(
+      neighbors.length > 0
+        ? `Focus: ${center.title} + ${neighbors.length} linked (Ctrl+Z undo · Esc clear dim)`
+        : `Focus: ${center.title} (no linked windows)`
+    );
+  }, [nodes, wires, recordHistory, showToast, config.normalScale]);
+
   // Tidy: one column per wallet, children stacked below → wires stay short/vertical
   const handleSmartArrange = useCallback(() => {
     recordHistory();
@@ -433,13 +517,14 @@ export const App: React.FC = () => {
       const next = posById.get(n.id);
       return next ? { ...n, x: next.x, y: next.y } : n;
     }));
+    setHighlightNodeIds([]);
 
     const fitScale = Math.min(
       config.normalScale,
       Math.max(0.32, Math.min(1500 / gridW, 900 / gridH))
     );
     cameraRef.current.flyTo(0, gridH * 0.05, fitScale);
-    showToast('Tidied into wallet columns — click a window to spotlight its wires');
+    showToast('Tidied into wallet columns — click a window to isolate its cluster');
   }, [nodes, wires, recordHistory, showToast, config.normalScale]);
 
   const handleUndo = useCallback(() => {
@@ -687,6 +772,7 @@ export const App: React.FC = () => {
         setSelectedNode(null);
         setHighlightNodeIds([]);
         pendingInspectRef.current = null;
+        pendingFocusClusterRef.current = null;
         didDragRef.current = false;
         isDraggingNodeRef.current = false;
         draggedNodeRef.current = null;
@@ -901,8 +987,9 @@ export const App: React.FC = () => {
           return;
         }
 
-        // Arm drag for every node. Inspect opens only on clean click (mouseup).
-        pendingInspectRef.current = (e.detail === 2 || node.type === 'position') ? node : null;
+        // Arm drag. Clean click → star focus cluster; double-click → also inspect.
+        pendingFocusClusterRef.current = node.id;
+        pendingInspectRef.current = e.detail === 2 ? node : null;
         didDragRef.current = false;
         pointerDownClientRef.current = { x: e.clientX, y: e.clientY };
         isDraggingNodeRef.current = true;
@@ -921,7 +1008,9 @@ export const App: React.FC = () => {
     }
 
     pendingInspectRef.current = null;
+    pendingFocusClusterRef.current = null;
     didDragRef.current = false;
+    setHighlightNodeIds([]);
     isPanningRef.current = true;
     panStartRef.current = { x: e.clientX, y: e.clientY };
   };
@@ -937,6 +1026,7 @@ export const App: React.FC = () => {
         if (Math.hypot(moveDx, moveDy) < CLICK_DRAG_THRESHOLD_PX) return;
         didDragRef.current = true;
         pendingInspectRef.current = null;
+        pendingFocusClusterRef.current = null;
         recordHistory();
       }
 
@@ -968,16 +1058,24 @@ export const App: React.FC = () => {
   };
 
   const clearPointerInteraction = useCallback(() => {
-    if (!didDragRef.current && pendingInspectRef.current) {
-      setSelectedNode(pendingInspectRef.current);
-    }
+    const clusterId = !didDragRef.current ? pendingFocusClusterRef.current : null;
+    const inspectNode = !didDragRef.current ? pendingInspectRef.current : null;
+
     pendingInspectRef.current = null;
+    pendingFocusClusterRef.current = null;
     didDragRef.current = false;
     isDraggingNodeRef.current = false;
     draggedNodeRef.current = null;
     isPanningRef.current = false;
     isMinimapDraggingRef.current = false;
-  }, []);
+
+    if (clusterId) {
+      layoutFocusCluster(clusterId);
+    }
+    if (inspectNode) {
+      setSelectedNode(inspectNode);
+    }
+  }, [layoutFocusCluster]);
 
   const handleMouseUp = () => {
     clearPointerInteraction();
