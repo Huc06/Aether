@@ -19,7 +19,7 @@ import { buildNansenSpatialGraph, buildNansenResearchSubgraph, PRESET_ENTITIES, 
 export const App: React.FC = () => {
   // Application Data & State
   const [nodes, setNodes] = useState<CanvasNode[]>(() => {
-    const saved = localStorage.getItem('aether_nodes_v1') || localStorage.getItem('phantomat_nodes_v1');
+    const saved = localStorage.getItem('aether_nodes_v2');
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -137,6 +137,10 @@ export const App: React.FC = () => {
   const isPanningRef = useRef(false);
   const panStartRef = useRef({ x: 0, y: 0 });
   const isMinimapDraggingRef = useRef(false);
+  const pointerDownClientRef = useRef({ x: 0, y: 0 });
+  const didDragRef = useRef(false);
+  const pendingInspectRef = useRef<CanvasNode | null>(null);
+  const CLICK_DRAG_THRESHOLD_PX = 6;
 
   const showToast = useCallback((msg: string) => {
     setToastMessage(msg);
@@ -145,7 +149,7 @@ export const App: React.FC = () => {
 
   // Save state persistence
   useEffect(() => {
-    localStorage.setItem('aether_nodes_v1', JSON.stringify(nodes));
+    localStorage.setItem('aether_nodes_v2', JSON.stringify(nodes));
   }, [nodes]);
 
   useEffect(() => {
@@ -352,35 +356,55 @@ export const App: React.FC = () => {
   // Smart Arrange algorithm by Chain / Risk cluster
   const handleSmartArrange = useCallback(() => {
     recordHistory();
-    showToast('Smart arranged nodes into Chain Clusters (Ctrl+A)');
 
-    const clusters: Record<string, CanvasNode[]> = {};
-    nodes.forEach(node => {
-      const key = node.chain;
-      if (!clusters[key]) clusters[key] = [];
-      clusters[key].push(node);
-    });
+    const COLS = 3;
+    const GUTTER = 56;
+    const riskRank: Record<string, number> = { critical: 0, high: 1, medium: 2, safe: 3 };
 
-    const newNodes = [...nodes];
-    const chainKeys = Object.keys(clusters);
-    const colGap = 480;
-    const rowGap = 320;
-    const startX = -((chainKeys.length - 1) * colGap) / 2;
+    const wallets = nodes
+      .filter(n => n.type === 'wallet')
+      .sort((a, b) => b.valueUsd - a.valueUsd);
+    const positions = nodes
+      .filter(n => n.type !== 'wallet')
+      .sort((a, b) => {
+        const riskDelta = (riskRank[a.riskLevel] ?? 9) - (riskRank[b.riskLevel] ?? 9);
+        return riskDelta !== 0 ? riskDelta : b.valueUsd - a.valueUsd;
+      });
+    const ordered = [...wallets, ...positions];
+    if (ordered.length === 0) return;
 
-    chainKeys.forEach((chain, colIdx) => {
-      const chainNodes = clusters[chain];
-      const startY = -((chainNodes.length - 1) * rowGap) / 2;
-      chainNodes.forEach((node, rowIdx) => {
-        const found = newNodes.find(n => n.id === node.id);
-        if (found) {
-          found.x = startX + colIdx * colGap;
-          found.y = startY + rowIdx * rowGap;
-        }
+    const cellW = Math.max(...ordered.map(n => n.w), 420) + GUTTER;
+    const cellH = Math.max(...ordered.map(n => n.h), 220) + GUTTER;
+    const rows = Math.ceil(ordered.length / COLS);
+    const gridW = COLS * cellW - GUTTER;
+    const gridH = rows * cellH - GUTTER;
+    const originX = -gridW / 2;
+    const originY = -gridH / 2;
+
+    const posById = new Map<string, { x: number; y: number }>();
+    ordered.forEach((node, i) => {
+      const col = i % COLS;
+      const row = Math.floor(i / COLS);
+      const cellX = originX + col * cellW;
+      const cellY = originY + row * cellH;
+      posById.set(node.id, {
+        x: cellX + (cellW - GUTTER - node.w) / 2,
+        y: cellY + (cellH - GUTTER - node.h) / 2,
       });
     });
 
-    setNodes([...newNodes]);
-  }, [nodes, recordHistory, showToast]);
+    setNodes(prev => prev.map(n => {
+      const next = posById.get(n.id);
+      return next ? { ...n, x: next.x, y: next.y } : n;
+    }));
+
+    const fitScale = Math.min(
+      config.normalScale,
+      Math.max(0.35, Math.min(1400 / gridW, 900 / gridH))
+    );
+    cameraRef.current.flyTo(0, gridH * 0.05, fitScale);
+    showToast('Tidied canvas into dashboard grid (Ctrl+A)');
+  }, [nodes, recordHistory, showToast, config.normalScale]);
 
   const handleUndo = useCallback(() => {
     if (historyRef.current.length > 0) {
@@ -489,6 +513,7 @@ export const App: React.FC = () => {
   // Reset to Default Portfolio (Ctrl+Shift+R or HUD button)
   const handleResetPortfolio = useCallback(() => {
     [
+      'aether_nodes_v2',
       'aether_nodes_v1',
       'phantomat_nodes_v1',
       'aether_wires_v1',
@@ -623,6 +648,8 @@ export const App: React.FC = () => {
         setIsHelpOpen(false);
         setSelectedNode(null);
         setHighlightNodeIds([]);
+        pendingInspectRef.current = null;
+        didDragRef.current = false;
         isDraggingNodeRef.current = false;
         draggedNodeRef.current = null;
         isPanningRef.current = false;
@@ -803,7 +830,6 @@ export const App: React.FC = () => {
         worldPos.x >= node.x && worldPos.x <= node.x + node.w &&
         worldPos.y >= node.y && worldPos.y <= node.y + node.h
       ) {
-        recordHistory();
         focusNode(node.id, false);
 
         // Check if clicking traffic light red dot (close/delete node)
@@ -815,6 +841,7 @@ export const App: React.FC = () => {
           worldPos.y >= node.y + 4 &&
           worldPos.y <= node.y + 30
         ) {
+          recordHistory();
           setNodes(prev => prev.filter(n => n.id !== node.id));
           showToast(`Closed window: ${node.title}`);
           return;
@@ -836,12 +863,10 @@ export const App: React.FC = () => {
           return;
         }
 
-        // Inspect opens a modal that steals mouseup — never arm drag in the same gesture.
-        if (e.detail === 2 || node.type === 'position') {
-          setSelectedNode(node);
-          return;
-        }
-
+        // Arm drag for every node. Inspect opens only on clean click (mouseup).
+        pendingInspectRef.current = (e.detail === 2 || node.type === 'position') ? node : null;
+        didDragRef.current = false;
+        pointerDownClientRef.current = { x: e.clientX, y: e.clientY };
         isDraggingNodeRef.current = true;
         draggedNodeRef.current = node;
         dragOffsetRef.current = {
@@ -857,6 +882,8 @@ export const App: React.FC = () => {
       }
     }
 
+    pendingInspectRef.current = null;
+    didDragRef.current = false;
     isPanningRef.current = true;
     panStartRef.current = { x: e.clientX, y: e.clientY };
   };
@@ -866,6 +893,15 @@ export const App: React.FC = () => {
     if (!offscreen) return;
 
     if (isDraggingNodeRef.current && draggedNodeRef.current) {
+      const moveDx = e.clientX - pointerDownClientRef.current.x;
+      const moveDy = e.clientY - pointerDownClientRef.current.y;
+      if (!didDragRef.current) {
+        if (Math.hypot(moveDx, moveDy) < CLICK_DRAG_THRESHOLD_PX) return;
+        didDragRef.current = true;
+        pendingInspectRef.current = null;
+        recordHistory();
+      }
+
       const rect = canvasRef.current!.getBoundingClientRect();
       const sx = (e.clientX - rect.left) * (offscreen.width / rect.width);
       const sy = (e.clientY - rect.top) * (offscreen.height / rect.height);
@@ -894,6 +930,11 @@ export const App: React.FC = () => {
   };
 
   const clearPointerInteraction = useCallback(() => {
+    if (!didDragRef.current && pendingInspectRef.current) {
+      setSelectedNode(pendingInspectRef.current);
+    }
+    pendingInspectRef.current = null;
+    didDragRef.current = false;
     isDraggingNodeRef.current = false;
     draggedNodeRef.current = null;
     isPanningRef.current = false;
