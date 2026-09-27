@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "description": "A visual, intent-driven portfolio and execution layer. Explore cross-chain positions, understand systemic exposure, and preview transactions through an infinite zoomable canvas.",
+  "author": "Aether Protocol (Huc06), Zsolt Kacso",
   "license": "BSD-3-Clause",
   "type": "module",
   "scripts": {

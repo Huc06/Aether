@@ -558,4 +558,4 @@ cd Aether && npm install && npm run dev
 
 ## License
 
-[BSD 3-Clause](LICENSE) © 2023 Hypr Development, © 2026 Zsolt Kacso
+[BSD 3-Clause](LICENSE) © 2023 Hypr Development, © 2026 Aether Protocol (Huc06), Zsolt Kacso
