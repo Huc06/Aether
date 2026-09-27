@@ -28,6 +28,20 @@ export interface RecommendedRoute {
   riskChange?: string;
 }
 
+export interface RouteSettlementReceipt {
+  timestamp: string;
+  txHash: string;
+  routeTitle: string;
+  tag: string;
+  totalVolume: string;
+  executionTime: string;
+  gasCost: string;
+  netApyImpact: string;
+  steps: RouteStep[];
+  mevProtection: string;
+  status: 'SETTLED' | 'CONFIRMED';
+}
+
 export interface PositionSettlementReceipt {
   timestamp: string;
   txHash: string;

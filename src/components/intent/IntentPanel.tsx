@@ -95,17 +95,41 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
   onFitNodes,
   onZoomSingleNode,
 }) => {
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('intent') === '1' || params.get('thesis') === '1') {
+      return 'Thesis Desk: Interrogate trade thesis against Smart Money netflows';
+    }
+    return '';
+  });
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [selectedRoute, setSelectedRoute] = useState<RecommendedRoute | null>(null);
+  const [selectedRoute, setSelectedRoute] = useState<RecommendedRoute | null>(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('intent') === '1' || params.get('thesis') === '1') {
+      return SMART_MONEY_ROUTE;
+    }
+    return null;
+  });
   const [isSimulating, setIsSimulating] = useState(false);
   const [simulatedStep, setSimulatedStep] = useState(0);
   const isLight = config?.themeMode === 'light';
 
   // Nansen Research Agent state
   const [isAgentStreaming, setIsAgentStreaming] = useState(false);
-  const [agentResponse, setAgentResponse] = useState<string | null>(null);
-  const [agentToolCalls, setAgentToolCalls] = useState<string[]>([]);
+  const [agentResponse, setAgentResponse] = useState<string | null>(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('intent') === '1' || params.get('thesis') === '1') {
+      return 'NANSEN THESIS INTERROGATION REPORT:\n• Smart Money 24h Netflow confirms high-conviction accumulation across QNT (+$45.1k) and WTAO (+$640k).\n• Divergence detected on ETHFI (-$420k net outflow across 12 smart money wallets).\n• Generated 3-step capital rotation pipeline to reallocate idle treasury stables with 0-slippage protection.';
+    }
+    return null;
+  });
+  const [agentToolCalls, setAgentToolCalls] = useState<string[]>(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('intent') === '1' || params.get('thesis') === '1') {
+      return ['token_discovery_screener', 'smart_money_netflow', 'profiler_address_balances'];
+    }
+    return [];
+  });
   const [panelOffset, setPanelOffset] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
