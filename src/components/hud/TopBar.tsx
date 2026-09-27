@@ -159,7 +159,7 @@ export const TopBar: React.FC<TopBarProps> = ({
               ? 'bg-white border-slate-300 text-slate-800 hover:text-slate-950 hover:border-slate-400 hover:shadow-sm' 
               : 'border-white/10 text-slate-300 hover:text-white hover:border-white/30'
           }`}
-          title="Tidy canvas into a dashboard grid (Ctrl+A)"
+          title="Tidy into wallet columns so wires stay short and readable (Ctrl+A)"
         >
           <LayoutGrid className="w-3.5 h-3.5" />
           <span className="hidden md:inline">Tidy</span>
