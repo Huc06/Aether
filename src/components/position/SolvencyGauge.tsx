@@ -1,6 +1,7 @@
 import React from 'react';
 import { RiskLevel } from '../../types';
 import { Activity } from 'lucide-react';
+import { DrawablyCircle } from 'drawably/react';
 
 interface SolvencyGaugeProps {
   healthFactor?: number;
@@ -45,18 +46,32 @@ export const SolvencyGauge: React.FC<SolvencyGaugeProps> = ({
           </span>
         </div>
 
-        <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border uppercase flex items-center gap-1 ${
-          isCritical
-            ? (isLight ? 'bg-rose-100 text-rose-800 border-rose-300' : 'bg-rose-950/60 text-rose-400 border-rose-800/80')
-            : isWarning
-            ? (isLight ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-amber-950/60 text-amber-400 border-amber-800/80')
-            : (isLight ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-emerald-950/60 text-emerald-400 border-emerald-800/80')
-        }`}>
-          <span className={`w-1.5 h-1.5 rounded-full ${
-            isCritical ? 'bg-rose-500 animate-ping' : isWarning ? 'bg-amber-500' : 'bg-emerald-500'
-          }`} />
-          HF {healthFactor.toFixed(2)} &bull; {riskLevel.toUpperCase()}
-        </span>
+        {isCritical ? (
+          <DrawablyCircle
+            seed={7}
+            roughness={1.1}
+            boil={0.35}
+            stroke={isLight ? '#e11d48' : '#f43f5e'}
+            width={1.6}
+            className="inline-flex"
+          >
+            <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border uppercase flex items-center gap-1 ${
+              isLight ? 'bg-rose-100 text-rose-800 border-rose-300' : 'bg-rose-950/60 text-rose-400 border-rose-800/80'
+            }`}>
+              <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping" />
+              HF {healthFactor.toFixed(2)} &bull; {riskLevel.toUpperCase()}
+            </span>
+          </DrawablyCircle>
+        ) : (
+          <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border uppercase flex items-center gap-1 ${
+            isWarning
+              ? (isLight ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-amber-950/60 text-amber-400 border-amber-800/80')
+              : (isLight ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-emerald-950/60 text-emerald-400 border-emerald-800/80')
+          }`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${isWarning ? 'bg-amber-500' : 'bg-emerald-500'}`} />
+            HF {healthFactor.toFixed(2)} &bull; {riskLevel.toUpperCase()}
+          </span>
+        )}
       </div>
 
       {/* Optical Segment Meter */}
