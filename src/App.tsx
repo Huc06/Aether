@@ -12,7 +12,9 @@ import { PositionPeek } from './components/position/PositionPeek';
 import { PositionCommandSheet } from './components/position/PositionCommandSheet';
 import { PositionInspector } from './components/position/PositionInspector';
 import { UnwindConfirmModal } from './components/position/UnwindConfirmModal';
+import { SettlementReceiptModal } from './components/position/SettlementReceiptModal';
 import { DetailPhase, initialPhaseForNode } from './components/position/detailPhase';
+import { PositionSettlementReceipt } from './types';
 import { LiveTuner } from './components/hud/LiveTuner';
 import { HelpModal } from './components/hud/HelpModal';
 import { NansenModal } from './components/hud/NansenModal';
@@ -95,6 +97,7 @@ export const App: React.FC = () => {
   });
   const [confirmRouteIndex, setConfirmRouteIndex] = useState(0);
   const [confirmReturnPhase, setConfirmReturnPhase] = useState<'peek' | 'sheet' | 'inspect'>('inspect');
+  const [activeSettlementReceipt, setActiveSettlementReceipt] = useState<{ node: CanvasNode; receipt: PositionSettlementReceipt } | null>(null);
   const [viewMode, setViewMode] = useState<PortfolioViewMode>(() => {
     const params = new URLSearchParams(window.location.search);
     const v = params.get('view');
@@ -819,23 +822,40 @@ export const App: React.FC = () => {
     }, 4000);
   }, [showToast]);
 
-  // Handle Kill Switch
+  // Handle Kill Switch & Output Detailed Settlement Receipt
   const handleKillSwitch = useCallback((node: CanvasNode, route: PositionExitRoute) => {
-    showToast(`KILL SWITCH ACTIVATED: Unwound ${node.title} -> ${route.targetAsset}`);
-    setNodes(prev => prev.map(n => {
-      if (n.id === node.id) {
-        return {
-          ...n,
-          riskLevel: 'safe',
-          title: `${n.title} (Unwound & Safe)`,
-          pnl24hUsd: 0,
-          healthFactor: 99.9,
-          debtRatioPct: 0,
-          borrowDebtUsd: 0
-        };
-      }
-      return n;
-    }));
+    const timestamp = new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+    const txHash = '5Kz' + Math.random().toString(36).substring(2, 9) + '9pQ' + Math.random().toString(36).substring(2, 6);
+    const penaltySaved = '+$' + Math.round((node.valueUsd || 68500) * 0.82).toLocaleString();
+
+    const receipt: PositionSettlementReceipt = {
+      timestamp,
+      txHash,
+      targetAsset: route.targetAsset,
+      recoveredAmount: route.estReturn,
+      debtExtinguished: node.borrowAsset || '3,270 SOL ($615,000 Notional)',
+      liquidationPenaltySaved: penaltySaved,
+      priorHealthFactor: node.healthFactor ?? 1.08,
+      newHealthFactor: 99.9,
+      feePaid: route.fee,
+      routeSummary: route.routeSummary,
+      mevProtection: 'Jito MEV Shielded Bundle (Private RPC)'
+    };
+
+    const updatedNode: CanvasNode = {
+      ...node,
+      riskLevel: 'safe',
+      title: `${node.title} (Unwound & Safe)`,
+      pnl24hUsd: 0,
+      healthFactor: 99.9,
+      debtRatioPct: 0,
+      borrowDebtUsd: 0,
+      settlementReceipt: receipt
+    };
+
+    setNodes(prev => prev.map(n => (n.id === node.id ? updatedNode : n)));
+    setActiveSettlementReceipt({ node: updatedNode, receipt });
+    showToast(`SETTLED: Recovered ${route.estReturn} • Debt Cleared to $0`);
   }, [showToast]);
 
   // Reset to Default Portfolio (Ctrl+Shift+R or HUD button)
@@ -1492,6 +1512,18 @@ export const App: React.FC = () => {
             handleKillSwitch(node, route);
             clearPositionDetail();
           }}
+        />
+      )}
+
+      {/* Active On-Chain Settlement Receipt Modal */}
+      {activeSettlementReceipt && (
+        <SettlementReceiptModal
+          node={activeSettlementReceipt.node}
+          receipt={activeSettlementReceipt.receipt}
+          config={config}
+          onClose={() => setActiveSettlementReceipt(null)}
+          onFocusNode={(n) => handleFocusNode(n, false)}
+          onShowToast={showToast}
         />
       )}
 
