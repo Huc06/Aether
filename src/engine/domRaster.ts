@@ -138,13 +138,47 @@ export function createDomRaster(
     ctx!.textBaseline = "middle";
     ctx!.textAlign = "left";
 
+    const parent = node.parentElement;
+    const parentRect = parent?.getBoundingClientRect();
+    const isEllipsis =
+      style.textOverflow === "ellipsis" ||
+      (parent && getComputedStyle(parent).textOverflow === "ellipsis");
+    const isNoWrap =
+      style.whiteSpace === "nowrap" ||
+      (parent && getComputedStyle(parent).whiteSpace === "nowrap");
+
     if (rects.length === 1) {
       const rect = rects[0]!;
-      ctx!.fillText(
-        value,
-        rect.left - origin.left,
-        (rect.top + rect.bottom) / 2 - origin.top,
-      );
+      const textX = rect.left - origin.left;
+      const textY = (rect.top + rect.bottom) / 2 - origin.top;
+
+      let drawText = value;
+      // Truncate text with ellipsis if container bounds restrict width
+      if ((isEllipsis || isNoWrap) && parentRect) {
+        const maxW = Math.max(0, parentRect.right - rect.left);
+        if (maxW > 0 && ctx!.measureText(drawText).width > maxW) {
+          if (isEllipsis) {
+            const ellipsis = "…";
+            const ellipsisW = ctx!.measureText(ellipsis).width;
+            let low = 0;
+            let high = value.length;
+            let best = "";
+            while (low <= high) {
+              const mid = Math.floor((low + high) / 2);
+              const candidate = value.slice(0, mid);
+              if (ctx!.measureText(candidate).width + ellipsisW <= maxW) {
+                best = candidate + ellipsis;
+                low = mid + 1;
+              } else {
+                high = mid - 1;
+              }
+            }
+            drawText = best || ellipsis;
+          }
+        }
+      }
+
+      ctx!.fillText(drawText, textX, textY);
       return;
     }
 
@@ -361,9 +395,36 @@ export function createDomRaster(
       return;
     }
 
+    const shouldClip =
+      style.overflow === "hidden" ||
+      style.overflowX === "hidden" ||
+      style.overflowY === "hidden" ||
+      style.overflow === "clip";
+
+    let didClip = false;
+    if (shouldClip) {
+      const rect = element.getBoundingClientRect();
+      if (rect.width > 0 && rect.height > 0) {
+        ctx!.save();
+        ctx!.beginPath();
+        ctx!.rect(
+          rect.left - origin.left,
+          rect.top - origin.top,
+          rect.width,
+          rect.height,
+        );
+        ctx!.clip();
+        didClip = true;
+      }
+    }
+
     paintBox(element, style, origin);
-    if (paintGraphic(element, origin)) return;
+    if (paintGraphic(element, origin)) {
+      if (didClip) ctx!.restore();
+      return;
+    }
     for (const child of element.childNodes) walk(child, origin);
+    if (didClip) ctx!.restore();
   }
 
   return {
