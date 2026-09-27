@@ -105,7 +105,7 @@ export const WordTiles: React.FC<
                 '--tile-index': i,
                 backgroundColor: initial.bg,
                 color: initial.fg,
-                transition: `background-color ${COLOR_MS}ms ease, color ${COLOR_MS}ms ease`,
+                transition: 'background-color 120ms ease, color 120ms ease',
               } as React.CSSProperties
             }
           >

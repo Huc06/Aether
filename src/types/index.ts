@@ -28,6 +28,20 @@ export interface RecommendedRoute {
   riskChange?: string;
 }
 
+export interface PositionSettlementReceipt {
+  timestamp: string;
+  txHash: string;
+  targetAsset: string;
+  recoveredAmount: string;
+  debtExtinguished: string;
+  liquidationPenaltySaved: string;
+  priorHealthFactor: number;
+  newHealthFactor: number;
+  feePaid: string;
+  routeSummary: string;
+  mevProtection: string;
+}
+
 export interface PositionExitRoute {
   targetAsset: string;
   estReturn: string;
@@ -73,6 +87,7 @@ export interface CanvasNode {
   auditedBy?: string[];
   oracleProvider?: string;
   exitRoutes?: PositionExitRoute[];
+  settlementReceipt?: PositionSettlementReceipt;
 
   // Nansen Onchain Intelligence Signals
   nansenLabel?: string;

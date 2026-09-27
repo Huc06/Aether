@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback, startTransition } from 'react';
 import { CanvasNode, WireConnection, LensConfig, RecommendedRoute, PositionExitRoute } from './types';
 import { INITIAL_NODES, INITIAL_WIRES, INTENT_PRESETS, DEFAULT_LENS_CONFIG } from './data/mockData';
 import { CameraController } from './engine/camera';
@@ -9,7 +9,13 @@ import { ListSwitcher, PortfolioViewMode } from './components/morph/ListSwitcher
 import { ExposureGridFeed, CctvSettings } from './components/cctv/ExposureGridFeed';
 import { useAgentBridge } from './hooks/useAgentBridge';
 import { IntentPanel } from './components/intent/IntentPanel';
-import { PositionDetailModal } from './components/position/PositionDetailModal';
+import { PositionPeek } from './components/position/PositionPeek';
+import { PositionCommandSheet } from './components/position/PositionCommandSheet';
+import { PositionInspector } from './components/position/PositionInspector';
+import { UnwindConfirmModal } from './components/position/UnwindConfirmModal';
+import { SettlementReceiptModal } from './components/position/SettlementReceiptModal';
+import { DetailPhase, initialPhaseForNode } from './components/position/detailPhase';
+import { PositionSettlementReceipt } from './types';
 import { LiveTuner } from './components/hud/LiveTuner';
 import { HelpModal } from './components/hud/HelpModal';
 import { NansenModal } from './components/hud/NansenModal';
@@ -20,7 +26,7 @@ import { buildNansenSpatialGraph, buildNansenResearchSubgraph, PRESET_ENTITIES, 
 export const App: React.FC = () => {
   // Application Data & State
   const [nodes, setNodes] = useState<CanvasNode[]>(() => {
-    const saved = localStorage.getItem('aether_nodes_v1') || localStorage.getItem('phantomat_nodes_v1');
+    const saved = localStorage.getItem('aether_nodes_v3');
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -81,6 +87,18 @@ export const App: React.FC = () => {
     }
     return null;
   });
+  const [detailPhase, setDetailPhase] = useState<DetailPhase>(() => {
+    const params = new URLSearchParams(window.location.search);
+    const nodeId = params.get('node');
+    if (nodeId) {
+      const found = nodes.find(n => n.id === nodeId || n.id.toLowerCase().includes(nodeId.toLowerCase()));
+      if (found) return initialPhaseForNode(found);
+    }
+    return 'none';
+  });
+  const [confirmRouteIndex, setConfirmRouteIndex] = useState(0);
+  const [confirmReturnPhase, setConfirmReturnPhase] = useState<'peek' | 'sheet' | 'inspect'>('inspect');
+  const [activeSettlementReceipt, setActiveSettlementReceipt] = useState<{ node: CanvasNode; receipt: PositionSettlementReceipt } | null>(null);
   const [viewMode, setViewMode] = useState<PortfolioViewMode>(() => {
     const params = new URLSearchParams(window.location.search);
     const v = params.get('view');
@@ -139,6 +157,21 @@ export const App: React.FC = () => {
   const isPanningRef = useRef(false);
   const panStartRef = useRef({ x: 0, y: 0 });
   const isMinimapDraggingRef = useRef(false);
+  const pointerDownClientRef = useRef({ x: 0, y: 0 });
+  const didDragRef = useRef(false);
+  const pendingInspectRef = useRef<CanvasNode | null>(null);
+  const pendingFocusClusterRef = useRef<string | null>(null);
+  const clickTimerRef = useRef<number | null>(null);
+  const gestureClosedRef = useRef(false);
+  const CLICK_DRAG_THRESHOLD_PX = 6;
+  const DOUBLE_CLICK_DELAY_MS = 280;
+
+  const cancelPendingClick = useCallback(() => {
+    if (clickTimerRef.current !== null) {
+      window.clearTimeout(clickTimerRef.current);
+      clickTimerRef.current = null;
+    }
+  }, []);
 
   const showToast = useCallback((msg: string) => {
     setToastMessage(msg);
@@ -147,11 +180,14 @@ export const App: React.FC = () => {
 
   // Save state persistence
   useEffect(() => {
-    localStorage.setItem('aether_nodes_v1', JSON.stringify(nodes));
+    localStorage.setItem('aether_nodes_v3', JSON.stringify(nodes));
   }, [nodes]);
 
   useEffect(() => {
-    localStorage.setItem('aether_config_v1', JSON.stringify(config));
+    const t = window.setTimeout(() => {
+      localStorage.setItem('aether_config_v1', JSON.stringify(config));
+    }, 250);
+    return () => window.clearTimeout(t);
   }, [config]);
 
   useEffect(() => {
@@ -222,19 +258,92 @@ export const App: React.FC = () => {
     };
   }, []);
 
+  // If ?intent=1 was passed in URL on mount, activate overview camera
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('intent') === '1' || params.get('intent') === 'true') {
+      cameraRef.current.setOverview(true, config.overviewScale, config.normalScale, 0, 0);
+      setIsOverview(true);
+    }
+  }, [config.overviewScale, config.normalScale]);
+
+  // Synchronize URL query parameters with active UI state
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    
+    // View mode
+    if (viewMode === 'canvas') {
+      params.delete('view');
+    } else {
+      params.set('view', viewMode);
+    }
+
+    // Theme mode
+    if (config.themeMode === 'light') {
+      params.set('theme', 'light');
+    } else {
+      params.delete('theme');
+    }
+
+    // Modals / Panels
+    if (isIntentOpen) {
+      params.set('intent', '1');
+    } else {
+      params.delete('intent');
+    }
+
+    if (isNansenOpen) {
+      params.set('nansen', '1');
+    } else {
+      params.delete('nansen');
+    }
+
+    if (isTunerOpen) {
+      params.set('tuner', '1');
+    } else {
+      params.delete('tuner');
+    }
+
+    // Entity
+    if (activeNansenEntity) {
+      params.set('entity', activeNansenEntity.address || activeNansenEntity.label);
+    } else {
+      params.delete('entity');
+    }
+
+    // Selected node
+    if (selectedNode && detailPhase !== 'none') {
+      params.set('node', selectedNode.id);
+    } else {
+      params.delete('node');
+    }
+
+    const qs = params.toString();
+    const newUrl = qs ? `${window.location.pathname}?${qs}` : window.location.pathname;
+    const currentUrl = `${window.location.pathname}${window.location.search}`;
+    if (newUrl !== currentUrl) {
+      window.history.replaceState(null, '', newUrl);
+    }
+  }, [viewMode, config.themeMode, isIntentOpen, isNansenOpen, isTunerOpen, activeNansenEntity, selectedNode, detailPhase]);
+
   const recordHistory = useCallback(() => {
     historyRef.current.push(JSON.stringify(nodes));
     if (historyRef.current.length > 20) historyRef.current.shift();
   }, [nodes]);
 
   // Focus node and fly camera
-  const focusNode = useCallback((nodeId: string, flyTo = true) => {
+  const focusNode = useCallback((nodeId: string, flyTo = true, targetScale?: number) => {
     setFocusedNodeId(nodeId);
     const node = nodes.find(n => n.id === nodeId);
     if (node && flyTo) {
-      cameraRef.current.flyTo(node.x + node.w / 2, node.y + node.h / 2);
+      const scaleToUse = targetScale !== undefined 
+        ? targetScale 
+        : (cameraRef.current.state.isOverview ? Math.max(0.85, config.normalScale) : cameraRef.current.state.scale);
+      cameraRef.current.state.isOverview = false;
+      setIsOverview(false);
+      cameraRef.current.flyTo(node.x + node.w / 2, node.y + node.h / 2, scaleToUse);
     }
-  }, [nodes]);
+  }, [nodes, config.normalScale]);
 
   // Load Nansen Entity & Build Dynamic Spatial Graph
   const handleLoadNansenEntity = useCallback(async (entity: typeof PRESET_ENTITIES[0]) => {
@@ -351,38 +460,239 @@ export const App: React.FC = () => {
     }
   }, [nodes, focusedNodeId, focusNode]);
 
-  // Smart Arrange algorithm by Chain / Risk cluster
-  const handleSmartArrange = useCallback(() => {
-    recordHistory();
-    showToast('Smart arranged nodes into Chain Clusters (Ctrl+A)');
+  // Click a window → star cluster: selected center, linked nodes around, others parked+dimmed
+  const layoutFocusCluster = useCallback((centerId: string) => {
+    const center = nodes.find(n => n.id === centerId);
+    if (!center) return;
 
-    const clusters: Record<string, CanvasNode[]> = {};
-    nodes.forEach(node => {
-      const key = node.chain;
-      if (!clusters[key]) clusters[key] = [];
-      clusters[key].push(node);
+    const relatedIds = new Set<string>([centerId]);
+    wires.forEach(w => {
+      if (w.fromId === centerId) relatedIds.add(w.toId);
+      if (w.toId === centerId) relatedIds.add(w.fromId);
     });
 
-    const newNodes = [...nodes];
-    const chainKeys = Object.keys(clusters);
-    const colGap = 480;
-    const rowGap = 320;
-    const startX = -((chainKeys.length - 1) * colGap) / 2;
+    const nodeById = new Map(nodes.map(n => [n.id, n]));
+    const neighbors = [...relatedIds]
+      .filter(id => id !== centerId)
+      .map(id => nodeById.get(id)!)
+      .filter(Boolean);
+    const others = nodes.filter(n => !relatedIds.has(n.id));
 
-    chainKeys.forEach((chain, colIdx) => {
-      const chainNodes = clusters[chain];
-      const startY = -((chainNodes.length - 1) * rowGap) / 2;
-      chainNodes.forEach((node, rowIdx) => {
-        const found = newNodes.find(n => n.id === node.id);
-        if (found) {
-          found.x = startX + colIdx * colGap;
-          found.y = startY + rowIdx * rowGap;
-        }
+    recordHistory();
+
+    const cx = 0;
+    const cy = 0;
+    const maxNeighborSpan = neighbors.reduce(
+      (m, n) => Math.max(m, n.w, n.h),
+      Math.max(center.w, center.h)
+    );
+    const radius = Math.max(460, maxNeighborSpan * 0.7 + 300);
+
+    const posById = new Map<string, { x: number; y: number }>();
+    posById.set(centerId, { x: cx - center.w / 2, y: cy - center.h / 2 });
+
+    if (neighbors.length === 1) {
+      const n = neighbors[0];
+      posById.set(n.id, { x: cx - n.w / 2, y: cy - radius - n.h / 2 });
+    } else if (neighbors.length === 2) {
+      neighbors.forEach((n, i) => {
+        const side = i === 0 ? -1 : 1;
+        posById.set(n.id, {
+          x: cx + side * radius * 0.95 - n.w / 2,
+          y: cy - n.h / 2,
+        });
+      });
+    } else {
+      neighbors.forEach((n, i) => {
+        const angle = -Math.PI / 2 + (2 * Math.PI * i) / neighbors.length;
+        const rx = radius * 1.2;
+        const ry = radius * 0.95;
+        posById.set(n.id, {
+          x: cx + Math.cos(angle) * rx - n.w / 2,
+          y: cy + Math.sin(angle) * ry - n.h / 2,
+        });
+      });
+    }
+
+    const parkX = cx + radius * 1.2 + Math.max(center.w, 480) + 120;
+    const parkGap = 200;
+    const parkY0 = cy - ((others.length - 1) * parkGap) / 2;
+    others.forEach((n, i) => {
+      posById.set(n.id, {
+        x: parkX,
+        y: parkY0 + i * parkGap - n.h / 2,
       });
     });
 
-    setNodes([...newNodes]);
-  }, [nodes, recordHistory, showToast]);
+    setNodes(prev => prev.map(n => {
+      const next = posById.get(n.id);
+      return next ? { ...n, x: next.x, y: next.y } : n;
+    }));
+    setHighlightNodeIds([...relatedIds]);
+    setFocusedNodeId(centerId);
+
+    // Initial camera: will be refined once nodes settle; Shift+F re-fits tighter.
+    const roughSpan = radius * 2.2 + Math.max(center.w, center.h);
+    const canvas = canvasRef.current;
+    const screenW = canvas?.clientWidth || window.innerWidth;
+    const screenH = canvas?.clientHeight || window.innerHeight;
+    const initScale = Math.max(
+      0.35,
+      Math.min(2.2, Math.min((screenW - 48) / roughSpan, (screenH - 80) / roughSpan) * 1.12)
+    );
+    cameraRef.current.flyTo(cx, cy, initScale);
+    showToast(
+      neighbors.length > 0
+        ? `Focus: ${center.title} + ${neighbors.length} linked (Shift+F fit · Ctrl+Z undo · Esc clear dim)`
+        : `Focus: ${center.title} (Shift+F fit · no linked windows)`
+    );
+  }, [nodes, wires, recordHistory, showToast]);
+
+  // Fit current focus cluster (or focused node + linked) to the live viewport
+  const fitFocusClusterToScreen = useCallback(() => {
+    const relatedIds = new Set<string>(
+      highlightNodeIds.length > 0 ? highlightNodeIds : [focusedNodeId]
+    );
+    if (highlightNodeIds.length === 0 && focusedNodeId) {
+      wires.forEach(w => {
+        if (w.fromId === focusedNodeId) relatedIds.add(w.toId);
+        if (w.toId === focusedNodeId) relatedIds.add(w.fromId);
+      });
+    }
+
+    const cluster = nodes.filter(n => relatedIds.has(n.id));
+    if (cluster.length === 0) {
+      showToast('Nothing to fit — click a window first');
+      return;
+    }
+
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+    cluster.forEach(n => {
+      minX = Math.min(minX, n.x);
+      minY = Math.min(minY, n.y);
+      maxX = Math.max(maxX, n.x + n.w);
+      maxY = Math.max(maxY, n.y + n.h);
+    });
+
+    const worldW = Math.max(1, maxX - minX);
+    const worldH = Math.max(1, maxY - minY);
+    const cx = (minX + maxX) / 2;
+    const cy = (minY + maxY) / 2;
+
+    const canvas = canvasRef.current;
+    const screenW = canvas?.clientWidth || window.innerWidth;
+    const screenH = canvas?.clientHeight || window.innerHeight;
+    // Tight chrome padding — fill most of the viewport
+    const padX = 36;
+    const padY = 64;
+    const FILL = 1.15;
+    const fitScale = Math.max(
+      0.3,
+      Math.min(
+        2.4,
+        Math.min((screenW - padX) / worldW, (screenH - padY) / worldH) * FILL
+      )
+    );
+
+    cameraRef.current.state.isOverview = false;
+    setIsOverview(false);
+    cameraRef.current.flyTo(cx, cy, fitScale);
+    showToast(
+      cluster.length > 1
+        ? `Fit ${cluster.length} windows to screen`
+        : `Fit ${cluster[0].title} to screen`
+    );
+  }, [nodes, wires, highlightNodeIds, focusedNodeId, showToast]);
+
+  // Tidy: one column per wallet, children stacked below → wires stay short/vertical
+  const handleSmartArrange = useCallback(() => {
+    recordHistory();
+
+    const GUTTER = 64;
+    const riskRank: Record<string, number> = { critical: 0, high: 1, medium: 2, safe: 3 };
+    const nodeById = new Map(nodes.map(n => [n.id, n]));
+
+    const wallets = nodes
+      .filter(n => n.type === 'wallet')
+      .sort((a, b) => b.valueUsd - a.valueUsd);
+
+    const childIdsByWallet = new Map<string, string[]>();
+    const assigned = new Set<string>();
+    wallets.forEach(w => childIdsByWallet.set(w.id, []));
+
+    wires.forEach(wire => {
+      const from = nodeById.get(wire.fromId);
+      const to = nodeById.get(wire.toId);
+      if (!from || !to) return;
+      if (from.type === 'wallet' && to.type !== 'wallet' && !assigned.has(to.id)) {
+        childIdsByWallet.get(from.id)?.push(to.id);
+        assigned.add(to.id);
+      } else if (to.type === 'wallet' && from.type !== 'wallet' && !assigned.has(from.id)) {
+        childIdsByWallet.get(to.id)?.push(from.id);
+        assigned.add(from.id);
+      }
+    });
+
+    childIdsByWallet.forEach((ids, walletId) => {
+      ids.sort((a, b) => {
+        const na = nodeById.get(a)!;
+        const nb = nodeById.get(b)!;
+        const riskDelta = (riskRank[na.riskLevel] ?? 9) - (riskRank[nb.riskLevel] ?? 9);
+        return riskDelta !== 0 ? riskDelta : nb.valueUsd - na.valueUsd;
+      });
+      childIdsByWallet.set(walletId, ids);
+    });
+
+    const orphans = nodes.filter(n => n.type !== 'wallet' && !assigned.has(n.id));
+    const columns: CanvasNode[][] = wallets.map(w => {
+      const kids = (childIdsByWallet.get(w.id) || [])
+        .map(id => nodeById.get(id)!)
+        .filter(Boolean);
+      return [w, ...kids];
+    });
+    if (orphans.length > 0) {
+      orphans.sort((a, b) => b.valueUsd - a.valueUsd);
+      columns.push(orphans);
+    }
+    if (columns.length === 0) return;
+
+    const allNodes = columns.flat();
+    const cellW = Math.max(...allNodes.map(n => n.w), 420) + GUTTER;
+    const cellH = Math.max(...allNodes.map(n => n.h), 220) + GUTTER;
+    const maxRows = Math.max(...columns.map(c => c.length));
+    const gridW = columns.length * cellW - GUTTER;
+    const gridH = maxRows * cellH - GUTTER;
+    const originX = -gridW / 2;
+    const originY = -gridH / 2;
+
+    const posById = new Map<string, { x: number; y: number }>();
+    columns.forEach((colNodes, col) => {
+      colNodes.forEach((node, row) => {
+        const cellX = originX + col * cellW;
+        const cellY = originY + row * cellH;
+        posById.set(node.id, {
+          x: cellX + (cellW - GUTTER - node.w) / 2,
+          y: cellY + (cellH - GUTTER - node.h) / 2,
+        });
+      });
+    });
+
+    setNodes(prev => prev.map(n => {
+      const next = posById.get(n.id);
+      return next ? { ...n, x: next.x, y: next.y } : n;
+    }));
+    setHighlightNodeIds([]);
+
+    const fitScale = Math.min(
+      config.normalScale,
+      Math.max(0.32, Math.min(1500 / gridW, 900 / gridH))
+    );
+    cameraRef.current.flyTo(0, gridH * 0.05, fitScale);
+    showToast('Tidied into wallet columns — click a window to isolate its cluster');
+  }, [nodes, wires, recordHistory, showToast, config.normalScale]);
 
   const handleUndo = useCallback(() => {
     if (historyRef.current.length > 0) {
@@ -394,7 +704,7 @@ export const App: React.FC = () => {
     }
   }, [showToast]);
 
-  // Toggle Overview & Intent
+  // Overview zoom — may open Intent when entering, always clears Intent when leaving
   const toggleOverviewMode = useCallback((enable?: boolean) => {
     const nextState = enable !== undefined ? enable : !cameraRef.current.state.isOverview;
     cameraRef.current.setOverview(
@@ -412,15 +722,143 @@ export const App: React.FC = () => {
     }
   }, [config.overviewScale, config.normalScale]);
 
+  /** Mission Control: ensure overview + open Spotlight (canvas stays visible underneath) */
+  const openIntentMissionControl = useCallback(() => {
+    if (!cameraRef.current.state.isOverview) {
+      cameraRef.current.setOverview(
+        true,
+        config.overviewScale,
+        config.normalScale,
+        0,
+        0
+      );
+      setIsOverview(true);
+    }
+    setIsIntentOpen(true);
+  }, [config.overviewScale, config.normalScale]);
+
+  /** Soft-close Spotlight only — keep overview so demo pan/zoom of the map continues */
+  const closeIntentSpotlight = useCallback(() => {
+    setIsIntentOpen(false);
+  }, []);
+
+  const openPositionDetail = useCallback((node: CanvasNode) => {
+    setSelectedNode(node);
+    setFocusedNodeId(node.id);
+    setDetailPhase(initialPhaseForNode(node));
+  }, []);
+
+  const clearPositionDetail = useCallback(() => {
+    setSelectedNode(null);
+    setDetailPhase('none');
+  }, []);
+
+  const closeDetailLayer = useCallback(() => {
+    if (detailPhase === 'confirm') {
+      setDetailPhase(confirmReturnPhase);
+      return;
+    }
+    if (detailPhase === 'inspect') {
+      setDetailPhase(selectedNode?.riskLevel === 'critical' ? 'sheet' : 'peek');
+      return;
+    }
+    clearPositionDetail();
+  }, [detailPhase, confirmReturnPhase, selectedNode, clearPositionDetail]);
+
+  const requestUnwind = useCallback((returnPhase: 'peek' | 'sheet' | 'inspect', routeIndex = 0) => {
+    setConfirmReturnPhase(returnPhase);
+    setConfirmRouteIndex(routeIndex);
+    setDetailPhase('confirm');
+  }, []);
+
   const handleFocusNode = useCallback((node: CanvasNode, openDetail = false) => {
-    focusNode(node.id, true);
+    focusNode(node.id, true, Math.max(0.88, config.normalScale));
     cameraRef.current.state.isOverview = false;
     setIsOverview(false);
     setIsIntentOpen(false);
     if (openDetail) {
-      setSelectedNode(node);
+      openPositionDetail(node);
     }
-  }, [focusNode]);
+  }, [focusNode, openPositionDetail, config.normalScale]);
+
+  // Smoothly glide and zoom to a single node from Intent Spotlight
+  const handleZoomSingleNode = useCallback((node: CanvasNode) => {
+    const canvas = canvasRef.current;
+    const screenW = canvas?.clientWidth || window.innerWidth;
+    let cx = node.x + node.w / 2;
+    const cy = node.y + node.h / 2;
+    const fitScale = Math.max(0.88, config.normalScale);
+
+    if (window.innerWidth >= 768) {
+      // Offset camera horizontally so the node appears in the center of the right viewing area
+      const leftPanelWidth = 540;
+      const shiftScreenPx = leftPanelWidth / 2;
+      cx -= shiftScreenPx / fitScale;
+    }
+
+    cameraRef.current.state.isOverview = false;
+    setIsOverview(false);
+    cameraRef.current.flyTo(cx, cy, fitScale);
+    setFocusedNodeId(node.id);
+    setHighlightNodeIds([node.id]);
+    showToast(`Zoomed to ${node.title}`);
+  }, [config.normalScale, showToast]);
+
+  // Frame and zoom all matching search options on canvas
+  const handleFitNodes = useCallback((nodeIds: string[]) => {
+    const targetNodes = nodes.filter(n => nodeIds.includes(n.id));
+    if (targetNodes.length === 0) return;
+
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+    targetNodes.forEach(n => {
+      minX = Math.min(minX, n.x);
+      minY = Math.min(minY, n.y);
+      maxX = Math.max(maxX, n.x + n.w);
+      maxY = Math.max(maxY, n.y + n.h);
+    });
+
+    const worldW = Math.max(1, maxX - minX);
+    const worldH = Math.max(1, maxY - minY);
+    let cx = (minX + maxX) / 2;
+    const cy = (minY + maxY) / 2;
+
+    const canvas = canvasRef.current;
+    const screenW = canvas?.clientWidth || window.innerWidth;
+    const screenH = canvas?.clientHeight || window.innerHeight;
+
+    // Available viewport width when Spotlight is docked on the left (desktop >= 768px)
+    const leftPanelWidth = window.innerWidth >= 768 ? 540 : 0;
+    const usableW = Math.max(320, screenW - leftPanelWidth);
+    const padX = 72;
+    const padY = 96;
+
+    const fitScale = Math.max(
+      0.35,
+      Math.min(
+        1.45,
+        Math.min((usableW - padX) / worldW, (screenH - padY) / worldH) * 0.92
+      )
+    );
+
+    // If Spotlight is on the left, offset camera center horizontally so the cluster is centered in the right pane
+    if (window.innerWidth >= 768) {
+      const shiftScreenPx = leftPanelWidth / 2;
+      cx -= shiftScreenPx / fitScale;
+    }
+
+    cameraRef.current.state.isOverview = false;
+    setIsOverview(false);
+    cameraRef.current.flyTo(cx, cy, fitScale);
+    setHighlightNodeIds(nodeIds);
+    showToast(
+      targetNodes.length > 1
+        ? `Framed ${targetNodes.length} matching options on canvas`
+        : `Zoomed to ${targetNodes[0].title}`
+    );
+  }, [nodes, showToast]);
 
   // Filter high-risk positions
   const handleFilterRisk = useCallback(() => {
@@ -431,14 +869,15 @@ export const App: React.FC = () => {
     showToast(`Spotlighting ${criticalNodes.length} High-Risk Positions`);
   }, [nodes, toggleOverviewMode, showToast]);
 
-  // Toggle Theme Mode (Light / Dark)
+  // Toggle Theme Mode (Light / Dark) — startTransition keeps UI snappy
   const handleToggleThemeMode = useCallback(() => {
-    setConfig(prev => {
-      const nextMode = prev.themeMode === 'light' ? 'dark' : 'light';
-      showToast(nextMode === 'light' ? 'Switched to Clean Light Mode' : 'Switched to Dark Cyberpunk Mode');
-      return { ...prev, themeMode: nextMode };
+    startTransition(() => {
+      setConfig((prev) => ({
+        ...prev,
+        themeMode: prev.themeMode === 'light' ? 'dark' : 'light',
+      }));
     });
-  }, [showToast]);
+  }, []);
 
   // Dynamically generate and inject research graph & animated wires
   const handleApplyDynamicResearchGraph = useCallback(async (prompt: string) => {
@@ -469,28 +908,47 @@ export const App: React.FC = () => {
     }, 4000);
   }, [showToast]);
 
-  // Handle Kill Switch
+  // Handle Kill Switch & Output Detailed Settlement Receipt
   const handleKillSwitch = useCallback((node: CanvasNode, route: PositionExitRoute) => {
-    showToast(`KILL SWITCH ACTIVATED: Unwound ${node.title} -> ${route.targetAsset}`);
-    setNodes(prev => prev.map(n => {
-      if (n.id === node.id) {
-        return {
-          ...n,
-          riskLevel: 'safe',
-          title: `${n.title} (Unwound & Safe)`,
-          pnl24hUsd: 0,
-          healthFactor: 99.9,
-          debtRatioPct: 0,
-          borrowDebtUsd: 0
-        };
-      }
-      return n;
-    }));
+    const timestamp = new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+    const txHash = '5Kz' + Math.random().toString(36).substring(2, 9) + '9pQ' + Math.random().toString(36).substring(2, 6);
+    const penaltySaved = '+$' + Math.round((node.valueUsd || 68500) * 0.82).toLocaleString();
+
+    const receipt: PositionSettlementReceipt = {
+      timestamp,
+      txHash,
+      targetAsset: route.targetAsset,
+      recoveredAmount: route.estReturn,
+      debtExtinguished: node.borrowAsset || '3,270 SOL ($615,000 Notional)',
+      liquidationPenaltySaved: penaltySaved,
+      priorHealthFactor: node.healthFactor ?? 1.08,
+      newHealthFactor: 99.9,
+      feePaid: route.fee,
+      routeSummary: route.routeSummary,
+      mevProtection: 'Jito MEV Shielded Bundle (Private RPC)'
+    };
+
+    const updatedNode: CanvasNode = {
+      ...node,
+      riskLevel: 'safe',
+      title: `${node.title} (Unwound & Safe)`,
+      pnl24hUsd: 0,
+      healthFactor: 99.9,
+      debtRatioPct: 0,
+      borrowDebtUsd: 0,
+      settlementReceipt: receipt
+    };
+
+    setNodes(prev => prev.map(n => (n.id === node.id ? updatedNode : n)));
+    setActiveSettlementReceipt({ node: updatedNode, receipt });
+    showToast(`SETTLED: Recovered ${route.estReturn} • Debt Cleared to $0`);
   }, [showToast]);
 
   // Reset to Default Portfolio (Ctrl+Shift+R or HUD button)
   const handleResetPortfolio = useCallback(() => {
     [
+      'aether_nodes_v3',
+      'aether_nodes_v2',
       'aether_nodes_v1',
       'phantomat_nodes_v1',
       'aether_wires_v1',
@@ -503,7 +961,7 @@ export const App: React.FC = () => {
     setWires(JSON.parse(JSON.stringify(INITIAL_WIRES)));
     setActiveNansenEntity(null);
     setHighlightNodeIds([]);
-    setSelectedNode(null);
+    clearPositionDetail();
     setFocusedNodeId(INITIAL_NODES[0]?.id || 'wallet-ledger');
 
     const cam = cameraRef.current;
@@ -519,7 +977,14 @@ export const App: React.FC = () => {
     setIsIntentOpen(false);
 
     showToast('Reset to Default Portfolio');
-  }, [config.normalScale, showToast]);
+  }, [config.normalScale, showToast, clearPositionDetail]);
+
+  useEffect(() => {
+    if (selectedNode && detailPhase === 'none') {
+      setDetailPhase(initialPhaseForNode(selectedNode));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- URL bootstrap only
+  }, []);
 
   // Global Keyboard Shortcuts
   useEffect(() => {
@@ -541,7 +1006,7 @@ export const App: React.FC = () => {
         return;
       }
 
-      // View dock shortcuts (1: Canvas, 2: Table List, 3: CCTV Feed)
+      // View dock shortcuts (1: Canvas, 2: Table List, 3: CCTV Feed, 4: Intent)
       if (e.key === '1' && !e.ctrlKey && !e.metaKey && !e.altKey) {
         setViewMode('canvas');
         return;
@@ -552,6 +1017,11 @@ export const App: React.FC = () => {
       }
       if (e.key === '3' && !e.ctrlKey && !e.metaKey && !e.altKey) {
         setViewMode('exposure-grid');
+        return;
+      }
+      if (e.key === '4' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        if (isIntentOpen) closeIntentSpotlight();
+        else openIntentMissionControl();
         return;
       }
 
@@ -571,14 +1041,18 @@ export const App: React.FC = () => {
         if (e.key === 'ArrowDown') { e.preventDefault(); handleFocusNearest('down'); return; }
       }
 
-      // Cmd+K / SUPER+CTRL+G / / -> Toggle Intent
+      // Cmd+K / SUPER+CTRL+G / / -> Mission Control Spotlight (soft toggle)
       if (
         ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') ||
         ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'g') ||
         e.key === '/'
       ) {
         e.preventDefault();
-        toggleOverviewMode();
+        if (isIntentOpen) {
+          closeIntentSpotlight();
+        } else {
+          openIntentMissionControl();
+        }
         return;
       }
 
@@ -610,6 +1084,25 @@ export const App: React.FC = () => {
         return;
       }
 
+      // Shift+F -> Fit focus cluster to current screen (e.code survives layouts/IME)
+      if (
+        e.shiftKey &&
+        !e.ctrlKey &&
+        !e.metaKey &&
+        !e.altKey &&
+        !e.repeat &&
+        (e.code === 'KeyF' || e.key.toLowerCase() === 'f')
+      ) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (viewMode !== 'canvas') {
+          showToast('Switch to Canvas (1) then Shift+F to fit');
+          return;
+        }
+        fitFocusClusterToScreen();
+        return;
+      }
+
       // Ctrl/Cmd + Shift + R -> Reset to Default Portfolio
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'r') {
         e.preventDefault();
@@ -617,35 +1110,55 @@ export const App: React.FC = () => {
         return;
       }
 
-      // Escape -> Dismiss panels / reset camera
+      // Escape -> staged dismiss: Spotlight first, then overview / other panels
       if (e.key === 'Escape') {
-        setIsIntentOpen(false);
+        if (isIntentOpen) {
+          closeIntentSpotlight();
+          return;
+        }
         setIsNansenOpen(false);
         setIsTunerOpen(false);
         setIsHelpOpen(false);
-        setSelectedNode(null);
+        if (detailPhase !== 'none') return;
         setHighlightNodeIds([]);
+        cancelPendingClick();
+        pendingInspectRef.current = null;
+        pendingFocusClusterRef.current = null;
+        didDragRef.current = false;
+        isDraggingNodeRef.current = false;
+        draggedNodeRef.current = null;
+        isPanningRef.current = false;
+        isMinimapDraggingRef.current = false;
         if (cameraRef.current.state.isOverview) {
           toggleOverviewMode(false);
         }
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown, true);
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keydown', handleKeyDown, true);
     };
   }, [
     nodes,
     focusedNodeId,
+    isIntentOpen,
     toggleOverviewMode,
+    openIntentMissionControl,
+    closeIntentSpotlight,
+    detailPhase,
+    closeDetailLayer,
     handleSmartArrange,
     handleUndo,
     handleToggleFill,
     handleTogglePin,
     handleNudge,
     handleFocusNearest,
-    handleResetPortfolio
+    handleResetPortfolio,
+    cancelPendingClick,
+    fitFocusClusterToScreen,
+    viewMode,
+    showToast
   ]);
 
   // Persistent render state ref for 60/120 FPS render loop without context loss
@@ -801,7 +1314,6 @@ export const App: React.FC = () => {
         worldPos.x >= node.x && worldPos.x <= node.x + node.w &&
         worldPos.y >= node.y && worldPos.y <= node.y + node.h
       ) {
-        recordHistory();
         focusNode(node.id, false);
 
         // Check if clicking traffic light red dot (close/delete node)
@@ -813,6 +1325,7 @@ export const App: React.FC = () => {
           worldPos.y >= node.y + 4 &&
           worldPos.y <= node.y + 30
         ) {
+          recordHistory();
           setNodes(prev => prev.filter(n => n.id !== node.id));
           showToast(`Closed window: ${node.title}`);
           return;
@@ -834,10 +1347,19 @@ export const App: React.FC = () => {
           return;
         }
 
-        if (e.detail === 2 || node.type === 'position') {
-          setSelectedNode(node);
+        // Arm drag. Single clean click → cluster (deferred); double-click → cluster + inspect.
+        gestureClosedRef.current = false;
+        if (e.detail >= 2) {
+          // Cancel the deferred single-click from the first click of this double-click.
+          cancelPendingClick();
+          pendingFocusClusterRef.current = node.id;
+          pendingInspectRef.current = node;
+        } else {
+          pendingFocusClusterRef.current = node.id;
+          pendingInspectRef.current = null;
         }
-
+        didDragRef.current = false;
+        pointerDownClientRef.current = { x: e.clientX, y: e.clientY };
         isDraggingNodeRef.current = true;
         draggedNodeRef.current = node;
         dragOffsetRef.current = {
@@ -853,6 +1375,12 @@ export const App: React.FC = () => {
       }
     }
 
+    cancelPendingClick();
+    pendingInspectRef.current = null;
+    pendingFocusClusterRef.current = null;
+    didDragRef.current = false;
+    gestureClosedRef.current = false;
+    setHighlightNodeIds([]);
     isPanningRef.current = true;
     panStartRef.current = { x: e.clientX, y: e.clientY };
   };
@@ -862,6 +1390,17 @@ export const App: React.FC = () => {
     if (!offscreen) return;
 
     if (isDraggingNodeRef.current && draggedNodeRef.current) {
+      const moveDx = e.clientX - pointerDownClientRef.current.x;
+      const moveDy = e.clientY - pointerDownClientRef.current.y;
+      if (!didDragRef.current) {
+        if (Math.hypot(moveDx, moveDy) < CLICK_DRAG_THRESHOLD_PX) return;
+        didDragRef.current = true;
+        cancelPendingClick();
+        pendingInspectRef.current = null;
+        pendingFocusClusterRef.current = null;
+        recordHistory();
+      }
+
       const rect = canvasRef.current!.getBoundingClientRect();
       const sx = (e.clientX - rect.left) * (offscreen.width / rect.width);
       const sy = (e.clientY - rect.top) * (offscreen.height / rect.height);
@@ -889,12 +1428,59 @@ export const App: React.FC = () => {
     }
   };
 
-  const handleMouseUp = () => {
+  const clearPointerInteraction = useCallback(() => {
+    // Canvas mouseup + window mouseup both fire — only handle the gesture once.
+    if (gestureClosedRef.current) return;
+    if (!isDraggingNodeRef.current && !isPanningRef.current && !isMinimapDraggingRef.current) {
+      return;
+    }
+    gestureClosedRef.current = true;
+
+    const wasDrag = didDragRef.current;
+    const clusterId = !wasDrag ? pendingFocusClusterRef.current : null;
+    const inspectNode = !wasDrag ? pendingInspectRef.current : null;
+
+    pendingInspectRef.current = null;
+    pendingFocusClusterRef.current = null;
+    didDragRef.current = false;
     isDraggingNodeRef.current = false;
     draggedNodeRef.current = null;
     isPanningRef.current = false;
     isMinimapDraggingRef.current = false;
+
+    if (!clusterId && !inspectNode) return;
+
+    // Double-click: run immediately (cluster + progressive detail).
+    if (inspectNode) {
+      cancelPendingClick();
+      layoutFocusCluster(clusterId || inspectNode.id);
+      openPositionDetail(inspectNode);
+      return;
+    }
+
+    // Single-click: defer so a following double-click can cancel this.
+    cancelPendingClick();
+    clickTimerRef.current = window.setTimeout(() => {
+      clickTimerRef.current = null;
+      layoutFocusCluster(clusterId!);
+    }, DOUBLE_CLICK_DELAY_MS);
+  }, [layoutFocusCluster, cancelPendingClick, openPositionDetail]);
+
+  const handleMouseUp = () => {
+    clearPointerInteraction();
   };
+
+  // Safety net: modal/overlay can steal canvas mouseup and leave drag armed.
+  useEffect(() => {
+    const onPointerUp = () => clearPointerInteraction();
+    window.addEventListener('mouseup', onPointerUp);
+    window.addEventListener('pointerup', onPointerUp);
+    return () => {
+      window.removeEventListener('mouseup', onPointerUp);
+      window.removeEventListener('pointerup', onPointerUp);
+      cancelPendingClick();
+    };
+  }, [clearPointerInteraction, cancelPendingClick]);
 
   // Dynamic calculations
   const totalValue = nodes.reduce((sum, n) => sum + n.valueUsd, 0);
@@ -955,7 +1541,7 @@ export const App: React.FC = () => {
   );
 
   return (
-    <div className={`relative w-screen h-screen overflow-hidden font-mono select-none transition-colors duration-200 ${
+    <div className={`relative w-screen h-screen overflow-hidden font-mono select-none ${
       config.themeMode === 'light' ? 'theme-light bg-[#f8fafc] text-slate-900' : 'bg-[#07090e] text-slate-200'
     }`}>
       {/* WebGL Canvas */}
@@ -973,8 +1559,6 @@ export const App: React.FC = () => {
       <TopBar
         config={config}
         nodes={nodes}
-        isOverview={isOverview}
-        onToggleOverview={() => toggleOverviewMode()}
         onSmartArrange={handleSmartArrange}
         onOpenNansen={() => setIsNansenOpen(true)}
         onOpenTuner={() => setIsTunerOpen(true)}
@@ -993,7 +1577,7 @@ export const App: React.FC = () => {
             setViewMode('canvas');
             handleFocusNode(node, false);
           }}
-          onInspectNode={(node) => setSelectedNode(node)}
+          onInspectNode={openPositionDetail}
           onEmergencyKill={handleKillSwitch}
         />
       )}
@@ -1005,7 +1589,7 @@ export const App: React.FC = () => {
           config={config}
           settings={cctvSettings}
           onChangeSettings={(patch) => setCctvSettings(prev => ({ ...prev, ...patch }))}
-          onInspectNode={(node) => setSelectedNode(node)}
+          onInspectNode={openPositionDetail}
           onFocusNodeOnCanvas={(node) => {
             setViewMode('canvas');
             handleFocusNode(node, false);
@@ -1017,7 +1601,7 @@ export const App: React.FC = () => {
       {/* Screen 2: Natural Language Intent & Route Preview Panel */}
       <IntentPanel
         isOpen={isIntentOpen}
-        onClose={() => toggleOverviewMode(false)}
+        onClose={closeIntentSpotlight}
         nodes={nodes}
         intentPresets={INTENT_PRESETS}
         config={config}
@@ -1025,15 +1609,65 @@ export const App: React.FC = () => {
         onHighlightNodes={setHighlightNodeIds}
         onExecuteRoute={handleExecuteRoute}
         onApplyDynamicResearchGraph={handleApplyDynamicResearchGraph}
+        onFitNodes={handleFitNodes}
+        onZoomSingleNode={handleZoomSingleNode}
       />
 
-      {/* Screen 3: Position Detail Deep Focus & 1-Click Kill Switch */}
-      <PositionDetailModal
-        node={selectedNode}
-        config={config}
-        onClose={() => setSelectedNode(null)}
-        onKillSwitch={handleKillSwitch}
-      />
+      {/* Progressive position detail: peek → sheet → inspector → confirm */}
+      {selectedNode && detailPhase === 'peek' && (
+        <PositionPeek
+          node={selectedNode}
+          config={config}
+          onInspect={() => setDetailPhase('inspect')}
+          onUnwind={() => requestUnwind('peek')}
+          onClose={clearPositionDetail}
+        />
+      )}
+      {selectedNode && detailPhase === 'sheet' && (
+        <PositionCommandSheet
+          node={selectedNode}
+          config={config}
+          onInspect={() => setDetailPhase('inspect')}
+          onUnwind={() => requestUnwind('sheet')}
+          onClose={clearPositionDetail}
+        />
+      )}
+      {selectedNode && detailPhase === 'inspect' && (
+        <PositionInspector
+          node={selectedNode}
+          config={config}
+          onClose={closeDetailLayer}
+          onRequestUnwind={(routeIndex) => requestUnwind('inspect', routeIndex)}
+          onDirectKillSwitch={(node, route) => {
+            handleKillSwitch(node, route);
+            clearPositionDetail();
+          }}
+        />
+      )}
+      {selectedNode && detailPhase === 'confirm' && (
+        <UnwindConfirmModal
+          node={selectedNode}
+          config={config}
+          initialRouteIndex={confirmRouteIndex}
+          onClose={() => setDetailPhase(confirmReturnPhase)}
+          onKillSwitch={(node, route) => {
+            handleKillSwitch(node, route);
+            clearPositionDetail();
+          }}
+        />
+      )}
+
+      {/* Active On-Chain Settlement Receipt Modal */}
+      {activeSettlementReceipt && (
+        <SettlementReceiptModal
+          node={activeSettlementReceipt.node}
+          receipt={activeSettlementReceipt.receipt}
+          config={config}
+          onClose={() => setActiveSettlementReceipt(null)}
+          onFocusNode={(n) => handleFocusNode(n, false)}
+          onShowToast={showToast}
+        />
+      )}
 
       {/* Live CRT Lens Tuner */}
       <LiveTuner
@@ -1066,6 +1700,11 @@ export const App: React.FC = () => {
         onChangeViewMode={setViewMode}
         config={config}
         isDimmed={viewMode === 'exposure-grid'}
+        isIntentOpen={isIntentOpen}
+        onToggleIntent={() => {
+          if (isIntentOpen) closeIntentSpotlight();
+          else openIntentMissionControl();
+        }}
       />
 
       {/* Status Toast */}

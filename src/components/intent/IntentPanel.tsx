@@ -4,20 +4,26 @@ import {
   Search, 
   ArrowRight, 
   ShieldAlert, 
+  ShieldCheck,
   RefreshCw, 
   CheckCircle2, 
   Clock, 
   Fuel, 
+  Play,
   Zap, 
   ChevronRight, 
   TrendingUp, 
   X, 
   Terminal, 
   Activity,
-  Cpu 
+  Cpu,
+  Compass,
+  Maximize2
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { streamNansenAgent } from '../../services/nansenApi';
+import { MdxTableFrame } from './MdxTableFrame';
+import { DrawablyHighlight } from 'drawably/react';
 
 interface IntentPanelProps {
   isOpen: boolean;
@@ -29,6 +35,8 @@ interface IntentPanelProps {
   onHighlightNodes: (nodeIds: string[]) => void;
   onExecuteRoute: (route: RecommendedRoute) => void;
   onApplyDynamicResearchGraph?: (prompt: string) => Promise<void>;
+  onFitNodes?: (nodeIds: string[]) => void;
+  onZoomSingleNode?: (node: CanvasNode) => void;
 }
 
 const SMART_MONEY_ROUTE: RecommendedRoute = {
@@ -83,7 +91,9 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
   onSelectNode,
   onHighlightNodes,
   onExecuteRoute,
-  onApplyDynamicResearchGraph
+  onApplyDynamicResearchGraph,
+  onFitNodes,
+  onZoomSingleNode,
 }) => {
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -96,16 +106,61 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
   const [isAgentStreaming, setIsAgentStreaming] = useState(false);
   const [agentResponse, setAgentResponse] = useState<string | null>(null);
   const [agentToolCalls, setAgentToolCalls] = useState<string[]>([]);
+  const [panelOffset, setPanelOffset] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const dragRef = useRef<{ ox: number; oy: number; sx: number; sy: number } | null>(null);
 
   useEffect(() => {
     if (isOpen) {
+      setPanelOffset({ x: 0, y: 0 });
       setTimeout(() => {
         inputRef.current?.focus();
         inputRef.current?.select();
       }, 50);
+    } else {
+      dragRef.current = null;
+      setIsDragging(false);
     }
   }, [isOpen]);
+
+  const onDragHandlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    e.stopPropagation();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    dragRef.current = {
+      ox: panelOffset.x,
+      oy: panelOffset.y,
+      sx: e.clientX,
+      sy: e.clientY,
+    };
+    setIsDragging(true);
+  };
+
+  const onDragHandlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const drag = dragRef.current;
+    if (!drag) return;
+    const nextX = drag.ox + (e.clientX - drag.sx);
+    const nextY = drag.oy + (e.clientY - drag.sy);
+    const maxX = Math.max(0, window.innerWidth - 360);
+    const maxY = Math.max(0, window.innerHeight - 140);
+    setPanelOffset({
+      x: Math.min(maxX, Math.max(-24, nextX)),
+      y: Math.min(maxY, Math.max(-60, nextY)),
+    });
+  };
+
+  const onDragHandlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!dragRef.current) return;
+    dragRef.current = null;
+    setIsDragging(false);
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {
+      /* already released */
+    }
+  };
 
   // Match nodes and intent presets against query
   const filteredNodes = nodes.filter(n => {
@@ -260,20 +315,61 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 bg-black/60 backdrop-blur-md transition-all">
-      <div 
-        className={`w-full max-w-2xl rounded-2xl border shadow-2xl overflow-hidden flex flex-col max-h-[84vh] animate-in fade-in slide-in-from-top-3 duration-150 transition-colors ${
-          isLight 
-            ? 'bg-white/98 text-slate-900 border-slate-300 shadow-2xl' 
-            : 'glass-panel text-slate-200 border-amber-500/50'
+    /* Spotlight shell: pass pointer events through so canvas stays pan/zoomable */
+    <div className="fixed inset-0 z-50 flex items-start justify-start pt-16 sm:pt-20 pl-3 sm:pl-6 lg:pl-8 pr-3 pointer-events-none">
+      <div
+        role="dialog"
+        aria-modal="false"
+        aria-label="Intent spotlight"
+        className={`pointer-events-auto w-full max-w-[min(560px,calc(100vw-1.5rem))] sm:max-w-[480px] lg:max-w-[540px] xl:max-w-[580px] rounded-2xl border overflow-hidden flex flex-col max-h-[min(82vh,48rem)] ${
+          isDragging ? '' : 'animate-in fade-in slide-in-from-left-4 duration-150'
+        } ${
+          isLight
+            ? 'bg-white/85 text-slate-900 border-slate-200/90 backdrop-blur-2xl'
+            : 'bg-slate-950/80 text-slate-200 border-white/15 backdrop-blur-2xl'
         }`}
         style={{
-          boxShadow: isLight ? '0 20px 60px rgba(0, 0, 0, 0.15)' : '0 0 50px rgba(245, 158, 11, 0.25), 0 25px 60px rgba(0, 0, 0, 0.9)'
+          transform: `translate(${panelOffset.x}px, ${panelOffset.y}px)`,
+          boxShadow: isLight
+            ? '0 18px 50px rgba(15, 23, 42, 0.18), 0 0 0 1px rgba(15, 23, 42, 0.04)'
+            : '0 24px 60px rgba(0, 0, 0, 0.65), 0 0 40px rgba(245, 158, 11, 0.12)',
         }}
+        onMouseDown={(e) => e.stopPropagation()}
+        onWheel={(e) => e.stopPropagation()}
       >
+        {/* Mission Control Spotlight Header & Drag Handle */}
+        <div
+          className={`flex items-center justify-between px-3 py-1.5 border-b select-none touch-none ${
+            isDragging ? 'cursor-grabbing' : 'cursor-grab'
+          } ${isLight ? 'bg-white/60 border-slate-200/80 text-slate-600' : 'bg-white/[0.04] border-white/10 text-slate-400'}`}
+          onPointerDown={onDragHandlePointerDown}
+          onPointerMove={onDragHandlePointerMove}
+          onPointerUp={onDragHandlePointerUp}
+          onPointerCancel={onDragHandlePointerUp}
+          title="Drag anywhere to reposition"
+        >
+          <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold tracking-wider uppercase text-amber-500/90">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+            <span>MISSION CONTROL // INTENT</span>
+          </div>
+
+          <div className="flex items-center gap-1">
+            <span className={`block w-8 h-1 rounded-full ${isLight ? 'bg-slate-300' : 'bg-white/20'}`} />
+          </div>
+
+          <div className="flex items-center gap-2 text-[10px] font-mono">
+            <span className={`hidden sm:inline ${isLight ? 'text-slate-500' : 'text-slate-500'}`}>DRAG TO MOVE</span>
+            <kbd className={`px-1.5 py-0.5 rounded border text-[9px] font-bold ${
+              isLight ? 'bg-slate-100 border-slate-300 text-slate-700' : 'bg-slate-900 border-white/10 text-slate-400'
+            }`}>
+              ESC
+            </kbd>
+          </div>
+        </div>
+
         {/* Search Header Bar */}
         <div className={`p-3.5 border-b flex items-center gap-2.5 flex-nowrap ${
-          isLight ? 'bg-slate-50/95 border-slate-200' : 'bg-slate-900/90 border-white/10'
+          isLight ? 'bg-white/50 border-slate-200/80' : 'bg-white/[0.04] border-white/10'
         }`}>
           <span className="text-amber-500 font-extrabold text-base shrink-0 select-none">&gt;</span>
           <input
@@ -285,10 +381,20 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
               if (e.key === 'Escape') onClose();
               if (e.key === 'Enter') {
                 e.preventDefault();
-                handleAskNansenAgent();
+                if (e.metaKey || e.ctrlKey) {
+                  if (filteredNodes.length > 0 && onFitNodes) {
+                    onFitNodes(filteredNodes.map(n => n.id));
+                  }
+                } else if (query.toLowerCase().startsWith('ask') || query.includes('?')) {
+                  handleAskNansenAgent();
+                } else if (filteredNodes.length > 0 && onFitNodes) {
+                  onFitNodes(filteredNodes.map(n => n.id));
+                } else {
+                  handleAskNansenAgent();
+                }
               }
             }}
-            placeholder="Ask Nansen AI / Type intent: e.g. 'Which tokens are smart money accumulating?'..."
+            placeholder="Search nodes (e.g. 'hyperliquid') or ask Nansen AI..."
             className={`flex-1 min-w-0 bg-transparent font-mono text-sm outline-none transition-colors ${
               isLight ? 'text-slate-950 placeholder:text-slate-500 font-semibold' : 'text-white placeholder:text-slate-500'
             }`}
@@ -326,7 +432,7 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
 
         {/* Intent Presets Pills */}
         <div className={`p-3 border-b flex items-center gap-2 overflow-x-auto no-scrollbar ${
-          isLight ? 'bg-slate-100/90 border-slate-200' : 'bg-slate-950/70 border-white/5'
+          isLight ? 'bg-slate-50/60 border-slate-200/80' : 'bg-black/20 border-white/5'
         }`}>
           <span className={`text-[10px] font-extrabold uppercase flex items-center gap-1 shrink-0 ${
             isLight ? 'text-slate-700' : 'text-slate-400'
@@ -334,6 +440,21 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
             <Zap className="w-3 h-3 text-amber-500 fill-amber-500" />
             Suggested:
           </span>
+          <button
+            onClick={() => {
+              setQuery('Thesis Desk: Interrogate trade thesis against Smart Money netflows and onchain holdings');
+              setSelectedRoute(SMART_MONEY_ROUTE);
+              handleAskNansenAgent('Thesis Desk: Interrogate trade thesis against Smart Money netflows and onchain holdings');
+            }}
+            className={`text-xs px-2.5 py-1 rounded-md border shrink-0 transition-all font-mono font-bold flex items-center gap-1.5 cursor-pointer ${
+              isLight 
+                ? 'bg-amber-50 hover:bg-amber-100 border-amber-300 text-amber-950' 
+                : 'bg-amber-950/40 hover:bg-amber-900/60 border-amber-500/40 text-amber-300'
+            }`}
+          >
+            <Compass className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+            <span>Thesis Desk</span>
+          </button>
           <button
             onClick={() => {
               setQuery('Which tokens are smart money accumulating on Ethereum today?');
@@ -371,18 +492,30 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
         <div className="overflow-y-auto p-4 flex flex-col gap-4">
           {/* Nansen AI Research Agent Response Box */}
           {(isAgentStreaming || agentResponse) && (
-            <div className="rounded-lg border border-cyan-500/40 bg-slate-950/90 p-4 flex flex-col gap-2.5 animate-in fade-in duration-150">
-              <div className="flex items-center justify-between border-b border-cyan-500/20 pb-2">
+            <div className={`rounded-xl border p-4 flex flex-col gap-2.5 animate-in fade-in duration-150 ${
+              isLight
+                ? 'bg-cyan-50/80 border-cyan-300 text-slate-900 shadow-sm'
+                : 'bg-slate-950/90 border-cyan-500/40 text-slate-200'
+            }`}>
+              <div className={`flex items-center justify-between border-b pb-2 ${
+                isLight ? 'border-cyan-200' : 'border-cyan-500/20'
+              }`}>
                 <div className="flex items-center gap-2">
-                  <span className="p-1 rounded bg-cyan-500/20 text-cyan-400">
+                  <span className={`p-1 rounded ${
+                    isLight ? 'bg-cyan-100 text-cyan-800' : 'bg-cyan-500/20 text-cyan-400'
+                  }`}>
                     <Terminal className="w-4 h-4 stroke-[2.5]" />
                   </span>
-                  <span className="font-extrabold text-xs text-cyan-300 tracking-wider">
+                  <span className={`font-extrabold text-xs tracking-wider ${
+                    isLight ? 'text-cyan-950' : 'text-cyan-300'
+                  }`}>
                     NANSEN RESEARCH AGENT (STREAMING INTELLIGENCE)
                   </span>
                 </div>
                 {isAgentStreaming && (
-                  <span className="flex items-center gap-1.5 text-[10px] text-amber-400 font-mono font-bold animate-pulse">
+                  <span className={`flex items-center gap-1.5 text-[10px] font-mono font-bold animate-pulse ${
+                    isLight ? 'text-amber-700' : 'text-amber-400'
+                  }`}>
                     <Activity className="w-3 h-3 animate-spin" />
                     QUERYING ON-CHAIN DATA...
                   </span>
@@ -391,23 +524,43 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
 
               {agentToolCalls.length > 0 && (
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="text-[10px] text-slate-500 font-bold uppercase">Tools Used:</span>
+                  <span className={`text-[10px] font-bold uppercase ${
+                    isLight ? 'text-slate-600' : 'text-slate-500'
+                  }`}>Tools Used:</span>
                   {agentToolCalls.map((t, idx) => (
-                    <span key={idx} className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-950 border border-cyan-800 text-cyan-300 font-mono">
+                    <span key={idx} className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-bold ${
+                      isLight 
+                        ? 'bg-white border-cyan-300 text-cyan-900 shadow-xs' 
+                        : 'bg-cyan-950 border-cyan-800 text-cyan-300'
+                    }`}>
                       [TOOL: {t}]
                     </span>
                   ))}
                 </div>
               )}
 
-              <div className="text-xs text-slate-200 font-mono leading-relaxed whitespace-pre-wrap max-h-60 overflow-y-auto bg-black/40 p-3 rounded border border-white/5">
+              <div className={`text-xs font-mono leading-relaxed whitespace-pre-wrap max-h-60 overflow-y-auto p-3.5 rounded-lg border ${
+                isLight
+                  ? 'bg-white text-slate-900 border-cyan-200/90 shadow-inner'
+                  : 'bg-black/40 text-slate-200 border-white/5'
+              }`}>
                 {agentResponse || 'Initializing Nansen Agent stream...'}
-                {isAgentStreaming && <span className="inline-block w-2 h-4 ml-1 bg-amber-400 animate-pulse" />}
+                {isAgentStreaming && <span className={`inline-block w-2 h-4 ml-1 animate-pulse ${
+                  isLight ? 'bg-amber-600' : 'bg-amber-400'
+                }`} />}
               </div>
 
+              {!isAgentStreaming && agentResponse && (
+                <MdxTableFrame isLight={isLight} />
+              )}
+
               {agentResponse && !isAgentStreaming && (
-                <div className="pt-2 flex items-center justify-between border-t border-cyan-500/20">
-                  <span className="text-[10px] text-cyan-300 font-mono">
+                <div className={`pt-2 flex items-center justify-between border-t ${
+                  isLight ? 'border-cyan-200' : 'border-cyan-500/20'
+                }`}>
+                  <span className={`text-[10px] font-mono font-semibold ${
+                    isLight ? 'text-cyan-900' : 'text-cyan-300'
+                  }`}>
                     Intelligence indexed &bull; Wires energized
                   </span>
                   <button
@@ -422,7 +575,11 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
                       }
                       onClose();
                     }}
-                    className="px-3 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-black font-extrabold text-xs font-mono flex items-center gap-1.5 transition-all shadow cursor-pointer"
+                    className={`px-3 py-1.5 rounded-lg font-extrabold text-xs font-mono flex items-center gap-1.5 transition-all shadow cursor-pointer ${
+                      isLight
+                        ? 'bg-cyan-600 hover:bg-cyan-500 text-white'
+                        : 'bg-cyan-500 hover:bg-cyan-400 text-black'
+                    }`}
                   >
                     <span>Focus Researched Nodes &amp; Wires</span>
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -434,23 +591,37 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
 
           {/* Visual Route Preview Section (if an intent is active or selected) */}
           {selectedRoute && (
-            <div className="rounded-lg border border-amber-500/40 bg-amber-950/20 p-4 flex flex-col gap-3">
+            <div className={`rounded-xl border p-4 flex flex-col gap-3 ${
+              isLight
+                ? 'bg-amber-50/70 border-amber-300 text-slate-900'
+                : 'bg-amber-950/20 border-amber-500/40 text-slate-200'
+            }`}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-bold px-2 py-0.5 rounded bg-amber-500 text-black">
                     {selectedRoute.tag}
                   </span>
-                  <span className="font-bold text-sm text-white">
-                    {selectedRoute.title}
-                  </span>
+                  <DrawablyHighlight
+                    seed={99}
+                    roughness={1}
+                    boil={0.25}
+                    fill={isLight ? 'rgba(245, 158, 11, 0.3)' : 'rgba(245, 158, 11, 0.25)'}
+                    className="inline-flex"
+                  >
+                    <span className={`font-bold text-sm ${isLight ? 'text-slate-950' : 'text-white'}`}>
+                      {selectedRoute.title}
+                    </span>
+                  </DrawablyHighlight>
                 </div>
-                <div className="flex items-center gap-3 text-xs text-slate-400 font-mono">
+                <div className={`flex items-center gap-3 text-xs font-mono ${
+                  isLight ? 'text-slate-600' : 'text-slate-400'
+                }`}>
                   <span className="flex items-center gap-1">
-                    <Clock className="w-3.5 h-3.5 text-slate-400" />
+                    <Clock className={`w-3.5 h-3.5 ${isLight ? 'text-slate-500' : 'text-slate-400'}`} />
                     {selectedRoute.estTime}
                   </span>
                   <span className="flex items-center gap-1">
-                    <Fuel className="w-3.5 h-3.5 text-slate-400" />
+                    <Fuel className={`w-3.5 h-3.5 ${isLight ? 'text-slate-500' : 'text-slate-400'}`} />
                     {selectedRoute.gasCost}
                   </span>
                 </div>
@@ -458,7 +629,9 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
 
               {/* Step Pipeline Flow */}
               <div className="flex flex-col gap-2 pt-2">
-                <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                <div className={`text-[11px] font-bold uppercase tracking-wider ${
+                  isLight ? 'text-slate-600' : 'text-slate-400'
+                }`}>
                   Visual Execution Pipeline ({selectedRoute.steps.length} Steps)
                 </div>
 
@@ -472,38 +645,42 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
                         key={step.stepNumber}
                         className={`rounded-md border p-2.5 flex flex-col gap-1 transition-all ${
                           isStepDone
-                            ? 'bg-emerald-950/30 border-emerald-500/50 text-emerald-300'
+                            ? (isLight ? 'bg-emerald-50 border-emerald-300 text-emerald-950' : 'bg-emerald-950/30 border-emerald-500/50 text-emerald-300')
                             : isStepActive
-                            ? 'bg-amber-500/20 border-amber-400 text-amber-200 animate-pulse shadow-lg'
-                            : 'bg-black/40 border-white/10 text-slate-300'
+                            ? (isLight ? 'bg-amber-100 border-amber-400 text-amber-950 animate-pulse shadow-md' : 'bg-amber-500/20 border-amber-400 text-amber-200 animate-pulse shadow-lg')
+                            : (isLight ? 'bg-white border-slate-200 text-slate-800' : 'bg-black/40 border-white/10 text-slate-300')
                         }`}
                       >
-                        <div className="flex items-center justify-between text-[10px] font-bold text-slate-400">
+                        <div className={`flex items-center justify-between text-[10px] font-bold ${
+                          isLight ? 'text-slate-600' : 'text-slate-400'
+                        }`}>
                           <span>STEP 0{step.stepNumber} // {step.type.toUpperCase()}</span>
                           {isStepDone ? (
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                            <CheckCircle2 className={`w-3.5 h-3.5 ${isLight ? 'text-emerald-600' : 'text-emerald-400'}`} />
                           ) : isStepActive ? (
-                            <RefreshCw className="w-3.5 h-3.5 text-amber-400 animate-spin" />
+                            <RefreshCw className={`w-3.5 h-3.5 animate-spin ${isLight ? 'text-amber-600' : 'text-amber-400'}`} />
                           ) : (
                             <span>{step.estTime}</span>
                           )}
                         </div>
 
-                        <div className="font-bold text-xs text-white">
+                        <div className={`font-bold text-xs ${isLight ? 'text-slate-950' : 'text-white'}`}>
                           {step.protocol}
                         </div>
 
-                        <div className="text-[11px] text-slate-400 flex items-center gap-1">
+                        <div className={`text-[11px] flex items-center gap-1 ${
+                          isLight ? 'text-slate-600' : 'text-slate-400'
+                        }`}>
                           <span>{step.fromAsset}</span>
                           {step.toAsset && (
                             <>
-                              <ArrowRight className="w-2.5 h-2.5 text-slate-500" />
-                              <span className="text-amber-300 font-semibold">{step.toAsset}</span>
+                              <ArrowRight className="w-2.5 h-2.5 text-slate-400" />
+                              <span className={`font-semibold ${isLight ? 'text-amber-800' : 'text-amber-300'}`}>{step.toAsset}</span>
                             </>
                           )}
                         </div>
 
-                        <div className="text-[10px] text-slate-500">
+                        <div className={`text-[10px] ${isLight ? 'text-slate-500' : 'text-slate-500'}`}>
                           {step.fromChain} {step.toChain ? `-> ${step.toChain}` : ''}
                         </div>
                       </div>
@@ -513,17 +690,32 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
               </div>
 
               {/* Simulation Action Bar */}
-              <div className="pt-2 flex items-center justify-between border-t border-white/10">
-                <div className="text-xs text-emerald-400 font-mono font-semibold">
-                  {selectedRoute.netApyImpact || selectedRoute.riskChange || 'Validated against MEV & Slippage'}
+              <div className={`pt-2 flex items-center justify-between gap-2 border-t ${
+                isLight ? 'border-amber-200' : 'border-white/10'
+              }`}>
+                <div className="flex items-center gap-1.5 text-xs font-mono font-semibold min-w-0 shrink">
+                  <ShieldCheck className={`w-3.5 h-3.5 shrink-0 ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`} />
+                  <span className={`truncate ${isLight ? 'text-emerald-800' : 'text-emerald-400'}`}>
+                    {selectedRoute.netApyImpact || selectedRoute.riskChange || 'MEV & Slippage Shielded'}
+                  </span>
                 </div>
                 <button
                   disabled={isSimulating}
                   onClick={() => handleRunSimulation(selectedRoute)}
-                  className="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-black font-extrabold text-xs flex items-center gap-2 shadow-lg transition-all"
+                  className="shrink-0 whitespace-nowrap px-3.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-black font-extrabold text-xs font-mono flex items-center gap-1.5 shadow-md hover:shadow-amber-500/20 transition-all cursor-pointer"
+                  title="Simulate route execution steps"
                 >
-                  <Zap className="w-3.5 h-3.5 fill-black" />
-                  <span>{isSimulating ? `Simulating Step ${simulatedStep}/${selectedRoute.steps.length}...` : 'Simulate & Execute Route'}</span>
+                  {isSimulating ? (
+                    <>
+                      <RefreshCw className="w-3 h-3 animate-spin shrink-0" />
+                      <span>Step {simulatedStep}/{selectedRoute.steps.length}...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Play className="w-3 h-3 fill-current shrink-0" />
+                      <span>Simulate Route</span>
+                    </>
+                  )}
                 </button>
               </div>
             </div>
@@ -534,8 +726,33 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
             <div className={`text-[11px] font-extrabold uppercase tracking-wider flex items-center justify-between ${
               isLight ? 'text-slate-700' : 'text-slate-400'
             }`}>
-              <span>Matching Portfolio Nodes ({filteredNodes.length})</span>
-              <span className={`text-[10px] ${isLight ? 'text-slate-500 font-semibold' : 'text-slate-500'}`}>Click to glide camera &amp; zoom</span>
+              <div className="flex items-center gap-1.5">
+                <span>Matching Portfolio Nodes ({filteredNodes.length})</span>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                {filteredNodes.length > 0 && onFitNodes && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onFitNodes(filteredNodes.map(n => n.id));
+                    }}
+                    className={`px-2 py-0.5 rounded-md text-[10px] font-mono font-extrabold border flex items-center gap-1 transition-all shadow-xs cursor-pointer ${
+                      isLight
+                        ? 'bg-amber-100 hover:bg-amber-200 border-amber-300 text-amber-950'
+                        : 'bg-amber-500/20 hover:bg-amber-500/35 border-amber-500/40 text-amber-300'
+                    }`}
+                    title="Zoom and frame all matching options on canvas"
+                  >
+                    <Maximize2 className="w-3 h-3 text-amber-500" />
+                    <span>Zoom {filteredNodes.length === 1 ? 'Option' : `All (${filteredNodes.length})`}</span>
+                  </button>
+                )}
+                <span className={`text-[10px] hidden sm:inline ${isLight ? 'text-slate-500 font-semibold' : 'text-slate-500'}`}>
+                  Click to inspect
+                </span>
+              </div>
             </div>
 
             <div className="flex flex-col gap-1.5">
@@ -552,9 +769,9 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
                       : 'bg-slate-900/60 hover:bg-slate-800/80 border-white/10 hover:border-amber-500/50'
                   }`}
                 >
-                  <div className="flex items-center gap-2.5">
-                    <div className="flex flex-col">
-                      <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="flex flex-col min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className={`font-extrabold text-xs transition-colors ${
                           isLight ? 'text-slate-950 group-hover:text-amber-700' : 'text-white group-hover:text-amber-300'
                         }`}>
@@ -575,13 +792,13 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
                           </span>
                         )}
                       </div>
-                      <span className={`text-[11px] ${isLight ? 'text-slate-600 font-medium' : 'text-slate-400'}`}>
+                      <span className={`text-[11px] truncate ${isLight ? 'text-slate-600 font-medium' : 'text-slate-400'}`}>
                         {node.app} &bull; {node.strategy || node.category}
                       </span>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-4 text-right">
+                  <div className="flex items-center gap-3 text-right shrink-0">
                     <div>
                       <div className={`font-extrabold text-xs font-mono ${isLight ? 'text-slate-950' : 'text-white'}`}>
                         ${node.valueUsd.toLocaleString()}
@@ -599,6 +816,25 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
                         </div>
                       )}
                     </div>
+
+                    {onZoomSingleNode && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onZoomSingleNode(node);
+                        }}
+                        className={`p-1.5 rounded-lg border text-xs transition-all cursor-pointer ${
+                          isLight
+                            ? 'bg-white hover:bg-amber-100 border-slate-300 text-slate-700 hover:text-amber-900'
+                            : 'bg-white/5 hover:bg-amber-500/20 border-white/10 text-slate-300 hover:text-amber-300'
+                        }`}
+                        title={`Zoom canvas directly to ${node.title}`}
+                      >
+                        <Maximize2 className="w-3.5 h-3.5 text-amber-500" />
+                      </button>
+                    )}
+
                     <ChevronRight className={`w-4 h-4 transition-transform group-hover:translate-x-0.5 ${
                       isLight ? 'text-slate-400 group-hover:text-amber-600' : 'text-slate-500 group-hover:text-amber-400'
                     }`} />

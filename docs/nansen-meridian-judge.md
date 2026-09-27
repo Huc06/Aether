@@ -56,14 +56,15 @@ npm run dev
 ---
 
 ### Step 3: Test Nansen AI Research Agent & Intent Engine (1 minute)
-1. Press **`Cmd + K`** (or `/`) to open the Intent Navigator.
+1. Press **`Cmd + K`** (or `/`) to open the **Intent Spotlight** (Mission Control): glass panel floats over the live spatial canvas — no full-screen blackout; drag the top grip to reposition; pan/zoom the map underneath.
 2. Click the cyan pill **`[Smart Money Accumulation (Live)]`** (or type: *"Which tokens are smart money accumulating on Ethereum today?"*).
 3. **Expected Result:**
-   - Real-time SSE streaming answer from Nansen Research Agent.
-   - Active tool call banner: `[tool: token_discovery_screener]`.
-   - Camera auto-highlights researched nodes on the spatial canvas.
-   - A 3-step **Visual Execution Pipeline** renders below the answer.
-   - Click **`Simulate & Execute Route`** $\rightarrow$ Step progress turns green $\rightarrow$ Confetti celebration triggers.
+    - Real-time SSE streaming answer from Nansen Research Agent.
+    - Active tool call banner: `[tool: token_discovery_screener]`.
+    - Camera auto-highlights researched nodes on the spatial canvas **while the Spotlight stays translucent**.
+    - A 3-step **Visual Execution Pipeline** renders below the answer.
+    - Click **`Simulate Route`** $\rightarrow$ Step progress turns green $\rightarrow$ Confetti celebration triggers.
+    - **`Esc`** closes Spotlight only (overview map remains); second **`Esc`** exits overview.
 
 ---
 

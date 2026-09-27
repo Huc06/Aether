@@ -27,8 +27,8 @@ export class GraphRenderer {
     // Draw Grid
     this.drawGrid(ctx, width, height, camera, config, isLight);
 
-    // Draw Connection Wires with flowing particles
-    this.drawWires(ctx, width, height, camera, nodes, wires, config, highlightIds, isSimulating, isLight);
+    // Draw Connection Wires with flowing particles (under cards; focus dims unrelated wires)
+    this.drawWires(ctx, width, height, camera, nodes, wires, config, highlightIds, selectedNodeId, isSimulating, isLight);
 
     // Draw Spatial Nodes & Windows
     this.drawNodes(ctx, width, height, camera, nodes, config, highlightIds, selectedNodeId, isLight);
@@ -88,6 +88,25 @@ export class GraphRenderer {
     ctx.restore();
   }
 
+  /** Anchor a wire on the card border facing the other node (not buried at center). */
+  private getEdgePort(
+    node: CanvasNode,
+    toward: { x: number; y: number }
+  ): { x: number; y: number } {
+    const cx = node.x + node.w / 2;
+    const cy = node.y + node.h / 2;
+    const dx = toward.x - cx;
+    const dy = toward.y - cy;
+    if (dx === 0 && dy === 0) return { x: cx, y: cy };
+
+    const hw = node.w / 2;
+    const hh = node.h / 2;
+    const sx = Math.abs(dx) / hw;
+    const sy = Math.abs(dy) / hh;
+    const t = 1 / Math.max(sx, sy);
+    return { x: cx + dx * t, y: cy + dy * t };
+  }
+
   private drawWires(
     ctx: CanvasRenderingContext2D,
     width: number,
@@ -97,6 +116,7 @@ export class GraphRenderer {
     wires: WireConnection[],
     config: LensConfig,
     highlightIds: string[],
+    selectedNodeId: string | null,
     isSimulating: boolean,
     isLight: boolean
   ) {
@@ -104,30 +124,55 @@ export class GraphRenderer {
     const nodeMap = new Map<string, CanvasNode>();
     nodes.forEach(n => nodeMap.set(n.id, n));
 
+    // Spotlight only when an explicit cluster/intent highlight is active.
+    // focusedNodeId is always set — must NOT hide the rest of the graph by default.
+    const hasSpotlight = highlightIds.length > 0;
+
+    type WireDraw = {
+      wire: WireConnection;
+      fromNode: CanvasNode;
+      toNode: CanvasNode;
+      emphasized: boolean;
+    };
+
+    const prepared: WireDraw[] = [];
     wires.forEach(wire => {
       const fromNode = nodeMap.get(wire.fromId);
       const toNode = nodeMap.get(wire.toId);
       if (!fromNode || !toNode) return;
 
-      const isHighlighted = highlightIds.length === 0 || highlightIds.includes(fromNode.id) || highlightIds.includes(toNode.id);
+      const touchesSpotlight =
+        highlightIds.includes(wire.fromId) || highlightIds.includes(wire.toId);
 
+      prepared.push({
+        wire,
+        fromNode,
+        toNode,
+        emphasized: hasSpotlight && touchesSpotlight,
+      });
+    });
+
+    // Soft-dimmed wires first; emphasized cluster links drawn on top.
+    prepared.sort((a, b) => Number(a.emphasized) - Number(b.emphasized));
+
+    prepared.forEach(({ wire, fromNode, toNode, emphasized }) => {
       const fromCenter = {
         x: fromNode.x + fromNode.w / 2,
-        y: fromNode.y + fromNode.h / 2
+        y: fromNode.y + fromNode.h / 2,
       };
       const toCenter = {
         x: toNode.x + toNode.w / 2,
-        y: toNode.y + toNode.h / 2
+        y: toNode.y + toNode.h / 2,
       };
+      const fromPort = this.getEdgePort(fromNode, toCenter);
+      const toPort = this.getEdgePort(toNode, fromCenter);
 
-      const p1 = camera.worldToScreen(fromCenter.x, fromCenter.y, width, height);
-      const p2 = camera.worldToScreen(toCenter.x, toCenter.y, width, height);
+      const p1 = camera.worldToScreen(fromPort.x, fromPort.y, width, height);
+      const p2 = camera.worldToScreen(toPort.x, toPort.y, width, height);
 
-      // Bezier curve calculation
       const dx = p2.x - p1.x;
       const dy = p2.y - p1.y;
       const dist = Math.sqrt(dx * dx + dy * dy);
-
       const cp1x = p1.x + dx * 0.5;
       const cp1y = p1.y;
       const cp2x = p1.x + dx * 0.5;
@@ -135,31 +180,55 @@ export class GraphRenderer {
 
       ctx.save();
 
-      // Base Wire Glow
       const wireColor = wire.color || config.accent;
-      const isTargeted = highlightIds.length > 0 && isHighlighted;
-      ctx.strokeStyle = isHighlighted ? wireColor : (isLight ? 'rgba(15, 23, 42, 0.12)' : 'rgba(255, 255, 255, 0.06)');
-      ctx.lineWidth = (isTargeted ? 3.5 : (isHighlighted ? 2.2 : 1.0)) * Math.max(0.5, sc);
-      ctx.lineCap = 'round';
+      // All wires stay visible by default. Spotlight only soft-dims outsiders.
+      const softDim = hasSpotlight && !emphasized;
 
-      if (isHighlighted) {
-        const glowPulse = isTargeted ? (Math.sin(this.particleTime * 4) * 0.3 + 0.9) : 1.0;
+      if (softDim) {
+        ctx.globalAlpha = isLight ? 0.35 : 0.3;
+        ctx.strokeStyle = wireColor;
+        ctx.lineWidth = 1.6 * Math.max(0.5, sc);
+      } else {
+        ctx.globalAlpha = 1;
+        ctx.strokeStyle = wireColor;
+        ctx.lineWidth = (emphasized ? 3.6 : 2.4) * Math.max(0.5, sc);
+        const glowPulse = emphasized ? Math.sin(this.particleTime * 4) * 0.3 + 0.9 : 1.0;
         ctx.shadowColor = wireColor;
-        ctx.shadowBlur = (isTargeted ? 22 : 12) * sc * glowPulse;
+        ctx.shadowBlur = (emphasized ? 22 : 10) * sc * glowPulse;
       }
+      ctx.lineCap = 'round';
 
       ctx.beginPath();
       ctx.moveTo(p1.x, p1.y);
       ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y);
       ctx.stroke();
 
-      // Flowing Energy Laser Particles
-      if (isHighlighted) {
-        const speed = isSimulating ? 1.4 : (isTargeted ? 0.75 : 0.35);
-        const numParticles = Math.max(4, Math.floor(dist / ((isTargeted ? 50 : 80) * sc)));
+      // Endpoint ports — makes the connected windows obvious
+      {
+        const portR = (emphasized ? 4.2 : 3.0) * Math.max(0.55, sc);
+        ctx.shadowBlur = emphasized ? 12 * sc : 0;
+        ctx.globalAlpha = softDim ? (isLight ? 0.4 : 0.35) : 1;
+        ctx.fillStyle = wireColor;
+        ctx.beginPath();
+        ctx.arc(p1.x, p1.y, portR, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(p2.x, p2.y, portR, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = isLight ? '#ffffff' : '#07090e';
+        ctx.beginPath();
+        ctx.arc(p1.x, p1.y, portR * 0.4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(p2.x, p2.y, portR * 0.4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      if (!softDim) {
+        const speed = isSimulating ? 1.4 : (emphasized ? 0.75 : 0.35);
+        const numParticles = Math.max(3, Math.floor(dist / ((emphasized ? 50 : 90) * sc)));
         for (let i = 0; i < numParticles; i++) {
           const t = ((this.particleTime * speed + i / numParticles) % 1.0);
-          
           const u = 1 - t;
           const tt = t * t;
           const uu = u * u;
@@ -171,29 +240,45 @@ export class GraphRenderer {
 
           ctx.fillStyle = '#ffffff';
           ctx.shadowColor = isSimulating ? '#4ade80' : wireColor;
-          ctx.shadowBlur = (isTargeted || isSimulating ? 18 : 8) * sc;
+          ctx.shadowBlur = (emphasized || isSimulating ? 18 : 8) * sc;
           ctx.beginPath();
-          ctx.arc(px, py, (isSimulating ? 4.8 : (isTargeted ? 3.8 : 2.5)) * Math.max(0.6, sc), 0, Math.PI * 2);
+          ctx.arc(px, py, (isSimulating ? 4.8 : (emphasized ? 3.8 : 2.4)) * Math.max(0.6, sc), 0, Math.PI * 2);
           ctx.fill();
         }
       }
 
-      // Wire Label in medium/close zoom
-      if (sc > 0.45 && wire.label && isHighlighted) {
-        const midX = (p1.x + p2.x) / 2;
-        const midY = (p1.y + p2.y) / 2;
-        ctx.font = `700 ${Math.max(8, Math.floor(10 * sc))}px 'JetBrains Mono', monospace`;
+      // Labels: cluster/intent wires always; otherwise when zoomed in
+      const showLabel =
+        !!wire.label && (emphasized || (!hasSpotlight && sc > 0.5));
+      if (showLabel && wire.label) {
+        const midT = 0.5;
+        const u = 1 - midT;
+        const midX =
+          u * u * u * p1.x +
+          3 * u * u * midT * cp1x +
+          3 * u * midT * midT * cp2x +
+          midT * midT * midT * p2.x;
+        const midY =
+          u * u * u * p1.y +
+          3 * u * u * midT * cp1y +
+          3 * u * midT * midT * cp2y +
+          midT * midT * midT * p2.y;
+        ctx.shadowBlur = 0;
+        ctx.globalAlpha = 1;
+        ctx.font = `700 ${Math.max(8, Math.floor((emphasized ? 11 : 10) * Math.max(0.7, sc)))}px 'JetBrains Mono', monospace`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        
-        const padX = 8 * sc;
+
+        const padX = 8 * Math.max(0.7, sc);
         const textW = ctx.measureText(wire.label).width;
-        
-        ctx.fillStyle = isLight ? 'rgba(255, 255, 255, 0.95)' : 'rgba(10, 14, 22, 0.85)';
+        const labelH = 20 * Math.max(0.7, sc);
+
+        ctx.fillStyle = isLight ? 'rgba(255, 255, 255, 0.96)' : 'rgba(10, 14, 22, 0.9)';
         ctx.beginPath();
-        ctx.roundRect(midX - textW / 2 - padX, midY - 10 * sc, textW + padX * 2, 20 * sc, 4 * sc);
+        ctx.roundRect(midX - textW / 2 - padX, midY - labelH / 2, textW + padX * 2, labelH, 4 * sc);
         ctx.fill();
-        ctx.strokeStyle = isLight ? 'rgba(15, 23, 42, 0.15)' : 'rgba(255, 255, 255, 0.15)';
+        ctx.strokeStyle = wireColor;
+        ctx.lineWidth = emphasized ? 1.4 : 1;
         ctx.stroke();
 
         ctx.fillStyle = wireColor;
