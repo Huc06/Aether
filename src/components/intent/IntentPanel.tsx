@@ -475,18 +475,30 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
         <div className="overflow-y-auto p-4 flex flex-col gap-4">
           {/* Nansen AI Research Agent Response Box */}
           {(isAgentStreaming || agentResponse) && (
-            <div className="rounded-lg border border-cyan-500/40 bg-slate-950/90 p-4 flex flex-col gap-2.5 animate-in fade-in duration-150">
-              <div className="flex items-center justify-between border-b border-cyan-500/20 pb-2">
+            <div className={`rounded-xl border p-4 flex flex-col gap-2.5 animate-in fade-in duration-150 ${
+              isLight
+                ? 'bg-cyan-50/80 border-cyan-300 text-slate-900 shadow-sm'
+                : 'bg-slate-950/90 border-cyan-500/40 text-slate-200'
+            }`}>
+              <div className={`flex items-center justify-between border-b pb-2 ${
+                isLight ? 'border-cyan-200' : 'border-cyan-500/20'
+              }`}>
                 <div className="flex items-center gap-2">
-                  <span className="p-1 rounded bg-cyan-500/20 text-cyan-400">
+                  <span className={`p-1 rounded ${
+                    isLight ? 'bg-cyan-100 text-cyan-800' : 'bg-cyan-500/20 text-cyan-400'
+                  }`}>
                     <Terminal className="w-4 h-4 stroke-[2.5]" />
                   </span>
-                  <span className="font-extrabold text-xs text-cyan-300 tracking-wider">
+                  <span className={`font-extrabold text-xs tracking-wider ${
+                    isLight ? 'text-cyan-950' : 'text-cyan-300'
+                  }`}>
                     NANSEN RESEARCH AGENT (STREAMING INTELLIGENCE)
                   </span>
                 </div>
                 {isAgentStreaming && (
-                  <span className="flex items-center gap-1.5 text-[10px] text-amber-400 font-mono font-bold animate-pulse">
+                  <span className={`flex items-center gap-1.5 text-[10px] font-mono font-bold animate-pulse ${
+                    isLight ? 'text-amber-700' : 'text-amber-400'
+                  }`}>
                     <Activity className="w-3 h-3 animate-spin" />
                     QUERYING ON-CHAIN DATA...
                   </span>
@@ -495,18 +507,30 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
 
               {agentToolCalls.length > 0 && (
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="text-[10px] text-slate-500 font-bold uppercase">Tools Used:</span>
+                  <span className={`text-[10px] font-bold uppercase ${
+                    isLight ? 'text-slate-600' : 'text-slate-500'
+                  }`}>Tools Used:</span>
                   {agentToolCalls.map((t, idx) => (
-                    <span key={idx} className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-950 border border-cyan-800 text-cyan-300 font-mono">
+                    <span key={idx} className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-bold ${
+                      isLight 
+                        ? 'bg-white border-cyan-300 text-cyan-900 shadow-xs' 
+                        : 'bg-cyan-950 border-cyan-800 text-cyan-300'
+                    }`}>
                       [TOOL: {t}]
                     </span>
                   ))}
                 </div>
               )}
 
-              <div className="text-xs text-slate-200 font-mono leading-relaxed whitespace-pre-wrap max-h-60 overflow-y-auto bg-black/40 p-3 rounded border border-white/5">
+              <div className={`text-xs font-mono leading-relaxed whitespace-pre-wrap max-h-60 overflow-y-auto p-3.5 rounded-lg border ${
+                isLight
+                  ? 'bg-white text-slate-900 border-cyan-200/90 shadow-inner'
+                  : 'bg-black/40 text-slate-200 border-white/5'
+              }`}>
                 {agentResponse || 'Initializing Nansen Agent stream...'}
-                {isAgentStreaming && <span className="inline-block w-2 h-4 ml-1 bg-amber-400 animate-pulse" />}
+                {isAgentStreaming && <span className={`inline-block w-2 h-4 ml-1 animate-pulse ${
+                  isLight ? 'bg-amber-600' : 'bg-amber-400'
+                }`} />}
               </div>
 
               {!isAgentStreaming && agentResponse && (
@@ -514,8 +538,12 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
               )}
 
               {agentResponse && !isAgentStreaming && (
-                <div className="pt-2 flex items-center justify-between border-t border-cyan-500/20">
-                  <span className="text-[10px] text-cyan-300 font-mono">
+                <div className={`pt-2 flex items-center justify-between border-t ${
+                  isLight ? 'border-cyan-200' : 'border-cyan-500/20'
+                }`}>
+                  <span className={`text-[10px] font-mono font-semibold ${
+                    isLight ? 'text-cyan-900' : 'text-cyan-300'
+                  }`}>
                     Intelligence indexed &bull; Wires energized
                   </span>
                   <button
@@ -530,7 +558,11 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
                       }
                       onClose();
                     }}
-                    className="px-3 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-black font-extrabold text-xs font-mono flex items-center gap-1.5 transition-all shadow cursor-pointer"
+                    className={`px-3 py-1.5 rounded-lg font-extrabold text-xs font-mono flex items-center gap-1.5 transition-all shadow cursor-pointer ${
+                      isLight
+                        ? 'bg-cyan-600 hover:bg-cyan-500 text-white'
+                        : 'bg-cyan-500 hover:bg-cyan-400 text-black'
+                    }`}
                   >
                     <span>Focus Researched Nodes &amp; Wires</span>
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -542,7 +574,11 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
 
           {/* Visual Route Preview Section (if an intent is active or selected) */}
           {selectedRoute && (
-            <div className="rounded-lg border border-amber-500/40 bg-amber-950/20 p-4 flex flex-col gap-3">
+            <div className={`rounded-xl border p-4 flex flex-col gap-3 ${
+              isLight
+                ? 'bg-amber-50/70 border-amber-300 text-slate-900'
+                : 'bg-amber-950/20 border-amber-500/40 text-slate-200'
+            }`}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-bold px-2 py-0.5 rounded bg-amber-500 text-black">
@@ -555,18 +591,20 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
                     fill={isLight ? 'rgba(245, 158, 11, 0.3)' : 'rgba(245, 158, 11, 0.25)'}
                     className="inline-flex"
                   >
-                    <span className="font-bold text-sm text-white">
+                    <span className={`font-bold text-sm ${isLight ? 'text-slate-950' : 'text-white'}`}>
                       {selectedRoute.title}
                     </span>
                   </DrawablyHighlight>
                 </div>
-                <div className="flex items-center gap-3 text-xs text-slate-400 font-mono">
+                <div className={`flex items-center gap-3 text-xs font-mono ${
+                  isLight ? 'text-slate-600' : 'text-slate-400'
+                }`}>
                   <span className="flex items-center gap-1">
-                    <Clock className="w-3.5 h-3.5 text-slate-400" />
+                    <Clock className={`w-3.5 h-3.5 ${isLight ? 'text-slate-500' : 'text-slate-400'}`} />
                     {selectedRoute.estTime}
                   </span>
                   <span className="flex items-center gap-1">
-                    <Fuel className="w-3.5 h-3.5 text-slate-400" />
+                    <Fuel className={`w-3.5 h-3.5 ${isLight ? 'text-slate-500' : 'text-slate-400'}`} />
                     {selectedRoute.gasCost}
                   </span>
                 </div>
@@ -574,7 +612,9 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
 
               {/* Step Pipeline Flow */}
               <div className="flex flex-col gap-2 pt-2">
-                <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                <div className={`text-[11px] font-bold uppercase tracking-wider ${
+                  isLight ? 'text-slate-600' : 'text-slate-400'
+                }`}>
                   Visual Execution Pipeline ({selectedRoute.steps.length} Steps)
                 </div>
 
@@ -588,38 +628,42 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
                         key={step.stepNumber}
                         className={`rounded-md border p-2.5 flex flex-col gap-1 transition-all ${
                           isStepDone
-                            ? 'bg-emerald-950/30 border-emerald-500/50 text-emerald-300'
+                            ? (isLight ? 'bg-emerald-50 border-emerald-300 text-emerald-950' : 'bg-emerald-950/30 border-emerald-500/50 text-emerald-300')
                             : isStepActive
-                            ? 'bg-amber-500/20 border-amber-400 text-amber-200 animate-pulse shadow-lg'
-                            : 'bg-black/40 border-white/10 text-slate-300'
+                            ? (isLight ? 'bg-amber-100 border-amber-400 text-amber-950 animate-pulse shadow-md' : 'bg-amber-500/20 border-amber-400 text-amber-200 animate-pulse shadow-lg')
+                            : (isLight ? 'bg-white border-slate-200 text-slate-800' : 'bg-black/40 border-white/10 text-slate-300')
                         }`}
                       >
-                        <div className="flex items-center justify-between text-[10px] font-bold text-slate-400">
+                        <div className={`flex items-center justify-between text-[10px] font-bold ${
+                          isLight ? 'text-slate-600' : 'text-slate-400'
+                        }`}>
                           <span>STEP 0{step.stepNumber} // {step.type.toUpperCase()}</span>
                           {isStepDone ? (
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                            <CheckCircle2 className={`w-3.5 h-3.5 ${isLight ? 'text-emerald-600' : 'text-emerald-400'}`} />
                           ) : isStepActive ? (
-                            <RefreshCw className="w-3.5 h-3.5 text-amber-400 animate-spin" />
+                            <RefreshCw className={`w-3.5 h-3.5 animate-spin ${isLight ? 'text-amber-600' : 'text-amber-400'}`} />
                           ) : (
                             <span>{step.estTime}</span>
                           )}
                         </div>
 
-                        <div className="font-bold text-xs text-white">
+                        <div className={`font-bold text-xs ${isLight ? 'text-slate-950' : 'text-white'}`}>
                           {step.protocol}
                         </div>
 
-                        <div className="text-[11px] text-slate-400 flex items-center gap-1">
+                        <div className={`text-[11px] flex items-center gap-1 ${
+                          isLight ? 'text-slate-600' : 'text-slate-400'
+                        }`}>
                           <span>{step.fromAsset}</span>
                           {step.toAsset && (
                             <>
-                              <ArrowRight className="w-2.5 h-2.5 text-slate-500" />
-                              <span className="text-amber-300 font-semibold">{step.toAsset}</span>
+                              <ArrowRight className="w-2.5 h-2.5 text-slate-400" />
+                              <span className={`font-semibold ${isLight ? 'text-amber-800' : 'text-amber-300'}`}>{step.toAsset}</span>
                             </>
                           )}
                         </div>
 
-                        <div className="text-[10px] text-slate-500">
+                        <div className={`text-[10px] ${isLight ? 'text-slate-500' : 'text-slate-500'}`}>
                           {step.fromChain} {step.toChain ? `-> ${step.toChain}` : ''}
                         </div>
                       </div>
@@ -629,14 +673,18 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
               </div>
 
               {/* Simulation Action Bar */}
-              <div className="pt-2 flex items-center justify-between border-t border-white/10">
-                <div className="text-xs text-emerald-400 font-mono font-semibold">
+              <div className={`pt-2 flex items-center justify-between border-t ${
+                isLight ? 'border-amber-200' : 'border-white/10'
+              }`}>
+                <div className={`text-xs font-mono font-semibold ${
+                  isLight ? 'text-emerald-800' : 'text-emerald-400'
+                }`}>
                   {selectedRoute.netApyImpact || selectedRoute.riskChange || 'Validated against MEV & Slippage'}
                 </div>
                 <button
                   disabled={isSimulating}
                   onClick={() => handleRunSimulation(selectedRoute)}
-                  className="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-black font-extrabold text-xs flex items-center gap-2 shadow-lg transition-all"
+                  className="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-black font-extrabold text-xs flex items-center gap-2 shadow-lg transition-all cursor-pointer"
                 >
                   <Zap className="w-3.5 h-3.5 fill-black" />
                   <span>{isSimulating ? `Simulating Step ${simulatedStep}/${selectedRoute.steps.length}...` : 'Simulate & Execute Route'}</span>
