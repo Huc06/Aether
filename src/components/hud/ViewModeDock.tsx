@@ -1,20 +1,24 @@
 import React from 'react';
 import { PortfolioViewMode } from '../morph/ListSwitcher';
 import { LensConfig } from '../../types';
-import { Orbit, List as ListIcon, Camera } from 'lucide-react';
+import { Orbit, List as ListIcon, Camera, Search } from 'lucide-react';
 
 interface ViewModeDockProps {
   viewMode: PortfolioViewMode;
   onChangeViewMode: (mode: PortfolioViewMode) => void;
   config?: LensConfig;
   isDimmed?: boolean;
+  isIntentOpen?: boolean;
+  onToggleIntent?: () => void;
 }
 
 export const ViewModeDock: React.FC<ViewModeDockProps> = ({
   viewMode,
   onChangeViewMode,
   config,
-  isDimmed = false
+  isDimmed = false,
+  isIntentOpen = false,
+  onToggleIntent,
 }) => {
   const isLight = config?.themeMode === 'light';
 
@@ -44,7 +48,7 @@ export const ViewModeDock: React.FC<ViewModeDockProps> = ({
             <button
               key={item.mode}
               onClick={() => onChangeViewMode(item.mode)}
-              className={`relative px-4 py-2 rounded-xl text-xs font-sans font-bold flex items-center gap-2 transition-all cursor-pointer group ${
+              className={`relative px-3.5 sm:px-4 py-2 rounded-xl text-xs font-sans font-bold flex items-center gap-2 transition-all cursor-pointer group ${
                 isActive
                   ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/30 font-extrabold scale-105'
                   : (isLight 
@@ -56,10 +60,38 @@ export const ViewModeDock: React.FC<ViewModeDockProps> = ({
               <span className={`transition-transform group-hover:scale-110 ${isActive ? 'text-black' : (isLight ? 'text-slate-700' : 'text-slate-400')}`}>
                 {item.icon}
               </span>
-              <span>{item.label}</span>
+              <span className="hidden sm:inline">{item.label}</span>
             </button>
           );
         })}
+
+        {onToggleIntent && (
+          <>
+            <div className={`h-5 w-px mx-0.5 ${isLight ? 'bg-slate-300' : 'bg-white/15'}`} />
+
+            <button
+              onClick={onToggleIntent}
+              className={`relative px-3 sm:px-3.5 py-2 rounded-xl text-xs font-sans font-bold flex items-center gap-1.5 sm:gap-2 transition-all cursor-pointer group ${
+                isIntentOpen
+                  ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/30 font-extrabold scale-105'
+                  : (isLight 
+                      ? 'text-amber-800 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-400/40' 
+                      : 'text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30')
+              }`}
+              title="Toggle Nansen AI Intent Spotlight (Cmd+K / /)"
+            >
+              <Search className={`w-3.5 h-3.5 ${isIntentOpen ? 'text-black' : (isLight ? 'text-amber-800' : 'text-amber-400')}`} />
+              <span>Intent</span>
+              <kbd className={`hidden md:inline text-[9px] px-1 py-0.2 rounded font-mono font-bold border ${
+                isIntentOpen 
+                  ? 'bg-black/20 text-black border-black/20' 
+                  : (isLight ? 'bg-white text-amber-900 border-amber-300' : 'bg-black/40 text-amber-300 border-amber-500/30')
+              }`}>
+                ⌘K
+              </kbd>
+            </button>
+          </>
+        )}
       </div>
     </nav>
   );

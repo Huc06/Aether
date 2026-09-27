@@ -1523,6 +1523,11 @@ export const App: React.FC = () => {
         onChangeViewMode={setViewMode}
         config={config}
         isDimmed={viewMode === 'exposure-grid'}
+        isIntentOpen={isIntentOpen}
+        onToggleIntent={() => {
+          if (isIntentOpen) closeIntentSpotlight();
+          else openIntentMissionControl();
+        }}
       />
 
       {/* Status Toast */}
