@@ -6,9 +6,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:full": "node scripts/dev-full.mjs",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "start": "node server.js"
+    "start": "node server.js",
+    "mcp": "node mcp/aether-mcp.mjs"
   },
   "dependencies": {
     "canvas-confetti": "^1.9.4",

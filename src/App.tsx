@@ -6,7 +6,8 @@ import { WebGLShaderPipeline } from './engine/shaderPipeline';
 import { GraphRenderer } from './engine/graphRenderer';
 import { TopBar } from './components/hud/TopBar';
 import { ListSwitcher, PortfolioViewMode } from './components/morph/ListSwitcher';
-import { ExposureGridFeed } from './components/cctv/ExposureGridFeed';
+import { ExposureGridFeed, CctvSettings } from './components/cctv/ExposureGridFeed';
+import { useAgentBridge } from './hooks/useAgentBridge';
 import { IntentPanel } from './components/intent/IntentPanel';
 import { PositionPeek } from './components/position/PositionPeek';
 import { PositionCommandSheet } from './components/position/PositionCommandSheet';
@@ -104,6 +105,7 @@ export const App: React.FC = () => {
     if (v === 'list' || v === 'exposure-grid' || v === 'canvas') return v;
     return 'canvas';
   });
+  const [cctvSettings, setCctvSettings] = useState<CctvSettings>({ columns: 3, rows: 3, treatment: 'chroma' });
   const [isOverview, setIsOverview] = useState(false);
   const [isIntentOpen, setIsIntentOpen] = useState(() => {
     const params = new URLSearchParams(window.location.search);
@@ -1486,6 +1488,58 @@ export const App: React.FC = () => {
   const pnlPercent = totalValue > 0 ? (totalPnl / (totalValue - totalPnl)) * 100 : 0;
   const criticalCount = nodes.filter(n => n.riskLevel === 'critical' || n.riskLevel === 'high').length;
 
+  // MCP agent bridge: publish state, execute inbound agent commands.
+  useAgentBridge(
+    {
+      viewMode,
+      nodes,
+      wires,
+      config,
+      cctv: {
+        ...cctvSettings,
+        slots: Array.from({ length: cctvSettings.columns * cctvSettings.rows }, (_, i) => {
+          const node = nodes[i];
+          return {
+            cam: `CAM-${String(i + 1).padStart(2, '0')}`,
+            nodeId: node?.id ?? null,
+            status: !node ? 'no-signal:unassigned' : node.riskLevel === 'critical' ? 'no-signal:desync' : 'live'
+          };
+        })
+      }
+    },
+    {
+      setView: (mode) => setViewMode(mode),
+      focusNode: (nodeId) => {
+        const node = nodes.find(n => n.id === nodeId);
+        if (!node) return false;
+        setViewMode('canvas');
+        handleFocusNode(node, false);
+        return true;
+      },
+      inspectNode: (nodeId) => {
+        const node = nodes.find(n => n.id === nodeId);
+        if (!node) return false;
+        setSelectedNode(node);
+        return true;
+      },
+      closeInspector: () => setSelectedNode(null),
+      killSwitch: (nodeId) => {
+        const node = nodes.find(n => n.id === nodeId);
+        const route = node?.exitRoutes?.[0];
+        if (!node || !route) return false;
+        handleKillSwitch(node, route);
+        return true;
+      },
+      setCctv: (patch) => setCctvSettings(prev => ({
+        ...prev,
+        ...(patch.columns ? { columns: patch.columns } : {}),
+        ...(patch.rows ? { rows: patch.rows } : {}),
+        ...(patch.treatment ? { treatment: patch.treatment as CctvSettings['treatment'] } : {})
+      })),
+      setTheme: (mode) => setConfig(prev => ({ ...prev, themeMode: mode }))
+    }
+  );
+
   return (
     <div className={`relative w-screen h-screen overflow-hidden font-mono select-none ${
       config.themeMode === 'light' ? 'theme-light bg-[#f8fafc] text-slate-900' : 'bg-[#07090e] text-slate-200'
@@ -1533,6 +1587,8 @@ export const App: React.FC = () => {
         <ExposureGridFeed
           nodes={nodes}
           config={config}
+          settings={cctvSettings}
+          onChangeSettings={(patch) => setCctvSettings(prev => ({ ...prev, ...patch }))}
           onInspectNode={openPositionDetail}
           onFocusNodeOnCanvas={(node) => {
             setViewMode('canvas');
