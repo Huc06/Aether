@@ -68,14 +68,15 @@ npm run dev
 
 ---
 
-### Step 4: Test Smart Money Divergence & 1-Click Kill Switch (1 minute)
+### Step 4: Test Smart Money Divergence & Emergency Unwind Protocol (1 minute)
 1. On the spatial canvas, locate the node **`Drift SOL-PERP 10x Long`** (marked in red with critical health factor).
-2. Double-click the node to open the **Position Detail Modal**.
-3. Observe the Nansen Smart Money 24h netflow correlation and distance-to-liquidation gauge.
-4. Click **`1-Click Emergency Kill Switch`**.
+2. Double-click the node to open the **Position Detail Modal** (Spatial Cockpit Deck).
+3. Observe the Nansen Smart Money 24h netflow correlation and optical Solvency Gauge.
+4. Press & hold **`Hold 1.2s to Emergency Unwind`** (or press & hold **`Space`** key).
 5. **Expected Result:**
+   - Visual progress fill completes after 1.2s of intentional hold.
    - 3-step emergency unwind protocol executes with MEV protection.
-   - Node status updates to `(Unwound & Safe)`.
+   - Node status updates to `(Unwound & Safe)` with quantitative settlement receipt metrics.
 
 ---
 

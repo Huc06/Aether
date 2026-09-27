@@ -508,11 +508,11 @@ export const MarkdownTable: React.FC<MarkdownTableProps> = ({
                                 e.stopPropagation();
                                 onEmergencyKill(node, emergencyRoute);
                               }}
-                              title="Trigger Instant Emergency Kill Switch"
+                              title="Inspect Emergency Unwind Deck & Liquidate"
                               className="px-2 py-1 bg-rose-600 hover:bg-rose-500 text-white font-extrabold border border-rose-400 text-[10px] uppercase flex items-center gap-1 shadow-sm transition-all"
                             >
                               <AlertOctagon className="w-3 h-3" />
-                              <span>KILL</span>
+                              <span>UNWIND</span>
                             </button>
                           )}
                         </div>
