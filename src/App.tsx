@@ -900,7 +900,7 @@ export const App: React.FC = () => {
         return;
       }
 
-      // View dock shortcuts (1: Canvas, 2: Table List, 3: CCTV Feed)
+      // View dock shortcuts (1: Canvas, 2: Table List, 3: CCTV Feed, 4: Intent)
       if (e.key === '1' && !e.ctrlKey && !e.metaKey && !e.altKey) {
         setViewMode('canvas');
         return;
@@ -911,6 +911,11 @@ export const App: React.FC = () => {
       }
       if (e.key === '3' && !e.ctrlKey && !e.metaKey && !e.altKey) {
         setViewMode('exposure-grid');
+        return;
+      }
+      if (e.key === '4' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        if (isIntentOpen) closeIntentSpotlight();
+        else openIntentMissionControl();
         return;
       }
 

@@ -78,16 +78,16 @@ export const ViewModeDock: React.FC<ViewModeDockProps> = ({
                       ? 'text-amber-800 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-400/40' 
                       : 'text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30')
               }`}
-              title="Toggle Nansen AI Intent Spotlight (Cmd+K / /)"
+              title="Toggle Nansen AI Intent Spotlight (Press 4 or ⌘K)"
             >
               <Search className={`w-3.5 h-3.5 ${isIntentOpen ? 'text-black' : (isLight ? 'text-amber-800' : 'text-amber-400')}`} />
               <span>Intent</span>
-              <kbd className={`hidden md:inline text-[9px] px-1 py-0.2 rounded font-mono font-bold border ${
+              <kbd className={`hidden md:inline text-[9px] px-1.5 py-0.2 rounded font-mono font-bold border ${
                 isIntentOpen 
                   ? 'bg-black/20 text-black border-black/20' 
                   : (isLight ? 'bg-white text-amber-900 border-amber-300' : 'bg-black/40 text-amber-300 border-amber-500/30')
               }`}>
-                ⌘K
+                4
               </kbd>
             </button>
           </>
