@@ -17,28 +17,28 @@ const chromePath = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome
 
 const targets = [
   {
-    name: '01-chapter1-spatial-nansen-profiler.png',
+    name: '01-spatial-webgl-canvas.png',
     url: 'http://localhost:4173/?nansen=1',
     size: '1600,900',
-    dest: path.join(screenshotsDir, '01-chapter1-spatial-nansen-profiler.png')
+    dest: path.join(screenshotsDir, '01-spatial-webgl-canvas.png')
   },
   {
-    name: '02-chapter2-nansen-ai-thesis-interrogator.png',
+    name: '02-nansen-ai-thesis-desk.png',
     url: 'http://localhost:4173/?intent=1',
     size: '1600,900',
-    dest: path.join(screenshotsDir, '02-chapter2-nansen-ai-thesis-interrogator.png')
+    dest: path.join(screenshotsDir, '02-nansen-ai-thesis-desk.png')
   },
   {
-    name: '03-chapter3-nymspace-bend-analytics.png',
+    name: '03-dashed-frame-ledger.png',
     url: 'http://localhost:4173/?view=list',
     size: '1600,900',
-    dest: path.join(screenshotsDir, '03-chapter3-nymspace-bend-analytics.png')
+    dest: path.join(screenshotsDir, '03-dashed-frame-ledger.png')
   },
   {
-    name: '04-chapter4-hero-mev-hold-unwind.png',
+    name: '04-mev-emergency-unwind.png',
     url: 'http://localhost:4173/?node=pos-drift-perp',
     size: '1600,900',
-    dest: path.join(screenshotsDir, '04-chapter4-hero-mev-hold-unwind.png')
+    dest: path.join(screenshotsDir, '04-mev-emergency-unwind.png')
   },
   {
     name: '05-cctv-surveillance-matrix.png',
@@ -109,5 +109,5 @@ try {
   }
 } finally {
   preview.kill('SIGKILL');
-  console.log('All 4-Chapter captures complete!');
+  console.log('All showcase captures complete!');
 }

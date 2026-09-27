@@ -1,6 +1,6 @@
 <p align="center">
-  <a href="https://github.com/Huc06/Aether">
-    <img src="docs/brand/aether-banner.png" alt="Aether Spatial DeFi Workspace Banner" width="100%" />
+  <a href="https://aether-production-c385.up.railway.app">
+    <img src="docs/brand/aether-banner.svg" alt="Aether Spatial DeFi Workspace Banner" width="100%" />
   </a>
 </p>
 
@@ -128,59 +128,19 @@ Aether gives operators three complementary lenses into their portfolio, switchab
 
 ---
 
-## Visual Showcase (The 4 Killer Chapters to Win)
+## Visual Showcase
 
-### CHAPTER 1: The Hook — Infinite Spatial Workspace & Live Nansen Profiler
-> **Autonomous Onchain Graph Synthesis:** Calls `/api/v1/profiler/address/current-balance` & `/related-wallets` live. Reconstructs wallet lineage and token decomposition directly into an infinite spatial plane.
+| Spatial WebGL Canvas (Star Focus Cluster) | Nansen AI Fast Agent & Thesis Desk (`Cmd+K`) |
+|---|---|
+| <img src="docs/screenshots/01-spatial-webgl-canvas.png" width="100%" /> | <img src="docs/screenshots/02-nansen-ai-thesis-desk.png" width="100%" /> |
 
-| Spatial WebGL Canvas & Nansen Live Entity Profiler (`vitalik.eth`) |
-|:---:|
-| <a href="docs/screenshots/01-chapter1-spatial-nansen-profiler.png"><img src="docs/screenshots/01-chapter1-spatial-nansen-profiler.png" alt="Chapter 1: Spatial Canvas & Live Nansen Profiler" width="100%" /></a> |
-| **Interactive Flow:** Pan smoothly across WebGL 2.0 Barrel Shader $\rightarrow$ Click `[NANSEN API]` in TopBar $\rightarrow$ Select `vitalik.eth` $\rightarrow$ Camera glides seamlessly to `(0, 0)`, orbital token nodes (`WHITE`, `MOODENG`, `ETH`) dynamically unpack with live valuations, and violet lineage wires connect to genesis `First Funder` and `Multisig Signers`. |
+| Dashed-Frame Data Ledger (Area Charts & 3D Bend) | MEV-Shielded Emergency Unwind (Settlement Receipt) |
+|---|---|
+| <img src="docs/screenshots/03-dashed-frame-ledger.png" width="100%" /> | <img src="docs/screenshots/04-mev-emergency-unwind.png" width="100%" /> |
 
----
-
-### CHAPTER 2: Nansen AI Research Agent & Dynamic Intent Injection
-> **Streaming Reasoning & Auto-Spotlight:** Real-time SSE token stream from Nansen Fast Agent (`/api/v1/agent/fast`) with active tool execution and automated camera focus.
-
-| Dual-Cockpit: Nansen AI Fast Agent & Thesis Desk Interrogator (`Cmd+K`) |
-|:---:|
-| <a href="docs/screenshots/02-chapter2-nansen-ai-thesis-interrogator.png"><img src="docs/screenshots/02-chapter2-nansen-ai-thesis-interrogator.png" alt="Chapter 2: Nansen AI Research Agent & Thesis Desk" width="100%" /></a> |
-| **Interactive Flow:** Press `Cmd + K` to open Mission Control $\rightarrow$ Click `[Thesis Desk]` & `[Smart Money Accumulation]` $\rightarrow$ Real-time SSE stream unpacks from `/api/v1/agent/fast` with `[tool: token_discovery_screener]`, dashed MDX screener table renders with `DrawablyHighlight`, canvas auto-spotlights researched token nodes, and `Simulate Route` triggers celebratory confetti. |
-
----
-
-### CHAPTER 3: Nymspace 3D Bend Ledger & MDX Analytics
-> **Nymspace 3D Deformation & Live Sparklines:** DOM-rasterized cylindrical page-bend physics (`bendEngine.ts`) with 60fps Liveline sparklines, DrawablyHighlight shaders, and high-contrast dual theme engine.
-
-| Dashed-Frame Data Ledger (Area Charts, Sparklines & Cylindrical Scroll) |
-|:---:|
-| <a href="docs/screenshots/03-chapter3-nymspace-bend-analytics.png"><img src="docs/screenshots/03-chapter3-nymspace-bend-analytics.png" alt="Chapter 3: Nymspace 3D Bend Ledger & MDX Analytics" width="100%" /></a> |
-| **Interactive Flow:** Press `2` to switch to Dashed-Frame Ledger $\rightarrow$ Scroll down to observe 3D cylindrical page-bend deformation (`bendEngine.ts`) $\rightarrow$ Hover over rows to view 60fps Liveline sparklines and `DrawablyHighlight` on `+SM $45k` badges $\rightarrow$ Toggle Sun/Moon to switch to Clean Slate Light Mode with full WCAG AA contrast compliance. |
-
----
-
-### CHAPTER 4: The Hero Climax — MEV-Shielded Hold-to-Unwind Protocol
-> **Tactile Hold-to-Unwind Protocol:** Zero-sandwich MEV protection via private builder RPCs with intentional 1.2s hold-to-confirm mechanics and real-time Solvency Gauge.
-
-| Position Cockpit Deck, Solvency Gauge & 1.2s Hold-to-Unwind |
-|:---:|
-| <a href="docs/screenshots/04-chapter4-hero-mev-hold-unwind.png"><img src="docs/screenshots/04-chapter4-hero-mev-hold-unwind.png" alt="Chapter 4: Position Cockpit & Emergency Unwind Protocol" width="100%" /></a> |
-| **Interactive Flow:** Press `1` to return to Canvas $\rightarrow$ Double-click critical node `Drift SOL-PERP 10x Long` $\rightarrow$ Solvency Gauge indicates red alert (`HF 1.08`), 3-step `RoutePipelineFlow` displays $\rightarrow$ Hold `Space` or mouse for 1.2s to trigger Emergency Unwind $\rightarrow$ Activates private builder RPCs to eliminate MEV sandwich attacks and outputs Onchain Settlement Receipt. |
-
----
-
-### Supplementary Workstation Views
-
-| Star Focus Cluster & Shift+F Fit | CCTV Surveillance Operations Matrix |
-|:---:|:---:|
-| <a href="docs/screenshots/05-star-focus-cluster.png"><img src="docs/screenshots/05-star-focus-cluster.png" alt="Star Focus Cluster Layout" width="100%" /></a> | <a href="docs/screenshots/06-cctv-surveillance-matrix.png"><img src="docs/screenshots/06-cctv-surveillance-matrix.png" alt="CCTV Surveillance Feed Matrix" width="100%" /></a> |
-| **Star Focus Cluster:** Single-click any node to isolate the position at the center and radially arrange direct dependencies; `Shift+F` automatically fits the cluster to the live viewport. | **CCTV Telemetry Wall:** Mirrored live canvas node cards rendered in `fillTable` mode with SMPTE `NO SIGNAL` channels and CRT scanline glitch shaders. |
-
-| Clean Slate Light Mode (High-Contrast Slate Optics) |
-|:---:|
-| <a href="docs/screenshots/07-clean-slate-light-mode.png"><img src="docs/screenshots/07-clean-slate-light-mode.png" alt="Clean Slate Light Mode" width="100%" /></a> |
-| **Dual Theme Engine:** Ultra-crisp `#f8fafc` canvas, bold slate typography, refined neon amber/cyan accents, and real-time adapted shader contrast. |
+| CCTV Surveillance Matrix (9-Channel Telemetry Wall) | Clean Slate Light Mode (High-Contrast Dual Theme) |
+|---|---|
+| <img src="docs/screenshots/05-cctv-surveillance-matrix.png" width="100%" /> | <img src="docs/screenshots/06-clean-slate-light-mode.png" width="100%" /> |
 
 ---
 
