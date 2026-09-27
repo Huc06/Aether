@@ -63,7 +63,7 @@ npm run dev
     - Active tool call banner: `[tool: token_discovery_screener]`.
     - Camera auto-highlights researched nodes on the spatial canvas **while the Spotlight stays translucent**.
     - A 3-step **Visual Execution Pipeline** renders below the answer.
-    - Click **`Simulate & Execute Route`** $\rightarrow$ Step progress turns green $\rightarrow$ Confetti celebration triggers.
+    - Click **`Simulate Route`** $\rightarrow$ Step progress turns green $\rightarrow$ Confetti celebration triggers.
     - **`Esc`** closes Spotlight only (overview map remains); second **`Esc`** exits overview.
 
 ---

@@ -4,10 +4,12 @@ import {
   Search, 
   ArrowRight, 
   ShieldAlert, 
+  ShieldCheck,
   RefreshCw, 
   CheckCircle2, 
   Clock, 
   Fuel, 
+  Play,
   Zap, 
   ChevronRight, 
   TrendingUp, 
@@ -673,21 +675,32 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
               </div>
 
               {/* Simulation Action Bar */}
-              <div className={`pt-2 flex items-center justify-between border-t ${
+              <div className={`pt-2 flex items-center justify-between gap-2 border-t ${
                 isLight ? 'border-amber-200' : 'border-white/10'
               }`}>
-                <div className={`text-xs font-mono font-semibold ${
-                  isLight ? 'text-emerald-800' : 'text-emerald-400'
-                }`}>
-                  {selectedRoute.netApyImpact || selectedRoute.riskChange || 'Validated against MEV & Slippage'}
+                <div className="flex items-center gap-1.5 text-xs font-mono font-semibold min-w-0 shrink">
+                  <ShieldCheck className={`w-3.5 h-3.5 shrink-0 ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`} />
+                  <span className={`truncate ${isLight ? 'text-emerald-800' : 'text-emerald-400'}`}>
+                    {selectedRoute.netApyImpact || selectedRoute.riskChange || 'MEV & Slippage Shielded'}
+                  </span>
                 </div>
                 <button
                   disabled={isSimulating}
                   onClick={() => handleRunSimulation(selectedRoute)}
-                  className="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-black font-extrabold text-xs flex items-center gap-2 shadow-lg transition-all cursor-pointer"
+                  className="shrink-0 whitespace-nowrap px-3.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-black font-extrabold text-xs font-mono flex items-center gap-1.5 shadow-md hover:shadow-amber-500/20 transition-all cursor-pointer"
+                  title="Simulate route execution steps"
                 >
-                  <Zap className="w-3.5 h-3.5 fill-black" />
-                  <span>{isSimulating ? `Simulating Step ${simulatedStep}/${selectedRoute.steps.length}...` : 'Simulate & Execute Route'}</span>
+                  {isSimulating ? (
+                    <>
+                      <RefreshCw className="w-3 h-3 animate-spin shrink-0" />
+                      <span>Step {simulatedStep}/{selectedRoute.steps.length}...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Play className="w-3 h-3 fill-current shrink-0" />
+                      <span>Simulate Route</span>
+                    </>
+                  )}
                 </button>
               </div>
             </div>
