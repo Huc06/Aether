@@ -1477,6 +1477,10 @@ export const App: React.FC = () => {
           config={config}
           onClose={closeDetailLayer}
           onRequestUnwind={(routeIndex) => requestUnwind('inspect', routeIndex)}
+          onDirectKillSwitch={(node, route) => {
+            handleKillSwitch(node, route);
+            clearPositionDetail();
+          }}
         />
       )}
       {selectedNode && detailPhase === 'confirm' && (

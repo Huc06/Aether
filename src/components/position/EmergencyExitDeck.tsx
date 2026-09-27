@@ -61,7 +61,8 @@ export const EmergencyExitDeck: React.FC<EmergencyExitDeckProps> = ({
   const startHold = useCallback(() => {
     if (isExecuting || !selectedRoute) return;
     setIsHolding(true);
-    holdStartTimeRef.current = performance.now();
+    const start = performance.now();
+    holdStartTimeRef.current = start;
 
     const tick = (now: number) => {
       if (!holdStartTimeRef.current) return;
@@ -79,12 +80,36 @@ export const EmergencyExitDeck: React.FC<EmergencyExitDeckProps> = ({
     animFrameRef.current = requestAnimationFrame(tick);
   }, [isExecuting, selectedRoute, handleHoldComplete]);
 
+  // Pointer event handlers with pointer capture so moving mouse/finger never prematurely cancels hold
+  const onButtonPointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
+    if (e.button !== 0 || isExecuting) return;
+    e.preventDefault();
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {}
+    startHold();
+  };
+
+  const onButtonPointerUp = (e: React.PointerEvent<HTMLButtonElement>) => {
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {}
+    cancelHold();
+  };
+
+  const onButtonPointerCancel = (e: React.PointerEvent<HTMLButtonElement>) => {
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {}
+    cancelHold();
+  };
+
   // Spacebar hold interaction
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.code === 'Space' && !e.repeat && !isHolding && !isExecuting) {
         const target = e.target as HTMLElement;
-        if (target && ['INPUT', 'TEXTAREA', 'BUTTON'].includes(target.tagName)) return;
+        if (target && ['INPUT', 'TEXTAREA'].includes(target.tagName)) return;
         e.preventDefault();
         startHold();
       }
@@ -198,9 +223,7 @@ export const EmergencyExitDeck: React.FC<EmergencyExitDeckProps> = ({
                     </span>
                   </div>
 
-                  <div className={`text-[9px] font-mono flex items-center gap-0.5 shrink-0 ${
-                    isLight ? 'text-slate-500' : 'text-slate-500'
-                  }`}>
+                  <div className="text-[9px] font-mono flex items-center gap-0.5 shrink-0 text-slate-500">
                     <Clock className="w-2.5 h-2.5" />
                     <span>{route.timeSeconds}s</span>
                   </div>
@@ -230,39 +253,26 @@ export const EmergencyExitDeck: React.FC<EmergencyExitDeckProps> = ({
           })}
         </div>
 
-        {/* Execution Stepper Terminal (Active State) */}
+        {/* Execution Active Telemetry Pipeline */}
         {isExecuting && (
-          <div className={`p-2.5 rounded-lg border flex flex-col gap-2 animate-in fade-in duration-200 ${
-            isLight 
-              ? 'bg-rose-50/60 border-rose-200 text-slate-900' 
-              : 'bg-rose-950/20 border-rose-900/40 text-slate-100'
+          <div className={`p-2.5 rounded-lg border font-mono text-[10px] flex flex-col gap-1.5 animate-in fade-in duration-150 ${
+            isLight ? 'bg-rose-50 border-rose-200 text-rose-950' : 'bg-rose-950/40 border-rose-500/40 text-rose-200'
           }`}>
-            <div className="flex items-center justify-between text-xs font-mono font-bold">
-              <span className="flex items-center gap-1.5 text-rose-600 text-[11px]">
-                <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
+            <div className="flex items-center justify-between font-bold">
+              <span className="flex items-center gap-1.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping" />
                 Executing Exit Pipeline
               </span>
-              <span className={`text-[10px] ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
-                Step {killStep} of 3
-              </span>
+              <span className="text-[9px] uppercase tracking-wider">Step {killStep}/3</span>
             </div>
-
-            <div className={`w-full h-1.5 rounded-full overflow-hidden ${
-              isLight ? 'bg-slate-200' : 'bg-slate-800'
-            }`}>
-              <div 
-                className="bg-rose-500 h-full transition-all duration-300 ease-out"
-                style={{ width: `${(killStep / 3) * 100}%` }}
-              />
-            </div>
-
+            
             <div className="grid grid-cols-3 gap-1.5 pt-0.5 text-[9px] font-mono">
               <div className={`p-1 rounded border transition-colors ${
-                killStep >= 1
-                  ? (isLight ? 'bg-white border-rose-300 text-rose-700 font-bold' : 'bg-slate-900 border-rose-500/50 text-rose-400 font-bold')
+                killStep >= 1 
+                  ? (isLight ? 'bg-white border-rose-300 text-rose-700 font-bold' : 'bg-slate-900 border-rose-500/50 text-rose-400 font-bold') 
                   : (isLight ? 'border-transparent text-slate-400' : 'border-transparent text-slate-600')
               }`}>
-                1. Revoke &amp; Collateral
+                1. Jito MEV Shield
               </div>
               <div className={`p-1 rounded border transition-colors ${
                 killStep >= 2
@@ -288,23 +298,20 @@ export const EmergencyExitDeck: React.FC<EmergencyExitDeckProps> = ({
             <button
               type="button"
               disabled={isExecuting}
-              onMouseDown={startHold}
-              onMouseUp={cancelHold}
-              onMouseLeave={cancelHold}
-              onTouchStart={startHold}
-              onTouchEnd={cancelHold}
-              onTouchCancel={cancelHold}
-              className={`w-full relative overflow-hidden py-2.5 px-3 rounded-lg font-mono text-xs font-bold tracking-wider uppercase flex items-center justify-center gap-2 border select-none transition-all duration-150 cursor-pointer ${
+              onPointerDown={onButtonPointerDown}
+              onPointerUp={onButtonPointerUp}
+              onPointerCancel={onButtonPointerCancel}
+              className={`w-full relative overflow-hidden py-3 px-3 rounded-lg font-mono text-xs font-bold tracking-wider uppercase flex items-center justify-center gap-2 border select-none transition-all duration-150 cursor-pointer touch-none ${
                 isExecuting
                   ? 'opacity-60 cursor-not-allowed bg-slate-800 border-slate-700 text-slate-400'
                   : isHolding
                   ? isCritical
-                    ? 'bg-rose-600 text-white border-rose-500 shadow-[0_0_25px_rgba(244,63,94,0.4)] scale-[0.99]'
-                    : 'bg-emerald-600 text-white border-emerald-500 shadow-[0_0_25px_rgba(16,185,129,0.4)] scale-[0.99]'
+                    ? 'bg-rose-600 text-white border-rose-400 shadow-[0_0_30px_rgba(244,63,94,0.6)] scale-[0.99]'
+                    : 'bg-emerald-600 text-white border-emerald-400 shadow-[0_0_30px_rgba(16,185,129,0.6)] scale-[0.99]'
                   : isCritical
                   ? (isLight
                       ? 'bg-rose-600 hover:bg-rose-700 text-white border-rose-700 shadow-sm hover:shadow'
-                      : 'bg-rose-950/40 hover:bg-rose-900/60 text-rose-200 border-rose-800/80 hover:border-rose-700 hover:text-white shadow-md')
+                      : 'bg-rose-950/60 hover:bg-rose-900/80 text-rose-100 border-rose-500/80 hover:border-rose-400 hover:text-white shadow-lg')
                   : (isLight
                       ? 'bg-slate-900 hover:bg-slate-800 text-white border-slate-950 shadow-sm hover:shadow'
                       : 'bg-slate-900/90 hover:bg-slate-800 text-slate-100 border-slate-700 hover:border-slate-600 shadow-md')
@@ -314,7 +321,7 @@ export const EmergencyExitDeck: React.FC<EmergencyExitDeckProps> = ({
               {isHolding && (
                 <div 
                   className={`absolute inset-0 transition-none z-0 ${
-                    isCritical ? 'bg-rose-600' : 'bg-emerald-600'
+                    isCritical ? 'bg-rose-500' : 'bg-emerald-500'
                   }`}
                   style={{ width: `${holdProgress}%` }}
                 />
@@ -322,9 +329,9 @@ export const EmergencyExitDeck: React.FC<EmergencyExitDeckProps> = ({
 
               <div className="relative z-10 flex items-center justify-center gap-2">
                 {isCritical ? (
-                  <ShieldAlert className={`w-3.5 h-3.5 ${isHolding ? 'text-white animate-pulse' : (isLight ? 'text-white' : 'text-rose-400')}`} />
+                  <ShieldAlert className={`w-4 h-4 ${isHolding ? 'text-white animate-pulse' : (isLight ? 'text-white' : 'text-rose-400')}`} />
                 ) : (
-                  <CheckCircle2 className={`w-3.5 h-3.5 ${isHolding ? 'text-white animate-pulse' : (isLight ? 'text-white' : 'text-emerald-400')}`} />
+                  <CheckCircle2 className={`w-4 h-4 ${isHolding ? 'text-white animate-pulse' : (isLight ? 'text-white' : 'text-emerald-400')}`} />
                 )}
                 <span className="truncate">
                   {isExecuting
@@ -335,14 +342,14 @@ export const EmergencyExitDeck: React.FC<EmergencyExitDeckProps> = ({
                     ? `Hold 1.2s to Emergency Exit (to ${selectedRoute?.targetAsset || 'Safe Asset'})`
                     : `Hold 1.2s to Exit Position (to ${selectedRoute?.targetAsset || 'Safe Asset'})`}
                 </span>
-                <ArrowRight className="w-3.5 h-3.5 opacity-70 shrink-0" />
+                <ArrowRight className="w-4 h-4 opacity-70 shrink-0" />
               </div>
             </button>
           </div>
 
           <div className="flex items-center justify-between text-[9px] font-mono px-1">
             <span className={isLight ? 'text-slate-500' : 'text-slate-500'}>
-              Hold <kbd className="px-1 py-0.2 rounded border text-[9px] bg-slate-800/40 border-slate-700">Space</kbd> or press button
+              Hold <kbd className="px-1 py-0.2 rounded border text-[9px] bg-slate-800/40 border-slate-700">Space</kbd> or click &amp; hold button
             </span>
             <span className={isLight ? 'text-slate-500' : 'text-slate-500'}>
               Zero-sandwich guarantee &bull; Flashbots / Jito Private RPC
