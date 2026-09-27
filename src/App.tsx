@@ -19,7 +19,7 @@ import { buildNansenSpatialGraph, buildNansenResearchSubgraph, PRESET_ENTITIES, 
 export const App: React.FC = () => {
   // Application Data & State
   const [nodes, setNodes] = useState<CanvasNode[]>(() => {
-    const saved = localStorage.getItem('aether_nodes_v2');
+    const saved = localStorage.getItem('aether_nodes_v3');
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -149,7 +149,7 @@ export const App: React.FC = () => {
 
   // Save state persistence
   useEffect(() => {
-    localStorage.setItem('aether_nodes_v2', JSON.stringify(nodes));
+    localStorage.setItem('aether_nodes_v3', JSON.stringify(nodes));
   }, [nodes]);
 
   useEffect(() => {
@@ -353,43 +353,76 @@ export const App: React.FC = () => {
     }
   }, [nodes, focusedNodeId, focusNode]);
 
-  // Smart Arrange algorithm by Chain / Risk cluster
+  // Tidy: one column per wallet, children stacked below → wires stay short/vertical
   const handleSmartArrange = useCallback(() => {
     recordHistory();
 
-    const COLS = 3;
-    const GUTTER = 56;
+    const GUTTER = 64;
     const riskRank: Record<string, number> = { critical: 0, high: 1, medium: 2, safe: 3 };
+    const nodeById = new Map(nodes.map(n => [n.id, n]));
 
     const wallets = nodes
       .filter(n => n.type === 'wallet')
       .sort((a, b) => b.valueUsd - a.valueUsd);
-    const positions = nodes
-      .filter(n => n.type !== 'wallet')
-      .sort((a, b) => {
-        const riskDelta = (riskRank[a.riskLevel] ?? 9) - (riskRank[b.riskLevel] ?? 9);
-        return riskDelta !== 0 ? riskDelta : b.valueUsd - a.valueUsd;
-      });
-    const ordered = [...wallets, ...positions];
-    if (ordered.length === 0) return;
 
-    const cellW = Math.max(...ordered.map(n => n.w), 420) + GUTTER;
-    const cellH = Math.max(...ordered.map(n => n.h), 220) + GUTTER;
-    const rows = Math.ceil(ordered.length / COLS);
-    const gridW = COLS * cellW - GUTTER;
-    const gridH = rows * cellH - GUTTER;
+    const childIdsByWallet = new Map<string, string[]>();
+    const assigned = new Set<string>();
+    wallets.forEach(w => childIdsByWallet.set(w.id, []));
+
+    wires.forEach(wire => {
+      const from = nodeById.get(wire.fromId);
+      const to = nodeById.get(wire.toId);
+      if (!from || !to) return;
+      if (from.type === 'wallet' && to.type !== 'wallet' && !assigned.has(to.id)) {
+        childIdsByWallet.get(from.id)?.push(to.id);
+        assigned.add(to.id);
+      } else if (to.type === 'wallet' && from.type !== 'wallet' && !assigned.has(from.id)) {
+        childIdsByWallet.get(to.id)?.push(from.id);
+        assigned.add(from.id);
+      }
+    });
+
+    childIdsByWallet.forEach((ids, walletId) => {
+      ids.sort((a, b) => {
+        const na = nodeById.get(a)!;
+        const nb = nodeById.get(b)!;
+        const riskDelta = (riskRank[na.riskLevel] ?? 9) - (riskRank[nb.riskLevel] ?? 9);
+        return riskDelta !== 0 ? riskDelta : nb.valueUsd - na.valueUsd;
+      });
+      childIdsByWallet.set(walletId, ids);
+    });
+
+    const orphans = nodes.filter(n => n.type !== 'wallet' && !assigned.has(n.id));
+    const columns: CanvasNode[][] = wallets.map(w => {
+      const kids = (childIdsByWallet.get(w.id) || [])
+        .map(id => nodeById.get(id)!)
+        .filter(Boolean);
+      return [w, ...kids];
+    });
+    if (orphans.length > 0) {
+      orphans.sort((a, b) => b.valueUsd - a.valueUsd);
+      columns.push(orphans);
+    }
+    if (columns.length === 0) return;
+
+    const allNodes = columns.flat();
+    const cellW = Math.max(...allNodes.map(n => n.w), 420) + GUTTER;
+    const cellH = Math.max(...allNodes.map(n => n.h), 220) + GUTTER;
+    const maxRows = Math.max(...columns.map(c => c.length));
+    const gridW = columns.length * cellW - GUTTER;
+    const gridH = maxRows * cellH - GUTTER;
     const originX = -gridW / 2;
     const originY = -gridH / 2;
 
     const posById = new Map<string, { x: number; y: number }>();
-    ordered.forEach((node, i) => {
-      const col = i % COLS;
-      const row = Math.floor(i / COLS);
-      const cellX = originX + col * cellW;
-      const cellY = originY + row * cellH;
-      posById.set(node.id, {
-        x: cellX + (cellW - GUTTER - node.w) / 2,
-        y: cellY + (cellH - GUTTER - node.h) / 2,
+    columns.forEach((colNodes, col) => {
+      colNodes.forEach((node, row) => {
+        const cellX = originX + col * cellW;
+        const cellY = originY + row * cellH;
+        posById.set(node.id, {
+          x: cellX + (cellW - GUTTER - node.w) / 2,
+          y: cellY + (cellH - GUTTER - node.h) / 2,
+        });
       });
     });
 
@@ -400,11 +433,11 @@ export const App: React.FC = () => {
 
     const fitScale = Math.min(
       config.normalScale,
-      Math.max(0.35, Math.min(1400 / gridW, 900 / gridH))
+      Math.max(0.32, Math.min(1500 / gridW, 900 / gridH))
     );
     cameraRef.current.flyTo(0, gridH * 0.05, fitScale);
-    showToast('Tidied canvas into dashboard grid (Ctrl+A)');
-  }, [nodes, recordHistory, showToast, config.normalScale]);
+    showToast('Tidied into wallet columns — click a window to spotlight its wires');
+  }, [nodes, wires, recordHistory, showToast, config.normalScale]);
 
   const handleUndo = useCallback(() => {
     if (historyRef.current.length > 0) {
@@ -513,6 +546,7 @@ export const App: React.FC = () => {
   // Reset to Default Portfolio (Ctrl+Shift+R or HUD button)
   const handleResetPortfolio = useCallback(() => {
     [
+      'aether_nodes_v3',
       'aether_nodes_v2',
       'aether_nodes_v1',
       'phantomat_nodes_v1',
