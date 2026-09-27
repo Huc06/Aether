@@ -14,8 +14,9 @@ import { PositionCommandSheet } from './components/position/PositionCommandSheet
 import { PositionInspector } from './components/position/PositionInspector';
 import { UnwindConfirmModal } from './components/position/UnwindConfirmModal';
 import { SettlementReceiptModal } from './components/position/SettlementReceiptModal';
+import { RouteSettlementReceiptModal } from './components/intent/RouteSettlementReceiptModal';
 import { DetailPhase, initialPhaseForNode } from './components/position/detailPhase';
-import { PositionSettlementReceipt } from './types';
+import { PositionSettlementReceipt, RouteSettlementReceipt } from './types';
 import { LiveTuner } from './components/hud/LiveTuner';
 import { HelpModal } from './components/hud/HelpModal';
 import { NansenModal } from './components/hud/NansenModal';
@@ -99,6 +100,7 @@ export const App: React.FC = () => {
   const [confirmRouteIndex, setConfirmRouteIndex] = useState(0);
   const [confirmReturnPhase, setConfirmReturnPhase] = useState<'peek' | 'sheet' | 'inspect'>('inspect');
   const [activeSettlementReceipt, setActiveSettlementReceipt] = useState<{ node: CanvasNode; receipt: PositionSettlementReceipt } | null>(null);
+  const [activeRouteReceipt, setActiveRouteReceipt] = useState<RouteSettlementReceipt | null>(null);
   const [viewMode, setViewMode] = useState<PortfolioViewMode>(() => {
     const params = new URLSearchParams(window.location.search);
     const v = params.get('view');
@@ -257,15 +259,6 @@ export const App: React.FC = () => {
       window.removeEventListener('beforeunload', saveCamera);
     };
   }, []);
-
-  // If ?intent=1 was passed in URL on mount, activate overview camera
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('intent') === '1' || params.get('intent') === 'true') {
-      cameraRef.current.setOverview(true, config.overviewScale, config.normalScale, 0, 0);
-      setIsOverview(true);
-    }
-  }, [config.overviewScale, config.normalScale]);
 
   // Synchronize URL query parameters with active UI state
   useEffect(() => {
@@ -607,6 +600,44 @@ export const App: React.FC = () => {
     );
   }, [nodes, wires, highlightNodeIds, focusedNodeId, showToast]);
 
+  // If ?cluster= was passed in URL, layout star focus cluster and fit on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const clusterId = params.get('cluster');
+    if (clusterId) {
+      const found = nodes.find(n => n.id === clusterId || n.id.toLowerCase().includes(clusterId.toLowerCase()));
+      if (found) {
+        setTimeout(() => {
+          layoutFocusCluster(found.id);
+          setTimeout(() => {
+            fitFocusClusterToScreen();
+          }, 150);
+        }, 100);
+      }
+    }
+  }, [nodes, layoutFocusCluster, fitFocusClusterToScreen]);
+
+  // If ?intent=1 or ?cluster= was passed in URL on mount, activate overview or fit cluster
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('intent') === '1' || params.get('intent') === 'true') {
+      cameraRef.current.setOverview(true, config.overviewScale, config.normalScale, 0, 0);
+      setIsOverview(true);
+    }
+    const clusterId = params.get('cluster');
+    if (clusterId) {
+      const found = nodes.find(n => n.id === clusterId || n.id.toLowerCase().includes(clusterId.toLowerCase()));
+      if (found) {
+        setTimeout(() => {
+          layoutFocusCluster(found.id);
+          setTimeout(() => {
+            fitFocusClusterToScreen();
+          }, 150);
+        }, 100);
+      }
+    }
+  }, [config.overviewScale, config.normalScale, nodes, layoutFocusCluster, fitFocusClusterToScreen]);
+
   // Tidy: one column per wallet, children stacked below → wires stay short/vertical
   const handleSmartArrange = useCallback(() => {
     recordHistory();
@@ -897,15 +928,36 @@ export const App: React.FC = () => {
     }
   }, [nodes, wires, focusNode, showToast]);
 
-  // Handle Route Execution Simulation
+  // Handle Route Execution Simulation & Output Detailed Settlement Receipt
   const handleExecuteRoute = useCallback((route: RecommendedRoute) => {
     setIsSimulatingRoute(true);
     showToast(`Executing route: ${route.title}`);
+
     setTimeout(() => {
       setIsSimulatingRoute(false);
       setIsIntentOpen(false);
-      showToast('Route Executed & Settled Successfully!');
-    }, 4000);
+
+      const timestamp = new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+      const txHash = '0x' + Math.random().toString(36).substring(2, 10) + Math.random().toString(36).substring(2, 10);
+      const firstStepAmount = route.steps?.[0]?.amount || '$45,000 Notional';
+
+      const receipt: RouteSettlementReceipt = {
+        timestamp,
+        txHash,
+        routeTitle: route.title,
+        tag: route.tag || 'RECOMMENDED',
+        totalVolume: firstStepAmount,
+        executionTime: route.estTime || '3.8s',
+        gasCost: route.gasCost || '$0.008',
+        netApyImpact: route.netApyImpact || '+24.5% Alpha Capture',
+        steps: route.steps.map(s => ({ ...s, status: 'completed' })),
+        mevProtection: 'Jito MEV Shielded Bundle (Private RPC)',
+        status: 'SETTLED'
+      };
+
+      setActiveRouteReceipt(receipt);
+      showToast(`ROUTE SETTLED: ${route.title}`);
+    }, 2000);
   }, [showToast]);
 
   // Handle Kill Switch & Output Detailed Settlement Receipt
@@ -1657,7 +1709,7 @@ export const App: React.FC = () => {
         />
       )}
 
-      {/* Active On-Chain Settlement Receipt Modal */}
+      {/* Active On-Chain Settlement Receipt Modal (Emergency Exit) */}
       {activeSettlementReceipt && (
         <SettlementReceiptModal
           node={activeSettlementReceipt.node}
@@ -1665,6 +1717,21 @@ export const App: React.FC = () => {
           config={config}
           onClose={() => setActiveSettlementReceipt(null)}
           onFocusNode={(n) => handleFocusNode(n, false)}
+          onShowToast={showToast}
+        />
+      )}
+
+      {/* Active Intent Route Settlement Receipt Modal */}
+      {activeRouteReceipt && (
+        <RouteSettlementReceiptModal
+          receipt={activeRouteReceipt}
+          config={config}
+          onClose={() => setActiveRouteReceipt(null)}
+          onFocusCanvas={() => {
+            if (cameraRef.current.state.isOverview) {
+              toggleOverviewMode(false);
+            }
+          }}
           onShowToast={showToast}
         />
       )}
