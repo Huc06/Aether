@@ -16,7 +16,7 @@
   <a href="#dual-theme-engine-light--dark"><img src="https://img.shields.io/badge/Theme-Dark_·_Light_Dual_Mode-38bdf8?style=flat-square" alt="Dual Theme" /></a>
   <a href="#multi-chain--protocol-coverage"><img src="https://img.shields.io/badge/Chains-Solana_·_EVM_·_Hyperliquid_·_Berachain-8b5cf6?style=flat-square" alt="Chains" /></a>
   <a href="#quickstart--local-development"><img src="https://img.shields.io/badge/TypeScript-strict-3178c6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" /></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-amber.svg?style=flat-square" alt="License" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-BSD_3--Clause-amber.svg?style=flat-square" alt="License" /></a>
 </p>
 
 ```
@@ -598,4 +598,4 @@ cd Aether && npm install && npm run dev
 
 ## License
 
-[MIT](LICENSE) © 2026 Aether Protocol
+[BSD 3-Clause](LICENSE) © 2023 Hypr Development, © 2026 Zsolt Kacso
