@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://github.com/Huc06/Aether">
-    <img src="docs/brand/aether-banner.svg" alt="Aether Spatial DeFi Workspace Banner" width="100%" />
+    <img src="docs/brand/aether-banner.png" alt="Aether Spatial DeFi Workspace Banner" width="100%" />
   </a>
 </p>
 
