@@ -130,17 +130,21 @@ Aether gives operators three complementary lenses into their portfolio, switchab
 
 ## Visual Showcase
 
-| 1. Spatial WebGL Canvas (Amber Cyberpunk) | 2. Nymspace Bend Ledger (Curved Scroll) |
+| 1. Spatial WebGL Canvas (Star Focus Cluster) | 2. Dashed-Frame Data Ledger (Area Charts & Bend) |
 |:---:|:---:|
-| <a href="docs/screenshots/01-spatial-canvas-overview.png"><img src="docs/screenshots/01-spatial-canvas-overview.png" alt="Aether Spatial WebGL Canvas" width="100%" /></a> | <a href="docs/screenshots/02-nymspace-bend-ledger.png"><img src="docs/screenshots/02-nymspace-bend-ledger.png" alt="Nymspace Bend Ledger" width="100%" /></a> |
+| <a href="docs/screenshots/01-spatial-canvas-overview.png"><img src="docs/screenshots/01-spatial-canvas-overview.png" alt="Aether Spatial WebGL Canvas" width="100%" /></a> | <a href="docs/screenshots/02-dashed-frame-ledger.png"><img src="docs/screenshots/02-dashed-frame-ledger.png" alt="Dashed-Frame Data Ledger" width="100%" /></a> |
 
-| 3. CCTV Surveillance Matrix (CRT Telemetry) | 4. Nansen Live Entity Profiler (vitalik.eth) |
+| 3. CCTV Surveillance Matrix (Mirrored Feeds) | 4. Nansen Live Entity Profiler (vitalik.eth) |
 |:---:|:---:|
 | <a href="docs/screenshots/03-cctv-exposure-grid.png"><img src="docs/screenshots/03-cctv-exposure-grid.png" alt="CCTV Surveillance Feed" width="100%" /></a> | <a href="docs/screenshots/04-nansen-profiler-graph.png"><img src="docs/screenshots/04-nansen-profiler-graph.png" alt="Nansen Live Entity Profiler" width="100%" /></a> |
 
-| 5. Nansen AI Agent & Route Pipeline (Cmd+K) | 6. Clean Slate Light Mode (High Contrast) |
+| 5. Nansen AI Agent & Thesis Desk (Cmd+K) | 6. Progressive Position Cockpit (Solvency Gauge) |
 |:---:|:---:|
-| <a href="docs/screenshots/05-intent-agent-stream.png"><img src="docs/screenshots/05-intent-agent-stream.png" alt="Nansen AI Research Agent" width="100%" /></a> | <a href="docs/screenshots/06-clean-slate-light-mode.png"><img src="docs/screenshots/06-clean-slate-light-mode.png" alt="Clean Slate Light Mode" width="100%" /></a> |
+| <a href="docs/screenshots/05-intent-agent-stream.png"><img src="docs/screenshots/05-intent-agent-stream.png" alt="Nansen AI Research Agent" width="100%" /></a> | <a href="docs/screenshots/06-position-cockpit-inspector.png"><img src="docs/screenshots/06-position-cockpit-inspector.png" alt="Progressive Position Cockpit" width="100%" /></a> |
+
+| 7. Clean Slate Light Mode (High-Contrast Slate Optics) |
+|:---:|
+| <a href="docs/screenshots/07-clean-slate-light-mode.png"><img src="docs/screenshots/07-clean-slate-light-mode.png" alt="Clean Slate Light Mode" width="100%" /></a> |
 
 ---
 
