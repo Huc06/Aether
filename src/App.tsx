@@ -867,10 +867,22 @@ export const App: React.FC = () => {
         return;
       }
 
-      // Shift+F -> Fit focus cluster to current screen
-      if (e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey && e.key.toLowerCase() === 'f') {
+      // Shift+F -> Fit focus cluster to current screen (e.code survives layouts/IME)
+      if (
+        e.shiftKey &&
+        !e.ctrlKey &&
+        !e.metaKey &&
+        !e.altKey &&
+        !e.repeat &&
+        (e.code === 'KeyF' || e.key.toLowerCase() === 'f')
+      ) {
         e.preventDefault();
-        if (viewMode === 'canvas') fitFocusClusterToScreen();
+        e.stopPropagation();
+        if (viewMode !== 'canvas') {
+          showToast('Switch to Canvas (1) then Shift+F to fit');
+          return;
+        }
+        fitFocusClusterToScreen();
         return;
       }
 
@@ -903,9 +915,9 @@ export const App: React.FC = () => {
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown, true);
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keydown', handleKeyDown, true);
     };
   }, [
     nodes,
@@ -922,7 +934,8 @@ export const App: React.FC = () => {
     handleResetPortfolio,
     cancelPendingClick,
     fitFocusClusterToScreen,
-    viewMode
+    viewMode,
+    showToast
   ]);
 
   // Persistent render state ref for 60/120 FPS render loop without context loss
