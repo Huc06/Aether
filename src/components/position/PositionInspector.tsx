@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import confetti from 'canvas-confetti';
 import { CanvasNode, LensConfig, PositionExitRoute } from '../../types';
 import { PositionRiskBadge } from './PositionRiskBadge';
 import { PositionMetricsSummary } from './PositionMetricsSummary';
@@ -24,25 +25,39 @@ export const PositionInspector: React.FC<PositionInspectorProps> = ({
   const isLight = config?.themeMode === 'light';
   const routes = node.exitRoutes || [];
   const [selectedExitIndex, setSelectedExitIndex] = useState(0);
+  const [isExecutingKill, setIsExecutingKill] = useState(false);
+  const [killStep, setKillStep] = useState(0);
 
   useEffect(() => {
     setSelectedExitIndex(0);
+    setIsExecutingKill(false);
+    setKillStep(0);
   }, [node.id]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (e.key === 'Escape' && !isExecutingKill) {
         e.stopPropagation();
         onClose();
       }
     };
     window.addEventListener('keydown', onKey, true);
     return () => window.removeEventListener('keydown', onKey, true);
-  }, [onClose]);
+  }, [onClose, isExecutingKill]);
 
   const handleTriggerDirectExit = (route: PositionExitRoute) => {
+    if (isExecutingKill) return;
+
     if (onDirectKillSwitch) {
-      onDirectKillSwitch(node, route);
+      setIsExecutingKill(true);
+      setKillStep(1);
+      setTimeout(() => setKillStep(2), 800);
+      setTimeout(() => setKillStep(3), 1600);
+      setTimeout(() => {
+        setIsExecutingKill(false);
+        confetti({ particleCount: 100, spread: 80, origin: { y: 0.5 } });
+        onDirectKillSwitch(node, route);
+      }, 2400);
     } else {
       onRequestUnwind(selectedExitIndex);
     }
@@ -76,8 +91,9 @@ export const PositionInspector: React.FC<PositionInspectorProps> = ({
         <button
           type="button"
           onClick={onClose}
+          disabled={isExecutingKill}
           title="Close (Esc)"
-          className={`shrink-0 h-8 px-2.5 rounded-lg border text-[10px] font-mono font-bold uppercase transition-colors cursor-pointer ${
+          className={`shrink-0 h-8 px-2.5 rounded-lg border text-[10px] font-mono font-bold uppercase transition-colors cursor-pointer disabled:opacity-40 ${
             isLight
               ? 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-700 hover:text-slate-950'
               : 'bg-slate-900 hover:bg-slate-800 border-slate-700 text-slate-300 hover:text-white'
@@ -119,6 +135,8 @@ export const PositionInspector: React.FC<PositionInspectorProps> = ({
               onTriggerUnwind={handleTriggerDirectExit}
               riskLevel={node.riskLevel}
               isLight={isLight}
+              isExecuting={isExecutingKill}
+              killStep={killStep}
             />
           </div>
         )}

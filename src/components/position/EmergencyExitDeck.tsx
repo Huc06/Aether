@@ -35,13 +35,24 @@ export const EmergencyExitDeck: React.FC<EmergencyExitDeckProps> = ({
 }) => {
   const [holdProgress, setHoldProgress] = useState(0);
   const [isHolding, setIsHolding] = useState(false);
+  const isHoldingRef = useRef(false);
   const holdStartTimeRef = useRef<number | null>(null);
   const animFrameRef = useRef<number | null>(null);
 
-  const isCritical = riskLevel === 'critical' || riskLevel === 'high';
   const selectedRoute = routes[selectedRouteIndex] || routes[0];
+  const selectedRouteRef = useRef(selectedRoute);
+  selectedRouteRef.current = selectedRoute;
+
+  const isExecutingRef = useRef(isExecuting);
+  isExecutingRef.current = isExecuting;
+
+  const onTriggerUnwindRef = useRef(onTriggerUnwind);
+  onTriggerUnwindRef.current = onTriggerUnwind;
+
+  const isCritical = riskLevel === 'critical' || riskLevel === 'high';
 
   const cancelHold = useCallback(() => {
+    isHoldingRef.current = false;
     setIsHolding(false);
     holdStartTimeRef.current = null;
     if (animFrameRef.current) {
@@ -52,20 +63,32 @@ export const EmergencyExitDeck: React.FC<EmergencyExitDeckProps> = ({
   }, []);
 
   const handleHoldComplete = useCallback(() => {
-    cancelHold();
-    if (selectedRoute && !isExecuting) {
-      onTriggerUnwind(selectedRoute);
+    isHoldingRef.current = false;
+    setIsHolding(false);
+    holdStartTimeRef.current = null;
+    if (animFrameRef.current) {
+      cancelAnimationFrame(animFrameRef.current);
+      animFrameRef.current = null;
     }
-  }, [cancelHold, selectedRoute, isExecuting, onTriggerUnwind]);
+    setHoldProgress(0);
+
+    const route = selectedRouteRef.current;
+    if (route && !isExecutingRef.current) {
+      onTriggerUnwindRef.current(route);
+    }
+  }, []);
 
   const startHold = useCallback(() => {
-    if (isExecuting || !selectedRoute) return;
+    if (isExecutingRef.current || !selectedRouteRef.current) return;
+    if (isHoldingRef.current) return;
+
+    isHoldingRef.current = true;
     setIsHolding(true);
     const start = performance.now();
     holdStartTimeRef.current = start;
 
     const tick = (now: number) => {
-      if (!holdStartTimeRef.current) return;
+      if (!isHoldingRef.current || !holdStartTimeRef.current) return;
       const elapsed = now - holdStartTimeRef.current;
       const progress = Math.min(100, (elapsed / HOLD_DURATION_MS) * 100);
       setHoldProgress(progress);
@@ -78,36 +101,35 @@ export const EmergencyExitDeck: React.FC<EmergencyExitDeckProps> = ({
     };
 
     animFrameRef.current = requestAnimationFrame(tick);
-  }, [isExecuting, selectedRoute, handleHoldComplete]);
+  }, [handleHoldComplete]);
 
-  // Pointer event handlers with pointer capture so moving mouse/finger never prematurely cancels hold
-  const onButtonPointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
-    if (e.button !== 0 || isExecuting) return;
-    e.preventDefault();
-    try {
-      e.currentTarget.setPointerCapture(e.pointerId);
-    } catch {}
-    startHold();
-  };
+  // Global pointer release listener when hold is active
+  useEffect(() => {
+    if (!isHolding) return;
 
-  const onButtonPointerUp = (e: React.PointerEvent<HTMLButtonElement>) => {
-    try {
-      e.currentTarget.releasePointerCapture(e.pointerId);
-    } catch {}
-    cancelHold();
-  };
+    const handleGlobalRelease = () => {
+      cancelHold();
+    };
 
-  const onButtonPointerCancel = (e: React.PointerEvent<HTMLButtonElement>) => {
-    try {
-      e.currentTarget.releasePointerCapture(e.pointerId);
-    } catch {}
-    cancelHold();
-  };
+    window.addEventListener('pointerup', handleGlobalRelease, true);
+    window.addEventListener('pointercancel', handleGlobalRelease, true);
+    window.addEventListener('mouseup', handleGlobalRelease, true);
+    window.addEventListener('touchend', handleGlobalRelease, true);
+    window.addEventListener('touchcancel', handleGlobalRelease, true);
+
+    return () => {
+      window.removeEventListener('pointerup', handleGlobalRelease, true);
+      window.removeEventListener('pointercancel', handleGlobalRelease, true);
+      window.removeEventListener('mouseup', handleGlobalRelease, true);
+      window.removeEventListener('touchend', handleGlobalRelease, true);
+      window.removeEventListener('touchcancel', handleGlobalRelease, true);
+    };
+  }, [isHolding, cancelHold]);
 
   // Spacebar hold interaction
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.code === 'Space' && !e.repeat && !isHolding && !isExecuting) {
+      if (e.code === 'Space' && !e.repeat && !isHoldingRef.current && !isExecutingRef.current) {
         const target = e.target as HTMLElement;
         if (target && ['INPUT', 'TEXTAREA'].includes(target.tagName)) return;
         e.preventDefault();
@@ -116,7 +138,7 @@ export const EmergencyExitDeck: React.FC<EmergencyExitDeckProps> = ({
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
-      if (e.code === 'Space' && isHolding) {
+      if (e.code === 'Space' && isHoldingRef.current) {
         e.preventDefault();
         cancelHold();
       }
@@ -131,9 +153,22 @@ export const EmergencyExitDeck: React.FC<EmergencyExitDeckProps> = ({
         cancelAnimationFrame(animFrameRef.current);
       }
     };
-  }, [startHold, cancelHold, isHolding, isExecuting]);
+  }, [startHold, cancelHold]);
 
   if (!routes || routes.length === 0) return null;
+
+  // Clean target name for button label
+  const cleanTarget = selectedRoute?.targetAsset
+    ? selectedRoute.targetAsset.replace(/^Exit to\s+/i, '')
+    : 'Safe Asset';
+
+  const buttonLabel = isExecuting
+    ? 'Executing Exit Protocol...'
+    : isHolding
+    ? `Hold to Confirm (${Math.max(0, ((1 - holdProgress / 100) * 1.2)).toFixed(1)}s)...`
+    : isCritical
+    ? `Hold 1.2s: Exit → ${cleanTarget}`
+    : `Hold 1.2s: Exit → ${cleanTarget}`;
 
   return (
     <div className={`transition-colors overflow-hidden ${instrumentPanelClass(riskLevel, isLight)}`}>
@@ -200,7 +235,7 @@ export const EmergencyExitDeck: React.FC<EmergencyExitDeckProps> = ({
                         : 'bg-slate-900/25 border-white/8 text-slate-300 hover:border-white/15 hover:bg-slate-900/40')
                 } ${isExecuting ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
-                <div className="flex items-center justify-between gap-1">
+                <div className="flex items-center justify-between gap-1 min-w-0">
                   <div className="flex items-center gap-1.5 min-w-0 flex-1">
                     <div className={`w-3 h-3 rounded-full flex items-center justify-center border shrink-0 transition-colors ${
                       isSelected 
@@ -294,14 +329,12 @@ export const EmergencyExitDeck: React.FC<EmergencyExitDeckProps> = ({
 
         {/* Hold-to-Execute Action Bar */}
         <div className="flex flex-col gap-1.5">
-          <div className="relative">
+          <div className="relative w-full">
             <button
               type="button"
               disabled={isExecuting}
-              onPointerDown={onButtonPointerDown}
-              onPointerUp={onButtonPointerUp}
-              onPointerCancel={onButtonPointerCancel}
-              className={`w-full relative overflow-hidden py-3 px-3 rounded-lg font-mono text-xs font-bold tracking-wider uppercase flex items-center justify-center gap-2 border select-none transition-all duration-150 cursor-pointer touch-none ${
+              onPointerDown={startHold}
+              className={`w-full relative overflow-hidden py-3 px-3.5 rounded-lg font-mono text-xs font-bold tracking-wider uppercase border select-none transition-all duration-150 cursor-pointer touch-none flex items-center justify-center ${
                 isExecuting
                   ? 'opacity-60 cursor-not-allowed bg-slate-800 border-slate-700 text-slate-400'
                   : isHolding
@@ -317,32 +350,29 @@ export const EmergencyExitDeck: React.FC<EmergencyExitDeckProps> = ({
                       : 'bg-slate-900/90 hover:bg-slate-800 text-slate-100 border-slate-700 hover:border-slate-600 shadow-md')
               }`}
             >
-              {/* Dynamic Progress Fill for Hold Gesture */}
-              {isHolding && (
-                <div 
-                  className={`absolute inset-0 transition-none z-0 ${
-                    isCritical ? 'bg-rose-500' : 'bg-emerald-500'
-                  }`}
-                  style={{ width: `${holdProgress}%` }}
-                />
-              )}
+              {/* Dynamic Progress Fill (Always mounted in DOM to prevent Blink layout thrashing) */}
+              <div 
+                className="absolute inset-y-0 left-0 pointer-events-none transition-none z-0"
+                style={{
+                  width: `${holdProgress}%`,
+                  backgroundColor: isCritical ? '#e11d48' : '#059669',
+                  opacity: isHolding ? 0.9 : 0
+                }}
+              />
 
-              <div className="relative z-10 flex items-center justify-center gap-2">
+              {/* Text Container with strict min-w-0 and truncation check */}
+              <div className="relative z-10 pointer-events-none flex items-center justify-center gap-1.5 sm:gap-2 w-full max-w-full min-w-0 px-1 overflow-hidden">
                 {isCritical ? (
-                  <ShieldAlert className={`w-4 h-4 ${isHolding ? 'text-white animate-pulse' : (isLight ? 'text-white' : 'text-rose-400')}`} />
+                  <ShieldAlert className={`w-4 h-4 shrink-0 ${isHolding ? 'text-white animate-pulse' : (isLight ? 'text-white' : 'text-rose-400')}`} />
                 ) : (
-                  <CheckCircle2 className={`w-4 h-4 ${isHolding ? 'text-white animate-pulse' : (isLight ? 'text-white' : 'text-emerald-400')}`} />
+                  <CheckCircle2 className={`w-4 h-4 shrink-0 ${isHolding ? 'text-white animate-pulse' : (isLight ? 'text-white' : 'text-emerald-400')}`} />
                 )}
-                <span className="truncate">
-                  {isExecuting
-                    ? 'Executing Exit Protocol...'
-                    : isHolding
-                    ? `Hold to Confirm (${Math.round((1 - holdProgress / 100) * 1.2 * 10) / 10}s)...`
-                    : isCritical
-                    ? `Hold 1.2s to Emergency Exit (to ${selectedRoute?.targetAsset || 'Safe Asset'})`
-                    : `Hold 1.2s to Exit Position (to ${selectedRoute?.targetAsset || 'Safe Asset'})`}
+                
+                <span className="truncate text-xs font-mono font-bold tracking-wide block max-w-full min-w-0 text-center" title={buttonLabel}>
+                  {buttonLabel}
                 </span>
-                <ArrowRight className="w-4 h-4 opacity-70 shrink-0" />
+
+                <ArrowRight className="w-3.5 h-3.5 opacity-70 shrink-0 hidden xs:block sm:block" />
               </div>
             </button>
           </div>
@@ -352,7 +382,7 @@ export const EmergencyExitDeck: React.FC<EmergencyExitDeckProps> = ({
               Hold <kbd className="px-1 py-0.2 rounded border text-[9px] bg-slate-800/40 border-slate-700">Space</kbd> or click &amp; hold button
             </span>
             <span className={isLight ? 'text-slate-500' : 'text-slate-500'}>
-              Zero-sandwich guarantee &bull; Flashbots / Jito Private RPC
+              Zero-sandwich guarantee &bull; Jito MEV Shield
             </span>
           </div>
         </div>
