@@ -108,7 +108,7 @@ export const INITIAL_NODES: CanvasNode[] = [
         estReturn: '1,248.5 SOL ($239,700)',
         fee: '$12.40 (0.005%)',
         timeSeconds: 4,
-        routeSummary: 'Instant Unwind -> Raydium Swap -> Phantom Wallet'
+        routeSummary: 'Instant Exit -> Raydium Swap -> Phantom Wallet'
       },
       {
         targetAsset: 'Pure USDC',
@@ -185,7 +185,7 @@ export const INITIAL_NODES: CanvasNode[] = [
         estReturn: '67,820 USDC',
         fee: '$68.50 (0.1%)',
         timeSeconds: 2,
-        routeSummary: 'EMERGENCY MARKET UNWIND: Drift Orderbook Fill'
+        routeSummary: 'EMERGENCY MARKET EXIT: Drift Orderbook Fill'
       },
       {
         targetAsset: 'Native SOL',
@@ -426,7 +426,7 @@ export const INTENT_PRESETS: IntentQuery[] = [
     recommendedRoutes: [
       {
         id: 'route-kill-drift',
-        title: '1-Click Emergency Unwind Drift 10x Long',
+        title: '1-Click Emergency Exit Drift 10x Long',
         tag: 'SAFEST',
         estTime: '3.2s',
         gasCost: '$0.008 (Solana)',

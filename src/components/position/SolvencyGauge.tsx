@@ -2,6 +2,7 @@ import React from 'react';
 import { RiskLevel } from '../../types';
 import { Activity } from 'lucide-react';
 import { DrawablyCircle } from 'drawably/react';
+import { instrumentPanelClass } from './detailPhase';
 
 interface SolvencyGaugeProps {
   healthFactor?: number;
@@ -28,11 +29,7 @@ export const SolvencyGauge: React.FC<SolvencyGaugeProps> = ({
   const pinPercent = ((clampedHf - 1.0) / 2.0) * 100;
 
   return (
-    <div className={`p-3 rounded-xl border flex flex-col justify-between transition-colors h-full ${
-      isLight 
-        ? 'bg-slate-50 border-slate-200/90 shadow-sm' 
-        : 'bg-slate-950/70 border-slate-800'
-    }`}>
+    <div className={`p-3 flex flex-col justify-between transition-colors h-full ${instrumentPanelClass(riskLevel, isLight)}`}>
       {/* Metric Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">

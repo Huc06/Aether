@@ -8,6 +8,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { RoutePipelineFlow } from './RoutePipelineFlow';
+import { instrumentPanelClass } from './detailPhase';
 
 interface EmergencyExitDeckProps {
   routes: PositionExitRoute[];
@@ -110,14 +111,10 @@ export const EmergencyExitDeck: React.FC<EmergencyExitDeckProps> = ({
   if (!routes || routes.length === 0) return null;
 
   return (
-    <div className={`rounded-xl border transition-colors overflow-hidden ${
-      isLight 
-        ? 'bg-slate-50/90 border-slate-200/90 shadow-sm' 
-        : 'bg-slate-950/70 border-slate-800'
-    }`}>
+    <div className={`transition-colors overflow-hidden ${instrumentPanelClass(riskLevel, isLight)}`}>
       {/* Deck Header: Telemetry & State */}
       <div className={`px-3.5 py-2 border-b flex items-center justify-between gap-2 ${
-        isLight ? 'bg-slate-100/70 border-slate-200' : 'bg-slate-900/60 border-slate-800'
+        isLight ? 'bg-slate-50/80 border-slate-200' : 'bg-white/5 border-white/10'
       }`}>
         <div className="flex items-center gap-2 min-w-0">
           <div className={`w-2 h-2 rounded-full shrink-0 ${
@@ -130,7 +127,7 @@ export const EmergencyExitDeck: React.FC<EmergencyExitDeckProps> = ({
           <span className={`text-[11px] font-mono font-bold tracking-wider uppercase truncate ${
             isLight ? 'text-slate-900' : 'text-slate-200'
           }`}>
-            {isCritical ? 'Emergency Unwind Protocol' : 'Pre-computed Exit Routes'}
+            {isCritical ? 'Emergency Exit Protocol' : 'Pre-computed Exit Routes'}
           </span>
         </div>
 
@@ -164,18 +161,18 @@ export const EmergencyExitDeck: React.FC<EmergencyExitDeckProps> = ({
                 type="button"
                 onClick={() => !isExecuting && onSelectRoute(idx)}
                 disabled={isExecuting}
-                className={`p-2.5 rounded-lg border text-left transition-all duration-150 flex flex-col gap-1 relative cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-slate-400 min-w-0 ${
+                className={`p-2.5 rounded-lg border text-left transition-[border-color,background-color,box-shadow,color] duration-150 flex flex-col gap-1 relative cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-slate-400 min-w-0 ${
                   isSelected
                     ? (isLight
                         ? isCritical
-                          ? 'bg-white border-rose-500 shadow-sm ring-1 ring-rose-400/40 text-slate-900'
-                          : 'bg-white border-slate-900 shadow-sm ring-1 ring-slate-900/30 text-slate-900'
+                          ? 'bg-white/80 border-rose-500 shadow-sm ring-1 ring-rose-400/40 text-slate-900 backdrop-blur-sm'
+                          : 'bg-white/80 border-slate-900 shadow-sm ring-1 ring-slate-900/30 text-slate-900 backdrop-blur-sm'
                         : isCritical
-                          ? 'bg-slate-900/90 border-rose-500/80 shadow-[0_0_20px_rgba(244,63,94,0.12)] text-white'
-                          : 'bg-slate-900/90 border-cyan-500/70 shadow-[0_0_20px_rgba(6,182,212,0.12)] text-white')
+                          ? 'bg-slate-900/55 border-rose-500/80 shadow-[0_0_20px_rgba(244,63,94,0.12)] text-white backdrop-blur-sm'
+                          : 'bg-slate-900/55 border-cyan-500/70 shadow-[0_0_20px_rgba(6,182,212,0.12)] text-white backdrop-blur-sm')
                     : (isLight
-                        ? 'bg-white/60 border-slate-200 text-slate-700 hover:bg-white hover:border-slate-300'
-                        : 'bg-slate-900/40 border-slate-800 text-slate-300 hover:border-slate-700 hover:bg-slate-900/60')
+                        ? 'bg-white/40 border-slate-200 text-slate-700 hover:bg-white/65 hover:border-slate-300'
+                        : 'bg-slate-900/25 border-white/8 text-slate-300 hover:border-white/15 hover:bg-slate-900/40')
                 } ${isExecuting ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 <div className="flex items-center justify-between gap-1">
@@ -243,7 +240,7 @@ export const EmergencyExitDeck: React.FC<EmergencyExitDeckProps> = ({
             <div className="flex items-center justify-between text-xs font-mono font-bold">
               <span className="flex items-center gap-1.5 text-rose-600 text-[11px]">
                 <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
-                Executing Unwind Pipeline
+                Executing Exit Pipeline
               </span>
               <span className={`text-[10px] ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
                 Step {killStep} of 3
@@ -331,12 +328,12 @@ export const EmergencyExitDeck: React.FC<EmergencyExitDeckProps> = ({
                 )}
                 <span className="truncate">
                   {isExecuting
-                    ? 'Executing Unwind Protocol...'
+                    ? 'Executing Exit Protocol...'
                     : isHolding
                     ? `Hold to Confirm (${Math.round((1 - holdProgress / 100) * 1.2 * 10) / 10}s)...`
                     : isCritical
-                    ? `Hold 1.2s to Emergency Unwind (Exit to ${selectedRoute?.targetAsset || 'Safe Asset'})`
-                    : `Hold 1.2s to Exit Position (Exit to ${selectedRoute?.targetAsset || 'Safe Asset'})`}
+                    ? `Hold 1.2s to Emergency Exit (to ${selectedRoute?.targetAsset || 'Safe Asset'})`
+                    : `Hold 1.2s to Exit Position (to ${selectedRoute?.targetAsset || 'Safe Asset'})`}
                 </span>
                 <ArrowRight className="w-3.5 h-3.5 opacity-70 shrink-0" />
               </div>
