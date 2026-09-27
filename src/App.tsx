@@ -452,10 +452,68 @@ export const App: React.FC = () => {
     cameraRef.current.flyTo(cx, cy, fitScale);
     showToast(
       neighbors.length > 0
-        ? `Focus: ${center.title} + ${neighbors.length} linked (Ctrl+Z undo · Esc clear dim)`
-        : `Focus: ${center.title} (no linked windows)`
+        ? `Focus: ${center.title} + ${neighbors.length} linked (Shift+F fit · Ctrl+Z undo · Esc clear dim)`
+        : `Focus: ${center.title} (Shift+F fit · no linked windows)`
     );
   }, [nodes, wires, recordHistory, showToast, config.normalScale]);
+
+  // Fit current focus cluster (or focused node + linked) to the live viewport
+  const fitFocusClusterToScreen = useCallback(() => {
+    const relatedIds = new Set<string>(
+      highlightNodeIds.length > 0 ? highlightNodeIds : [focusedNodeId]
+    );
+    if (highlightNodeIds.length === 0 && focusedNodeId) {
+      wires.forEach(w => {
+        if (w.fromId === focusedNodeId) relatedIds.add(w.toId);
+        if (w.toId === focusedNodeId) relatedIds.add(w.fromId);
+      });
+    }
+
+    const cluster = nodes.filter(n => relatedIds.has(n.id));
+    if (cluster.length === 0) {
+      showToast('Nothing to fit — click a window first');
+      return;
+    }
+
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+    cluster.forEach(n => {
+      minX = Math.min(minX, n.x);
+      minY = Math.min(minY, n.y);
+      maxX = Math.max(maxX, n.x + n.w);
+      maxY = Math.max(maxY, n.y + n.h);
+    });
+
+    const worldW = Math.max(1, maxX - minX);
+    const worldH = Math.max(1, maxY - minY);
+    const cx = (minX + maxX) / 2;
+    const cy = (minY + maxY) / 2;
+
+    const canvas = canvasRef.current;
+    const screenW = canvas?.clientWidth || window.innerWidth;
+    const screenH = canvas?.clientHeight || window.innerHeight;
+    // Leave room for TopBar + ViewModeDock
+    const padX = 96;
+    const padY = 140;
+    const fitScale = Math.max(
+      0.22,
+      Math.min(
+        1.35,
+        Math.min((screenW - padX) / worldW, (screenH - padY) / worldH)
+      )
+    );
+
+    cameraRef.current.state.isOverview = false;
+    setIsOverview(false);
+    cameraRef.current.flyTo(cx, cy, fitScale);
+    showToast(
+      cluster.length > 1
+        ? `Fit ${cluster.length} windows to screen`
+        : `Fit ${cluster[0].title} to screen`
+    );
+  }, [nodes, wires, highlightNodeIds, focusedNodeId, showToast]);
 
   // Tidy: one column per wallet, children stacked below → wires stay short/vertical
   const handleSmartArrange = useCallback(() => {
@@ -809,6 +867,13 @@ export const App: React.FC = () => {
         return;
       }
 
+      // Shift+F -> Fit focus cluster to current screen
+      if (e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey && e.key.toLowerCase() === 'f') {
+        e.preventDefault();
+        if (viewMode === 'canvas') fitFocusClusterToScreen();
+        return;
+      }
+
       // Ctrl/Cmd + Shift + R -> Reset to Default Portfolio
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'r') {
         e.preventDefault();
@@ -855,7 +920,9 @@ export const App: React.FC = () => {
     handleNudge,
     handleFocusNearest,
     handleResetPortfolio,
-    cancelPendingClick
+    cancelPendingClick,
+    fitFocusClusterToScreen,
+    viewMode
   ]);
 
   // Persistent render state ref for 60/120 FPS render loop without context loss
