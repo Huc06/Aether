@@ -20,8 +20,8 @@ export class GraphRenderer {
     this.particleTime += dt * (isSimulating ? 3.5 : 1.0);
     const isLight = config.themeMode === 'light';
 
-    // Clear background
-    ctx.fillStyle = isLight ? '#f8fafc' : '#07090e';
+    // Clear background (Clean Slate in light mode, Deep Space Midnight in dark mode)
+    ctx.fillStyle = isLight ? '#f8fafc' : '#050811';
     ctx.fillRect(0, 0, width, height);
 
     // Draw Grid
@@ -57,8 +57,10 @@ export class GraphRenderer {
     const startX = (offset.x % step + step) % step;
     const startY = (offset.y % step + step) % step;
 
-    const dotAlpha = Math.min(0.28, Math.max(0.04, (sc - 0.1) * 0.35));
-    ctx.fillStyle = isLight ? `rgba(15, 23, 42, ${dotAlpha * 0.9})` : `rgba(255, 255, 255, ${dotAlpha})`;
+    const dotAlpha = Math.min(0.35, Math.max(0.06, (sc - 0.1) * 0.4));
+    ctx.fillStyle = isLight 
+      ? `rgba(15, 23, 42, ${dotAlpha * 0.9})` 
+      : `rgba(148, 163, 184, ${dotAlpha * 0.95})`;
 
     const dotSize = Math.max(1.0, 1.8 * Math.min(1.0, sc));
 
@@ -243,19 +245,24 @@ export class GraphRenderer {
       const isTargetedNode = highlightIds.length > 0 && isHighlighted;
       if (isTargetedNode || isSelected || node.riskLevel === 'critical') {
         ctx.shadowColor = isSelected ? config.accent : (isTargetedNode ? (isLight ? '#0284c7' : '#38bdf8') : riskColor);
-        ctx.shadowBlur = (isSelected ? 30 : (isTargetedNode ? 24 : 20)) * sc;
+        ctx.shadowBlur = (isSelected ? 32 : (isTargetedNode ? 26 : 22)) * sc;
         ctx.shadowOffsetY = 4 * sc;
       } else {
-        ctx.shadowColor = isLight ? 'rgba(0, 0, 0, 0.12)' : 'rgba(0, 0, 0, 0.75)';
-        ctx.shadowBlur = (isLight ? 10 : 14) * sc;
-        ctx.shadowOffsetY = (isLight ? 4 : 6) * sc;
+        ctx.shadowColor = isLight ? 'rgba(0, 0, 0, 0.12)' : 'rgba(0, 0, 0, 0.88)';
+        ctx.shadowBlur = (isLight ? 12 : 22) * sc;
+        ctx.shadowOffsetY = (isLight ? 4 : 8) * sc;
       }
 
-      // Card Background (Glass dark / glass light)
+      // Card Background (Ceramic Frosted Glass in Light / Obsidian Frosted Glass in Dark)
       const radius = 10 * sc;
-      ctx.fillStyle = isLight
-        ? (isSelected ? 'rgba(255, 255, 255, 0.98)' : 'rgba(255, 255, 255, 0.94)')
-        : (isSelected ? 'rgba(18, 24, 38, 0.95)' : 'rgba(10, 14, 22, 0.90)');
+      if (isLight) {
+        ctx.fillStyle = isSelected ? 'rgba(255, 255, 255, 0.98)' : 'rgba(255, 255, 255, 0.94)';
+      } else {
+        const cardGrad = ctx.createLinearGradient(pos.x, pos.y, pos.x, pos.y + sh);
+        cardGrad.addColorStop(0, isSelected ? 'rgba(24, 34, 56, 0.96)' : 'rgba(16, 23, 38, 0.95)');
+        cardGrad.addColorStop(1, isSelected ? 'rgba(14, 20, 34, 0.96)' : 'rgba(9, 13, 22, 0.95)');
+        ctx.fillStyle = cardGrad;
+      }
       ctx.beginPath();
       ctx.roundRect(pos.x, pos.y, sw, sh, radius);
       ctx.fill();
@@ -270,24 +277,34 @@ export class GraphRenderer {
         ctx.stroke();
       }
 
-      // Card Border
+      // Card Border with specular rim reflection
       ctx.shadowColor = 'transparent';
       ctx.lineWidth = isSelected ? 2.5 : (isTargetedNode ? 2.0 : (node.riskLevel === 'critical' ? 2.0 : 1.2));
       ctx.strokeStyle = isSelected 
         ? config.accent 
         : (isTargetedNode 
           ? (isLight ? '#0284c7' : '#38bdf8') 
-          : (node.riskLevel === 'critical' ? '#ef4444' : (isLight ? 'rgba(15, 23, 42, 0.12)' : 'rgba(255, 255, 255, 0.14)')));
+          : (node.riskLevel === 'critical' ? '#ef4444' : (isLight ? 'rgba(15, 23, 42, 0.12)' : 'rgba(255, 255, 255, 0.18)')));
       ctx.stroke();
 
       // Title Bar Header
       const headerH = 34 * sc;
-      ctx.fillStyle = isLight
-        ? (isSelected ? 'rgba(241, 245, 249, 0.98)' : 'rgba(248, 250, 252, 0.95)')
-        : (isSelected ? 'rgba(30, 41, 59, 0.95)' : 'rgba(15, 21, 32, 0.9)');
+      if (isLight) {
+        ctx.fillStyle = isSelected ? 'rgba(241, 245, 249, 0.98)' : 'rgba(248, 250, 252, 0.95)';
+      } else {
+        ctx.fillStyle = isSelected ? 'rgba(32, 45, 72, 0.96)' : 'rgba(20, 28, 46, 0.94)';
+      }
       ctx.beginPath();
       ctx.roundRect(pos.x, pos.y, sw, headerH, [radius, radius, 0, 0]);
       ctx.fill();
+
+      // Header Bottom Divider
+      ctx.strokeStyle = isLight ? 'rgba(15, 23, 42, 0.08)' : 'rgba(255, 255, 255, 0.08)';
+      ctx.lineWidth = 1 * sc;
+      ctx.beginPath();
+      ctx.moveTo(pos.x, pos.y + headerH);
+      ctx.lineTo(pos.x + sw, pos.y + headerH);
+      ctx.stroke();
 
       // Traffic Light status dots (Phantomat style close, fill, fullscreen)
       const dotPad = 12 * sc;
