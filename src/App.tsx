@@ -600,22 +600,89 @@ export const App: React.FC = () => {
     );
   }, [nodes, wires, highlightNodeIds, focusedNodeId, showToast]);
 
-  // If ?cluster= was passed in URL, layout star focus cluster and fit on mount
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const clusterId = params.get('cluster');
-    if (clusterId) {
-      const found = nodes.find(n => n.id === clusterId || n.id.toLowerCase().includes(clusterId.toLowerCase()));
-      if (found) {
-        setTimeout(() => {
-          layoutFocusCluster(found.id);
-          setTimeout(() => {
-            fitFocusClusterToScreen();
-          }, 150);
-        }, 100);
-      }
-    }
-  }, [nodes, layoutFocusCluster, fitFocusClusterToScreen]);
+  /**
+   * Frame and arrange target nodes in a clean non-overlapping pipeline in the left region
+   * of the canvas, avoiding collisions and leaving the right half clear for receipt modals.
+   */
+  const frameClusterToLeft = useCallback((targetNodeIds: string[]) => {
+    if (targetNodeIds.length === 0) return;
+
+    recordHistory();
+
+    const targetSet = new Set(targetNodeIds);
+    const targetNodes = nodes.filter(n => targetSet.has(n.id));
+    if (targetNodes.length === 0) return;
+
+    const nodeWidth = 440;
+    const nodeHeight = 240;
+    const gapX = 56;
+    const gapY = 36;
+
+    const count = targetNodes.length;
+    // 1-3 nodes: horizontal pipeline; 4+ nodes: 2-column grid
+    const cols = count <= 3 ? count : Math.ceil(Math.sqrt(count));
+    const rows = Math.ceil(count / cols);
+
+    const totalClusterW = cols * nodeWidth + (cols - 1) * gapX;
+    const totalClusterH = rows * nodeHeight + (rows - 1) * gapY;
+
+    const startX = -totalClusterW / 2;
+    const startY = -totalClusterH / 2;
+
+    const posById = new Map<string, { x: number; y: number }>();
+    targetNodes.forEach((node, idx) => {
+      const col = idx % cols;
+      const row = Math.floor(idx / cols);
+      posById.set(node.id, {
+        x: startX + col * (nodeWidth + gapX),
+        y: startY + row * (nodeHeight + gapY),
+      });
+    });
+
+    // Park non-involved nodes neatly to the side
+    const others = nodes.filter(n => !targetSet.has(n.id));
+    const parkX = startX + totalClusterW + 220;
+    const parkGap = 160;
+    const parkY0 = -((others.length - 1) * parkGap) / 2;
+    others.forEach((n, i) => {
+      posById.set(n.id, {
+        x: parkX,
+        y: parkY0 + i * parkGap,
+      });
+    });
+
+    setNodes(prev => prev.map(n => {
+      const p = posById.get(n.id);
+      return p ? { ...n, x: p.x, y: p.y } : n;
+    }));
+    setHighlightNodeIds([...targetSet]);
+
+    // Camera framing: shift camera so cluster appears in left ~55% of the screen
+    const canvas = canvasRef.current;
+    const screenW = canvas?.clientWidth || window.innerWidth;
+    const screenH = canvas?.clientHeight || window.innerHeight;
+
+    const isDesktop = screenW >= 1024;
+    const rightPanelW = isDesktop ? 600 : 0;
+    const usableLeftW = isDesktop ? Math.max(340, screenW - rightPanelW - 60) : (screenW - 48);
+    const usableH = Math.max(200, screenH - 140);
+
+    const fitScale = Math.max(
+      0.35,
+      Math.min(
+        1.25,
+        Math.min(usableLeftW / totalClusterW, usableH / totalClusterH) * 1.02
+      )
+    );
+
+    const shiftXScreen = isDesktop ? (rightPanelW / 2) : 0;
+    const targetCamX = 0 + (shiftXScreen / fitScale);
+    const targetCamY = 0;
+
+    cameraRef.current.state.isOverview = false;
+    setIsOverview(false);
+    cameraRef.current.flyTo(targetCamX, targetCamY, fitScale);
+  }, [nodes, recordHistory]);
 
   // If ?intent=1 or ?cluster= was passed in URL on mount, activate overview or fit cluster
   useEffect(() => {
@@ -955,10 +1022,17 @@ export const App: React.FC = () => {
         status: 'SETTLED'
       };
 
+      // Match intent preset or route nodes to cleanly frame and separate on the left
+      const matchedPreset = INTENT_PRESETS.find(p => p.recommendedRoutes?.some(r => r.id === route.id || r.title === route.title));
+      const targetIds = matchedPreset?.highlightNodeIds && matchedPreset.highlightNodeIds.length > 0
+        ? matchedPreset.highlightNodeIds
+        : ['wallet-ledger', 'pos-aave-eth', 'pos-pendle-pt'];
+
+      frameClusterToLeft(targetIds);
       setActiveRouteReceipt(receipt);
       showToast(`ROUTE SETTLED: ${route.title}`);
     }, 2000);
-  }, [showToast]);
+  }, [showToast, frameClusterToLeft]);
 
   // Handle Kill Switch & Output Detailed Settlement Receipt
   const handleKillSwitch = useCallback((node: CanvasNode, route: PositionExitRoute) => {
@@ -991,10 +1065,15 @@ export const App: React.FC = () => {
       settlementReceipt: receipt
     };
 
+    // Frame the settled position + connected wallet cleanly on the left
+    const relatedWallet = wires.find(w => w.toId === node.id || w.fromId === node.id)?.fromId;
+    const exitNodeIds = relatedWallet ? [relatedWallet, node.id] : [node.id];
+    frameClusterToLeft(exitNodeIds);
+
     setNodes(prev => prev.map(n => (n.id === node.id ? updatedNode : n)));
     setActiveSettlementReceipt({ node: updatedNode, receipt });
     showToast(`SETTLED: Recovered ${route.estReturn} • Debt Cleared to $0`);
-  }, [showToast]);
+  }, [showToast, wires, frameClusterToLeft]);
 
   // Reset to Default Portfolio (Ctrl+Shift+R or HUD button)
   const handleResetPortfolio = useCallback(() => {
