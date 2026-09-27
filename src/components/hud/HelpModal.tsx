@@ -72,6 +72,12 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose, config })
             <div className={`flex items-center justify-between p-2 rounded border ${
               isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/5'
             }`}>
+              <span className={isLight ? 'text-slate-700 font-semibold' : 'text-slate-300'}>Shift + F</span>
+              <span className={`font-bold ${isLight ? 'text-amber-700' : 'text-amber-300'}`}>Fit Focus Cluster</span>
+            </div>
+            <div className={`flex items-center justify-between p-2 rounded border ${
+              isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/5'
+            }`}>
               <span className={isLight ? 'text-slate-700 font-semibold' : 'text-slate-300'}>Ctrl + A</span>
               <span className={`font-bold ${isLight ? 'text-amber-700' : 'text-amber-300'}`}>Smart Arrange</span>
             </div>
