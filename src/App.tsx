@@ -1396,12 +1396,6 @@ export const App: React.FC = () => {
       <TopBar
         config={config}
         nodes={nodes}
-        isOverview={isOverview}
-        onToggleOverview={() => {
-          if (isIntentOpen) closeIntentSpotlight();
-          else if (isOverview) toggleOverviewMode(false);
-          else openIntentMissionControl();
-        }}
         onSmartArrange={handleSmartArrange}
         onOpenNansen={() => setIsNansenOpen(true)}
         onOpenTuner={() => setIsTunerOpen(true)}
