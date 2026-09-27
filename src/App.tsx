@@ -330,13 +330,18 @@ export const App: React.FC = () => {
   }, [nodes]);
 
   // Focus node and fly camera
-  const focusNode = useCallback((nodeId: string, flyTo = true) => {
+  const focusNode = useCallback((nodeId: string, flyTo = true, targetScale?: number) => {
     setFocusedNodeId(nodeId);
     const node = nodes.find(n => n.id === nodeId);
     if (node && flyTo) {
-      cameraRef.current.flyTo(node.x + node.w / 2, node.y + node.h / 2);
+      const scaleToUse = targetScale !== undefined 
+        ? targetScale 
+        : (cameraRef.current.state.isOverview ? Math.max(0.85, config.normalScale) : cameraRef.current.state.scale);
+      cameraRef.current.state.isOverview = false;
+      setIsOverview(false);
+      cameraRef.current.flyTo(node.x + node.w / 2, node.y + node.h / 2, scaleToUse);
     }
-  }, [nodes]);
+  }, [nodes, config.normalScale]);
 
   // Load Nansen Entity & Build Dynamic Spatial Graph
   const handleLoadNansenEntity = useCallback(async (entity: typeof PRESET_ENTITIES[0]) => {
@@ -765,14 +770,93 @@ export const App: React.FC = () => {
   }, []);
 
   const handleFocusNode = useCallback((node: CanvasNode, openDetail = false) => {
-    focusNode(node.id, true);
+    focusNode(node.id, true, Math.max(0.88, config.normalScale));
     cameraRef.current.state.isOverview = false;
     setIsOverview(false);
     setIsIntentOpen(false);
     if (openDetail) {
       openPositionDetail(node);
     }
-  }, [focusNode, openPositionDetail]);
+  }, [focusNode, openPositionDetail, config.normalScale]);
+
+  // Smoothly glide and zoom to a single node from Intent Spotlight
+  const handleZoomSingleNode = useCallback((node: CanvasNode) => {
+    const canvas = canvasRef.current;
+    const screenW = canvas?.clientWidth || window.innerWidth;
+    let cx = node.x + node.w / 2;
+    const cy = node.y + node.h / 2;
+    const fitScale = Math.max(0.88, config.normalScale);
+
+    if (window.innerWidth >= 768) {
+      // Offset camera horizontally so the node appears in the center of the right viewing area
+      const leftPanelWidth = 540;
+      const shiftScreenPx = leftPanelWidth / 2;
+      cx -= shiftScreenPx / fitScale;
+    }
+
+    cameraRef.current.state.isOverview = false;
+    setIsOverview(false);
+    cameraRef.current.flyTo(cx, cy, fitScale);
+    setFocusedNodeId(node.id);
+    setHighlightNodeIds([node.id]);
+    showToast(`Zoomed to ${node.title}`);
+  }, [config.normalScale, showToast]);
+
+  // Frame and zoom all matching search options on canvas
+  const handleFitNodes = useCallback((nodeIds: string[]) => {
+    const targetNodes = nodes.filter(n => nodeIds.includes(n.id));
+    if (targetNodes.length === 0) return;
+
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+    targetNodes.forEach(n => {
+      minX = Math.min(minX, n.x);
+      minY = Math.min(minY, n.y);
+      maxX = Math.max(maxX, n.x + n.w);
+      maxY = Math.max(maxY, n.y + n.h);
+    });
+
+    const worldW = Math.max(1, maxX - minX);
+    const worldH = Math.max(1, maxY - minY);
+    let cx = (minX + maxX) / 2;
+    const cy = (minY + maxY) / 2;
+
+    const canvas = canvasRef.current;
+    const screenW = canvas?.clientWidth || window.innerWidth;
+    const screenH = canvas?.clientHeight || window.innerHeight;
+
+    // Available viewport width when Spotlight is docked on the left (desktop >= 768px)
+    const leftPanelWidth = window.innerWidth >= 768 ? 540 : 0;
+    const usableW = Math.max(320, screenW - leftPanelWidth);
+    const padX = 72;
+    const padY = 96;
+
+    const fitScale = Math.max(
+      0.35,
+      Math.min(
+        1.45,
+        Math.min((usableW - padX) / worldW, (screenH - padY) / worldH) * 0.92
+      )
+    );
+
+    // If Spotlight is on the left, offset camera center horizontally so the cluster is centered in the right pane
+    if (window.innerWidth >= 768) {
+      const shiftScreenPx = leftPanelWidth / 2;
+      cx -= shiftScreenPx / fitScale;
+    }
+
+    cameraRef.current.state.isOverview = false;
+    setIsOverview(false);
+    cameraRef.current.flyTo(cx, cy, fitScale);
+    setHighlightNodeIds(nodeIds);
+    showToast(
+      targetNodes.length > 1
+        ? `Framed ${targetNodes.length} matching options on canvas`
+        : `Zoomed to ${targetNodes[0].title}`
+    );
+  }, [nodes, showToast]);
 
   // Filter high-risk positions
   const handleFilterRisk = useCallback(() => {
@@ -1469,6 +1553,8 @@ export const App: React.FC = () => {
         onHighlightNodes={setHighlightNodeIds}
         onExecuteRoute={handleExecuteRoute}
         onApplyDynamicResearchGraph={handleApplyDynamicResearchGraph}
+        onFitNodes={handleFitNodes}
+        onZoomSingleNode={handleZoomSingleNode}
       />
 
       {/* Progressive position detail: peek → sheet → inspector → confirm */}

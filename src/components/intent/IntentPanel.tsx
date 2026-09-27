@@ -17,7 +17,8 @@ import {
   Terminal, 
   Activity,
   Cpu,
-  Compass 
+  Compass,
+  Maximize2
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { streamNansenAgent } from '../../services/nansenApi';
@@ -34,6 +35,8 @@ interface IntentPanelProps {
   onHighlightNodes: (nodeIds: string[]) => void;
   onExecuteRoute: (route: RecommendedRoute) => void;
   onApplyDynamicResearchGraph?: (prompt: string) => Promise<void>;
+  onFitNodes?: (nodeIds: string[]) => void;
+  onZoomSingleNode?: (node: CanvasNode) => void;
 }
 
 const SMART_MONEY_ROUTE: RecommendedRoute = {
@@ -88,7 +91,9 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
   onSelectNode,
   onHighlightNodes,
   onExecuteRoute,
-  onApplyDynamicResearchGraph
+  onApplyDynamicResearchGraph,
+  onFitNodes,
+  onZoomSingleNode,
 }) => {
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -376,10 +381,20 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
               if (e.key === 'Escape') onClose();
               if (e.key === 'Enter') {
                 e.preventDefault();
-                handleAskNansenAgent();
+                if (e.metaKey || e.ctrlKey) {
+                  if (filteredNodes.length > 0 && onFitNodes) {
+                    onFitNodes(filteredNodes.map(n => n.id));
+                  }
+                } else if (query.toLowerCase().startsWith('ask') || query.includes('?')) {
+                  handleAskNansenAgent();
+                } else if (filteredNodes.length > 0 && onFitNodes) {
+                  onFitNodes(filteredNodes.map(n => n.id));
+                } else {
+                  handleAskNansenAgent();
+                }
               }
             }}
-            placeholder="Ask Nansen AI / Type intent: e.g. 'Which tokens are smart money accumulating?'..."
+            placeholder="Search nodes (e.g. 'hyperliquid') or ask Nansen AI..."
             className={`flex-1 min-w-0 bg-transparent font-mono text-sm outline-none transition-colors ${
               isLight ? 'text-slate-950 placeholder:text-slate-500 font-semibold' : 'text-white placeholder:text-slate-500'
             }`}
@@ -711,8 +726,33 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
             <div className={`text-[11px] font-extrabold uppercase tracking-wider flex items-center justify-between ${
               isLight ? 'text-slate-700' : 'text-slate-400'
             }`}>
-              <span>Matching Portfolio Nodes ({filteredNodes.length})</span>
-              <span className={`text-[10px] ${isLight ? 'text-slate-500 font-semibold' : 'text-slate-500'}`}>Click to glide camera &amp; zoom</span>
+              <div className="flex items-center gap-1.5">
+                <span>Matching Portfolio Nodes ({filteredNodes.length})</span>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                {filteredNodes.length > 0 && onFitNodes && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onFitNodes(filteredNodes.map(n => n.id));
+                    }}
+                    className={`px-2 py-0.5 rounded-md text-[10px] font-mono font-extrabold border flex items-center gap-1 transition-all shadow-xs cursor-pointer ${
+                      isLight
+                        ? 'bg-amber-100 hover:bg-amber-200 border-amber-300 text-amber-950'
+                        : 'bg-amber-500/20 hover:bg-amber-500/35 border-amber-500/40 text-amber-300'
+                    }`}
+                    title="Zoom and frame all matching options on canvas"
+                  >
+                    <Maximize2 className="w-3 h-3 text-amber-500" />
+                    <span>Zoom {filteredNodes.length === 1 ? 'Option' : `All (${filteredNodes.length})`}</span>
+                  </button>
+                )}
+                <span className={`text-[10px] hidden sm:inline ${isLight ? 'text-slate-500 font-semibold' : 'text-slate-500'}`}>
+                  Click to inspect
+                </span>
+              </div>
             </div>
 
             <div className="flex flex-col gap-1.5">
@@ -729,9 +769,9 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
                       : 'bg-slate-900/60 hover:bg-slate-800/80 border-white/10 hover:border-amber-500/50'
                   }`}
                 >
-                  <div className="flex items-center gap-2.5">
-                    <div className="flex flex-col">
-                      <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="flex flex-col min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className={`font-extrabold text-xs transition-colors ${
                           isLight ? 'text-slate-950 group-hover:text-amber-700' : 'text-white group-hover:text-amber-300'
                         }`}>
@@ -752,13 +792,13 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
                           </span>
                         )}
                       </div>
-                      <span className={`text-[11px] ${isLight ? 'text-slate-600 font-medium' : 'text-slate-400'}`}>
+                      <span className={`text-[11px] truncate ${isLight ? 'text-slate-600 font-medium' : 'text-slate-400'}`}>
                         {node.app} &bull; {node.strategy || node.category}
                       </span>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-4 text-right">
+                  <div className="flex items-center gap-3 text-right shrink-0">
                     <div>
                       <div className={`font-extrabold text-xs font-mono ${isLight ? 'text-slate-950' : 'text-white'}`}>
                         ${node.valueUsd.toLocaleString()}
@@ -776,6 +816,25 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
                         </div>
                       )}
                     </div>
+
+                    {onZoomSingleNode && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onZoomSingleNode(node);
+                        }}
+                        className={`p-1.5 rounded-lg border text-xs transition-all cursor-pointer ${
+                          isLight
+                            ? 'bg-white hover:bg-amber-100 border-slate-300 text-slate-700 hover:text-amber-900'
+                            : 'bg-white/5 hover:bg-amber-500/20 border-white/10 text-slate-300 hover:text-amber-300'
+                        }`}
+                        title={`Zoom canvas directly to ${node.title}`}
+                      >
+                        <Maximize2 className="w-3.5 h-3.5 text-amber-500" />
+                      </button>
+                    )}
+
                     <ChevronRight className={`w-4 h-4 transition-transform group-hover:translate-x-0.5 ${
                       isLight ? 'text-slate-400 group-hover:text-amber-600' : 'text-slate-500 group-hover:text-amber-400'
                     }`} />
