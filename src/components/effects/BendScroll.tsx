@@ -42,6 +42,27 @@ export const BendScroll: React.FC<BendScrollProps> = ({
   });
 
   useEffect(() => {
+    const content = contentRef.current;
+    if (!content) return;
+
+    const isFormControl = (el: EventTarget | null) =>
+      el instanceof HTMLElement && el.matches('input, textarea, select');
+
+    const syncPause = () => {
+      const active = document.activeElement;
+      instanceRef.current?.setPaused(isFormControl(active) && content.contains(active));
+    };
+
+    content.addEventListener('focusin', syncPause);
+    content.addEventListener('focusout', syncPause);
+    return () => {
+      content.removeEventListener('focusin', syncPause);
+      content.removeEventListener('focusout', syncPause);
+      instanceRef.current?.setPaused(false);
+    };
+  }, []);
+
+  useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
       const content = contentRef.current;
       if (!content || event.defaultPrevented) return;

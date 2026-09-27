@@ -167,10 +167,10 @@ export const DitherBadge: React.FC<{
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider border ${borderTone} ${className}`}
+      className={`inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs font-mono font-bold uppercase tracking-wider border whitespace-nowrap ${borderTone} ${className}`}
     >
-      <DitherSwatch status={status} idPrefix={idPrefix} size={10} />
-      <span className="text-inherit">{children}</span>
+      <DitherSwatch status={status} idPrefix={idPrefix} size={12} />
+      <span className="text-inherit leading-none">{children}</span>
     </span>
   );
 };

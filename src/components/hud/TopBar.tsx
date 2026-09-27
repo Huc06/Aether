@@ -45,16 +45,16 @@ export const TopBar: React.FC<TopBarProps> = ({
   const isLight = config.themeMode === 'light';
 
   return (
-    <header className="absolute top-3 left-3 right-3 z-40 flex items-center justify-between gap-3 pointer-events-none select-none">
+    <header className="absolute top-3 left-3 right-3 z-40 flex items-center justify-between gap-2 sm:gap-3 pointer-events-none select-none min-w-0">
       {/* Brand & Aggregate Metrics HUD */}
-      <div className="flex items-center gap-2.5 pointer-events-auto shrink-0">
-        <div className={`glass-badge rounded-xl px-3.5 py-1.5 flex items-center gap-2 shadow-lg border transition-colors ${
+      <div className="flex items-center gap-1.5 sm:gap-2.5 pointer-events-auto min-w-0 overflow-hidden">
+        <div className={`glass-badge rounded-xl px-2.5 sm:px-3.5 py-1.5 flex items-center gap-2 shadow-lg border transition-colors shrink-0 ${
           isLight ? 'bg-white/95 border-slate-300 text-slate-900 shadow-sm' : 'border-white/10 text-white'
         }`}>
           <span className={`font-black text-xs tracking-wider ${isLight ? 'text-slate-950 font-black' : 'text-white'}`}>
             AETHER
           </span>
-          <span className={`text-[9px] px-1.5 py-0.5 rounded font-extrabold border ${
+          <span className={`text-[9px] px-1.5 py-0.5 rounded font-extrabold border hidden xs:inline sm:inline ${
             isLight ? 'bg-amber-100 text-amber-900 border-amber-300' : 'bg-amber-500/20 text-amber-400 border-amber-500/30'
           }`}>
             Spatial DeFi
@@ -131,10 +131,10 @@ export const TopBar: React.FC<TopBarProps> = ({
       </div>
 
       {/* Action Controls */}
-      <div className="flex items-center gap-2 pointer-events-auto shrink-0">
+      <div className="flex items-center gap-1 sm:gap-2 pointer-events-auto shrink-0">
         <button
           onClick={onToggleOverview}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all shadow-lg cursor-pointer ${
+          className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-xl text-xs font-bold border transition-all shadow-lg cursor-pointer ${
             isOverview 
               ? 'bg-amber-500/25 border-amber-500 text-amber-500 shadow-amber-500/20 font-extrabold' 
               : (isLight 
@@ -144,8 +144,8 @@ export const TopBar: React.FC<TopBarProps> = ({
           title="Toggle Intent Search & Macro Overview (Cmd+K / /)"
         >
           <Search className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">Intent</span>
-          <kbd className={`text-[9px] px-1 py-0.2 rounded font-mono font-bold border ${
+          <span className="hidden md:inline">Intent</span>
+          <kbd className={`hidden sm:inline text-[9px] px-1 py-0.2 rounded font-mono font-bold border ${
             isLight ? 'bg-slate-100 text-amber-700 border-slate-300' : 'bg-black/40 text-amber-400 border-white/10'
           }`}>
             ⌘K
@@ -154,7 +154,7 @@ export const TopBar: React.FC<TopBarProps> = ({
 
         <button
           onClick={onSmartArrange}
-          className={`glass-badge flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border shadow-lg transition-all cursor-pointer ${
+          className={`glass-badge hidden sm:flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold border shadow-lg transition-all cursor-pointer ${
             isLight 
               ? 'bg-white border-slate-300 text-slate-800 hover:text-slate-950 hover:border-slate-400 hover:shadow-sm' 
               : 'border-white/10 text-slate-300 hover:text-white hover:border-white/30'
@@ -162,8 +162,8 @@ export const TopBar: React.FC<TopBarProps> = ({
           title="Tidy into wallet columns so wires stay short and readable (Ctrl+A)"
         >
           <LayoutGrid className="w-3.5 h-3.5" />
-          <span className="hidden md:inline">Tidy</span>
-          <kbd className={`text-[9px] px-1 py-0.2 rounded font-mono font-bold border ${
+          <span className="hidden lg:inline">Tidy</span>
+          <kbd className={`hidden md:inline text-[9px] px-1 py-0.2 rounded font-mono font-bold border ${
             isLight ? 'bg-slate-100 text-slate-700 border-slate-300' : 'bg-black/40 text-slate-400 border-white/10'
           }`}>
             ^A
@@ -172,7 +172,7 @@ export const TopBar: React.FC<TopBarProps> = ({
 
         <button
           onClick={onOpenTuner}
-          className={`glass-badge flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border shadow-lg transition-all cursor-pointer ${
+          className={`glass-badge flex items-center justify-center gap-1.5 w-8 h-8 md:w-auto md:h-auto md:px-3 md:py-1.5 rounded-xl text-xs font-bold border shadow-lg transition-all cursor-pointer ${
             isLight 
               ? 'bg-white border-slate-300 text-slate-800 hover:text-slate-950 hover:border-slate-400 hover:shadow-sm' 
               : 'border-white/10 text-slate-300 hover:text-white hover:border-white/30'

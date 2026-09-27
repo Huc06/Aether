@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback, startTransition } from 'react';
 import { CanvasNode, WireConnection, LensConfig, RecommendedRoute, PositionExitRoute } from './types';
 import { INITIAL_NODES, INITIAL_WIRES, INTENT_PRESETS, DEFAULT_LENS_CONFIG } from './data/mockData';
 import { CameraController } from './engine/camera';
@@ -153,7 +153,10 @@ export const App: React.FC = () => {
   }, [nodes]);
 
   useEffect(() => {
-    localStorage.setItem('aether_config_v1', JSON.stringify(config));
+    const t = window.setTimeout(() => {
+      localStorage.setItem('aether_config_v1', JSON.stringify(config));
+    }, 250);
+    return () => window.clearTimeout(t);
   }, [config]);
 
   useEffect(() => {
@@ -486,14 +489,15 @@ export const App: React.FC = () => {
     showToast(`Spotlighting ${criticalNodes.length} High-Risk Positions`);
   }, [nodes, toggleOverviewMode, showToast]);
 
-  // Toggle Theme Mode (Light / Dark)
+  // Toggle Theme Mode (Light / Dark) — startTransition keeps UI snappy
   const handleToggleThemeMode = useCallback(() => {
-    setConfig(prev => {
-      const nextMode = prev.themeMode === 'light' ? 'dark' : 'light';
-      showToast(nextMode === 'light' ? 'Switched to Clean Light Mode' : 'Switched to Dark Cyberpunk Mode');
-      return { ...prev, themeMode: nextMode };
+    startTransition(() => {
+      setConfig((prev) => ({
+        ...prev,
+        themeMode: prev.themeMode === 'light' ? 'dark' : 'light',
+      }));
     });
-  }, [showToast]);
+  }, []);
 
   // Dynamically generate and inject research graph & animated wires
   const handleApplyDynamicResearchGraph = useCallback(async (prompt: string) => {
@@ -997,7 +1001,7 @@ export const App: React.FC = () => {
   const criticalCount = nodes.filter(n => n.riskLevel === 'critical' || n.riskLevel === 'high').length;
 
   return (
-    <div className={`relative w-screen h-screen overflow-hidden font-mono select-none transition-colors duration-200 ${
+    <div className={`relative w-screen h-screen overflow-hidden font-mono select-none ${
       config.themeMode === 'light' ? 'theme-light bg-[#f8fafc] text-slate-900' : 'bg-[#07090e] text-slate-200'
     }`}>
       {/* WebGL Canvas */}

@@ -28,6 +28,8 @@ export interface BendElements {
 
 export interface BendInstance {
   setOptions: (options: BendOptions) => void;
+  /** Pause fold cover so live inputs/selects stay interactive */
+  setPaused: (paused: boolean) => void;
   resize: () => void;
   destroy: () => void;
 }
@@ -298,6 +300,7 @@ export function createBend(
   }
 
   let scrollable = false;
+  let paused = false;
   let topTarget = 0;
   let bottomTarget = 0;
   let topCurrent = 0;
@@ -372,6 +375,7 @@ export function createBend(
 
   function render() {
     const engaged =
+      !paused &&
       raster !== null &&
       scrollable &&
       (topCurrent > 1e-2 ||
@@ -562,6 +566,15 @@ export function createBend(
     setOptions(next) {
       Object.assign(config, next);
       syncScroll();
+      start();
+    },
+    setPaused(next) {
+      if (paused === next) return;
+      paused = next;
+      if (paused) {
+        setCovered(false);
+      }
+      contentDirty = true;
       start();
     },
     resize() {
