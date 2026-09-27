@@ -18,6 +18,8 @@ import {
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { streamNansenAgent } from '../../services/nansenApi';
+import { MdxTableFrame } from './MdxTableFrame';
+import { DrawablyHighlight } from 'drawably/react';
 
 interface IntentPanelProps {
   isOpen: boolean;
@@ -405,6 +407,10 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
                 {isAgentStreaming && <span className="inline-block w-2 h-4 ml-1 bg-amber-400 animate-pulse" />}
               </div>
 
+              {!isAgentStreaming && agentResponse && (
+                <MdxTableFrame isLight={isLight} />
+              )}
+
               {agentResponse && !isAgentStreaming && (
                 <div className="pt-2 flex items-center justify-between border-t border-cyan-500/20">
                   <span className="text-[10px] text-cyan-300 font-mono">
@@ -440,9 +446,17 @@ export const IntentPanel: React.FC<IntentPanelProps> = ({
                   <span className="text-xs font-bold px-2 py-0.5 rounded bg-amber-500 text-black">
                     {selectedRoute.tag}
                   </span>
-                  <span className="font-bold text-sm text-white">
-                    {selectedRoute.title}
-                  </span>
+                  <DrawablyHighlight
+                    seed={99}
+                    roughness={1}
+                    boil={0.25}
+                    fill={isLight ? 'rgba(245, 158, 11, 0.3)' : 'rgba(245, 158, 11, 0.25)'}
+                    className="inline-flex"
+                  >
+                    <span className="font-bold text-sm text-white">
+                      {selectedRoute.title}
+                    </span>
+                  </DrawablyHighlight>
                 </div>
                 <div className="flex items-center gap-3 text-xs text-slate-400 font-mono">
                   <span className="flex items-center gap-1">

@@ -10,7 +10,8 @@ import { ScrollRegion } from '../terminal/ScrollRegion';
 import { RowWindowFooter, useRowWindow } from '../terminal/RowWindow';
 import { DitherBadge, DitherDefs, type DitherStatus } from '../terminal/DitherPatterns';
 import { GraphMeter } from '../terminal/AsciiGraphs';
-import { DrawablyCircle } from 'drawably/react';
+import { DrawablyCircle, DrawablyHighlight } from 'drawably/react';
+import { LedgerRowSparkline } from './LedgerRowSparkline';
 
 export type PortfolioViewMode = 'canvas' | 'list' | 'exposure-grid';
 
@@ -243,9 +244,24 @@ export const ListSwitcher: React.FC<ListSwitcherProps> = ({
                     >
                       <div className="col-span-4 flex items-center gap-2.5 min-w-0">
                         <div className="flex flex-col min-w-0">
-                          <span className={`font-extrabold truncate hover:text-amber-500 ${isLight ? 'text-slate-950' : 'text-white'}`}>
-                            {node.title}
-                          </span>
+                          <div className="flex items-center gap-1.5 truncate">
+                            <span className={`font-extrabold truncate hover:text-amber-500 ${isLight ? 'text-slate-950' : 'text-white'}`}>
+                              {node.title}
+                            </span>
+                            {node.smartMoneyNetflow24h !== undefined && node.smartMoneyNetflow24h > 20000 && (
+                              <DrawablyHighlight
+                                seed={hashId(node.id + ':sm')}
+                                roughness={0.9}
+                                boil={0.2}
+                                fill={isLight ? 'rgba(245, 158, 11, 0.25)' : 'rgba(56, 189, 248, 0.2)'}
+                                className="inline-flex shrink-0"
+                              >
+                                <span className={`text-[9px] font-bold font-mono ${isLight ? 'text-amber-950' : 'text-cyan-300'}`}>
+                                  +SM ${Math.round(node.smartMoneyNetflow24h / 1000)}k
+                                </span>
+                              </DrawablyHighlight>
+                            )}
+                          </div>
                           <span className={`text-[10px] truncate ${isLight ? 'text-slate-600 font-medium' : 'text-slate-400'}`}>
                             {node.strategy || node.category}
                           </span>
@@ -265,25 +281,28 @@ export const ListSwitcher: React.FC<ListSwitcherProps> = ({
                         </span>
                       </div>
 
-                      <div className="col-span-2 text-right">
-                        <div className={`font-extrabold ${isLight ? 'text-slate-950' : 'text-white'}`}>
-                          <NumberFlip value={node.valueUsd} prefix="$" />
-                        </div>
-                        {node.pnl24hUsd !== undefined && (
-                          <div
-                            className={`text-[10px] font-bold ${
-                              node.pnl24hUsd >= 0
-                                ? isLight
-                                  ? 'text-emerald-700'
-                                  : 'text-emerald-400'
-                                : isLight
-                                  ? 'text-rose-700'
-                                  : 'text-rose-400'
-                            }`}
-                          >
-                            {node.pnl24hUsd >= 0 ? '+' : ''}${Math.abs(node.pnl24hUsd).toLocaleString()}
+                      <div className="col-span-2 flex items-center justify-end gap-2 text-right">
+                        <LedgerRowSparkline node={node} isLight={isLight} />
+                        <div className="flex flex-col text-right">
+                          <div className={`font-extrabold ${isLight ? 'text-slate-950' : 'text-white'}`}>
+                            <NumberFlip value={node.valueUsd} prefix="$" />
                           </div>
-                        )}
+                          {node.pnl24hUsd !== undefined && (
+                            <div
+                              className={`text-[10px] font-bold ${
+                                node.pnl24hUsd >= 0
+                                  ? isLight
+                                    ? 'text-emerald-700'
+                                    : 'text-emerald-400'
+                                  : isLight
+                                    ? 'text-rose-700'
+                                    : 'text-rose-400'
+                              }`}
+                            >
+                              {node.pnl24hUsd >= 0 ? '+' : ''}${Math.abs(node.pnl24hUsd).toLocaleString()}
+                            </div>
+                          )}
+                        </div>
                       </div>
 
                       <div className="col-span-2 text-right">
