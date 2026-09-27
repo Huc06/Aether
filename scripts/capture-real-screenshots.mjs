@@ -17,28 +17,28 @@ const chromePath = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome
 
 const targets = [
   {
-    name: '01-star-focus-cluster.png',
-    url: 'http://localhost:4173/?cluster=pos-drift-perp',
-    size: '1600,900',
-    dest: path.join(screenshotsDir, '01-star-focus-cluster.png')
-  },
-  {
-    name: '02-nansen-thesis-interrogator.png',
-    url: 'http://localhost:4173/?intent=1',
-    size: '1600,900',
-    dest: path.join(screenshotsDir, '02-nansen-thesis-interrogator.png')
-  },
-  {
-    name: '03-nansen-entity-profiler.png',
+    name: '01-chapter1-spatial-nansen-profiler.png',
     url: 'http://localhost:4173/?nansen=1',
     size: '1600,900',
-    dest: path.join(screenshotsDir, '03-nansen-entity-profiler.png')
+    dest: path.join(screenshotsDir, '01-chapter1-spatial-nansen-profiler.png')
   },
   {
-    name: '04-position-cockpit-inspector.png',
+    name: '02-chapter2-nansen-ai-thesis-interrogator.png',
+    url: 'http://localhost:4173/?intent=1',
+    size: '1600,900',
+    dest: path.join(screenshotsDir, '02-chapter2-nansen-ai-thesis-interrogator.png')
+  },
+  {
+    name: '03-chapter3-nymspace-bend-analytics.png',
+    url: 'http://localhost:4173/?view=list',
+    size: '1600,900',
+    dest: path.join(screenshotsDir, '03-chapter3-nymspace-bend-analytics.png')
+  },
+  {
+    name: '04-chapter4-hero-mev-hold-unwind.png',
     url: 'http://localhost:4173/?node=pos-drift-perp',
     size: '1600,900',
-    dest: path.join(screenshotsDir, '04-position-cockpit-inspector.png')
+    dest: path.join(screenshotsDir, '04-chapter4-hero-mev-hold-unwind.png')
   },
   {
     name: '05-cctv-surveillance-matrix.png',
@@ -47,20 +47,14 @@ const targets = [
     dest: path.join(screenshotsDir, '05-cctv-surveillance-matrix.png')
   },
   {
-    name: '06-dashed-frame-ledger.png',
-    url: 'http://localhost:4173/?view=list',
-    size: '1600,900',
-    dest: path.join(screenshotsDir, '06-dashed-frame-ledger.png')
-  },
-  {
-    name: '07-clean-slate-light-mode.png',
+    name: '06-clean-slate-light-mode.png',
     url: 'http://localhost:4173/?theme=light',
     size: '1600,900',
-    dest: path.join(screenshotsDir, '07-clean-slate-light-mode.png')
+    dest: path.join(screenshotsDir, '06-clean-slate-light-mode.png')
   },
   {
     name: 'aether-banner.png',
-    url: 'http://localhost:4173/?cluster=pos-drift-perp',
+    url: 'http://localhost:4173/?view=canvas',
     size: '1600,680',
     dest: path.join(brandDir, 'aether-banner.png')
   }
@@ -115,5 +109,5 @@ try {
   }
 } finally {
   preview.kill('SIGKILL');
-  console.log('All captures complete!');
+  console.log('All 4-Chapter captures complete!');
 }

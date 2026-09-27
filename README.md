@@ -128,27 +128,59 @@ Aether gives operators three complementary lenses into their portfolio, switchab
 
 ---
 
-## Visual Showcase (Killer Features to Win)
+## Visual Showcase (The 4 Killer Chapters to Win)
 
-| 1. Star Focus Cluster & Shift+F Live Fit (Spatial Canvas) | 2. Nansen AI Agent & Thesis Desk Interrogator (`Cmd+K`) |
+### CHAPTER 1: The Hook — Infinite Spatial Workspace & Live Nansen Profiler
+> **Autonomous Onchain Graph Synthesis:** Calls `/api/v1/profiler/address/current-balance` & `/related-wallets` live. Reconstructs wallet lineage and token decomposition directly into an infinite spatial plane.
+
+| Spatial WebGL Canvas & Nansen Live Entity Profiler (`vitalik.eth`) |
+|:---:|
+| <a href="docs/screenshots/01-chapter1-spatial-nansen-profiler.png"><img src="docs/screenshots/01-chapter1-spatial-nansen-profiler.png" alt="Chapter 1: Spatial Canvas & Live Nansen Profiler" width="100%" /></a> |
+| **Interactive Flow:** Rê chuột lia nhẹ trên WebGL 2.0 Barrel Shader $\rightarrow$ Click `[NANSEN API]` $\rightarrow$ Chọn `vitalik.eth` $\rightarrow$ Camera glide mượt mà về `(0, 0)`, orbital tokens (`WHITE`, `MOODENG`, `ETH`) bung ra với giá live, dây nối tím lần theo nguồn gốc `First Funder` và `Multisig Signer`. |
+
+---
+
+### CHAPTER 2: Nansen AI Research Agent & Dynamic Intent Injection
+> **Streaming Reasoning & Auto-Spotlight:** Real-time SSE token stream from Nansen Fast Agent (`/api/v1/agent/fast`) with active tool execution and automated camera focus.
+
+| Dual-Cockpit: Nansen AI Fast Agent & Thesis Desk Interrogator (`Cmd+K`) |
+|:---:|
+| <a href="docs/screenshots/02-chapter2-nansen-ai-thesis-interrogator.png"><img src="docs/screenshots/02-chapter2-nansen-ai-thesis-interrogator.png" alt="Chapter 2: Nansen AI Research Agent & Thesis Desk" width="100%" /></a> |
+| **Interactive Flow:** Nhấn `Cmd + K` mở Mission Control $\rightarrow$ Click `[Thesis Desk]` & `[Smart Money Accumulation]` $\rightarrow$ Luồng SSE stream đổ về từng chữ với `[tool: token_discovery_screener]`, bảng MDX Dashed Table (`mdxcn`) nét đứt hiện ra, Canvas tự động spotlight các node token và kích hoạt `Simulate Route` nổ confetti. |
+
+---
+
+### CHAPTER 3: Nymspace 3D Bend Ledger & MDX Analytics
+> **Nymspace 3D Deformation & Live Sparklines:** DOM-rasterized cylindrical page-bend physics (`bendEngine.ts`) with 60fps Liveline sparklines, DrawablyHighlight shaders, and high-contrast dual theme engine.
+
+| Dashed-Frame Data Ledger (Area Charts, Sparklines & Cylindrical Scroll) |
+|:---:|
+| <a href="docs/screenshots/03-chapter3-nymspace-bend-analytics.png"><img src="docs/screenshots/03-chapter3-nymspace-bend-analytics.png" alt="Chapter 3: Nymspace 3D Bend Ledger & MDX Analytics" width="100%" /></a> |
+| **Interactive Flow:** Nhấn phím `2` chuyển sang Ledger $\rightarrow$ Cuộn chuột xem hiệu ứng uốn cong trang giấy 3D $\rightarrow$ Rê chuột xem mini chart Sparkline 60fps và vệt dạ quang `DrawablyHighlight` trên nhãn `+SM $45k` $\rightarrow$ Click Sun/Moon chuyển Clean Slate Light Mode chuẩn WCAG AA. |
+
+---
+
+### CHAPTER 4: The Hero Climax — MEV-Shielded Hold-to-Unwind Protocol
+> **Tactile Hold-to-Unwind Protocol:** Zero-sandwich MEV protection via private builder RPCs with intentional 1.2s hold-to-confirm mechanics and real-time Solvency Gauge.
+
+| Position Cockpit Deck, Solvency Gauge & 1.2s Hold-to-Unwind |
+|:---:|
+| <a href="docs/screenshots/04-chapter4-hero-mev-hold-unwind.png"><img src="docs/screenshots/04-chapter4-hero-mev-hold-unwind.png" alt="Chapter 4: Position Cockpit & Emergency Unwind Protocol" width="100%" /></a> |
+| **Interactive Flow:** Phím `1` về Canvas $\rightarrow$ Double click vị thế đỏ `Drift SOL-PERP 10x Long` $\rightarrow$ Bảng Solvency Gauge báo động đỏ (`HF 1.08`), RoutePipelineFlow 3 bước $\rightarrow$ Nhấn giữ `Hold 1.2s to Emergency Unwind` (hoặc đè phím `Space`) $\rightarrow$ Kích hoạt Private Builder RPCs và xuất Onchain Settlement Receipt. |
+
+---
+
+### Supplementary Workstation Views
+
+| Star Focus Cluster & Shift+F Fit | CCTV Surveillance Operations Matrix |
 |:---:|:---:|
-| <a href="docs/screenshots/01-star-focus-cluster.png"><img src="docs/screenshots/01-star-focus-cluster.png" alt="Star Focus Cluster Layout & Edge Port Wires" width="100%" /></a> | <a href="docs/screenshots/02-nansen-thesis-interrogator.png"><img src="docs/screenshots/02-nansen-thesis-interrogator.png" alt="Nansen AI Agent & Thesis Desk" width="100%" /></a> |
-| **Star Focus Cluster (`layoutFocusCluster`):** Single-click isolates active position, radially spaces linked dependencies, and soft-dims noise. `Shift+F` tight-fits cluster to screen. | **Nansen Thesis Interrogator:** Evaluates user trade hypotheses against live 24h Smart Money netflows via real-time SSE stream (`/api/v1/agent/fast`) + `MdxTableFrame`. |
+| <a href="docs/screenshots/05-star-focus-cluster.png"><img src="docs/screenshots/05-star-focus-cluster.png" alt="Star Focus Cluster Layout" width="100%" /></a> | <a href="docs/screenshots/06-cctv-surveillance-matrix.png"><img src="docs/screenshots/06-cctv-surveillance-matrix.png" alt="CCTV Surveillance Feed Matrix" width="100%" /></a> |
+| **Star Focus Cluster:** Click bất kỳ node nào để cô lập vị thế ở trung tâm và xếp vệ tinh tỏa tròn; `Shift+F` tự động fit toàn màn hình. | **CCTV Telemetry Wall:** Render trực tiếp bảng chỉ số rủi ro thẻ canvas (`fillTable`), sóng tĩnh SMPTE `NO SIGNAL` và CRT scanlines. |
 
-| 3. Nansen Live Entity Profiler (`vitalik.eth`) | 4. Progressive Position Cockpit & Solvency Gauge |
-|:---:|:---:|
-| <a href="docs/screenshots/03-nansen-entity-profiler.png"><img src="docs/screenshots/03-nansen-entity-profiler.png" alt="Nansen Live Entity Profiler" width="100%" /></a> | <a href="docs/screenshots/04-position-cockpit-inspector.png"><img src="docs/screenshots/04-position-cockpit-inspector.png" alt="Progressive Position Cockpit" width="100%" /></a> |
-| **Autonomous Graph Decomposition:** Decomposes wallet balances into orbital token nodes + traces relational Bezier wires to genesis `First Funder` and `Multisig Signer`. | **Deep Solvency & MEV Exit Deck:** 4-phase progressive disclosure (`Peek` $\rightarrow$ `Sheet` $\rightarrow$ `Inspect` $\rightarrow$ `Exit`) with liquidation distance gauge and 1.2s hold-to-confirm unwind. |
-
-| 5. CCTV Surveillance Matrix (Canvas-Mirrored Feeds) | 6. Dashed-Frame Data Ledger (Area Charts & 3D Bend) |
-|:---:|:---:|
-| <a href="docs/screenshots/05-cctv-surveillance-matrix.png"><img src="docs/screenshots/05-cctv-surveillance-matrix.png" alt="CCTV Surveillance Feed Matrix" width="100%" /></a> | <a href="docs/screenshots/06-dashed-frame-ledger.png"><img src="docs/screenshots/06-dashed-frame-ledger.png" alt="Dashed-Frame Data Ledger" width="100%" /></a> |
-| **Mirrored Canvas Feeds (`renderNodeCard`):** Full metric table rendered in each camera slot with SMPTE `NO SIGNAL` unassigned channels and CRT scanline glitch shaders. | **Tactile Analytics Hub:** SVG Area Charts, allocation bar rankings, inline price sparklines, and Nymspace cylindrical page-bend scroll deformation physics. |
-
-| 7. Clean Slate Light Mode (High-Contrast Slate Optics) |
+| Clean Slate Light Mode (High-Contrast Slate Optics) |
 |:---:|
 | <a href="docs/screenshots/07-clean-slate-light-mode.png"><img src="docs/screenshots/07-clean-slate-light-mode.png" alt="Clean Slate Light Mode" width="100%" /></a> |
-| **Dual Theme System:** Ultra-crisp `#f8fafc` canvas, bold slate typography, refined amber accents, and adapted shader contrast. |
+| **Dual Theme Engine:** Nền `#f8fafc`, typography slate tương phản cao, dây neon sắc nét và shader thích ứng thời gian thực. |
 
 ---
 
