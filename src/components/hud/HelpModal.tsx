@@ -66,8 +66,8 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose, config })
             <div className={`flex items-center justify-between p-2 rounded border ${
               isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/5'
             }`}>
-              <span className={isLight ? 'text-slate-700 font-semibold' : 'text-slate-300'}>⌘K / ^G / /</span>
-              <span className={`font-bold ${isLight ? 'text-amber-700' : 'text-amber-300'}`}>Intent Search</span>
+              <span className={isLight ? 'text-slate-700 font-semibold' : 'text-slate-300'}>4 / ⌘K / /</span>
+              <span className={`font-bold ${isLight ? 'text-amber-700' : 'text-amber-300'}`}>Intent Spotlight</span>
             </div>
             <div className={`flex items-center justify-between p-2 rounded border ${
               isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/5'
