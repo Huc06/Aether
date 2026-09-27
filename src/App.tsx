@@ -141,7 +141,17 @@ export const App: React.FC = () => {
   const didDragRef = useRef(false);
   const pendingInspectRef = useRef<CanvasNode | null>(null);
   const pendingFocusClusterRef = useRef<string | null>(null);
+  const clickTimerRef = useRef<number | null>(null);
+  const gestureClosedRef = useRef(false);
   const CLICK_DRAG_THRESHOLD_PX = 6;
+  const DOUBLE_CLICK_DELAY_MS = 280;
+
+  const cancelPendingClick = useCallback(() => {
+    if (clickTimerRef.current !== null) {
+      window.clearTimeout(clickTimerRef.current);
+      clickTimerRef.current = null;
+    }
+  }, []);
 
   const showToast = useCallback((msg: string) => {
     setToastMessage(msg);
@@ -771,6 +781,7 @@ export const App: React.FC = () => {
         setIsHelpOpen(false);
         setSelectedNode(null);
         setHighlightNodeIds([]);
+        cancelPendingClick();
         pendingInspectRef.current = null;
         pendingFocusClusterRef.current = null;
         didDragRef.current = false;
@@ -798,7 +809,8 @@ export const App: React.FC = () => {
     handleTogglePin,
     handleNudge,
     handleFocusNearest,
-    handleResetPortfolio
+    handleResetPortfolio,
+    cancelPendingClick
   ]);
 
   // Persistent render state ref for 60/120 FPS render loop without context loss
@@ -987,9 +999,17 @@ export const App: React.FC = () => {
           return;
         }
 
-        // Arm drag. Clean click → star focus cluster; double-click → also inspect.
-        pendingFocusClusterRef.current = node.id;
-        pendingInspectRef.current = e.detail === 2 ? node : null;
+        // Arm drag. Single clean click → cluster (deferred); double-click → cluster + inspect.
+        gestureClosedRef.current = false;
+        if (e.detail >= 2) {
+          // Cancel the deferred single-click from the first click of this double-click.
+          cancelPendingClick();
+          pendingFocusClusterRef.current = node.id;
+          pendingInspectRef.current = node;
+        } else {
+          pendingFocusClusterRef.current = node.id;
+          pendingInspectRef.current = null;
+        }
         didDragRef.current = false;
         pointerDownClientRef.current = { x: e.clientX, y: e.clientY };
         isDraggingNodeRef.current = true;
@@ -1007,9 +1027,11 @@ export const App: React.FC = () => {
       }
     }
 
+    cancelPendingClick();
     pendingInspectRef.current = null;
     pendingFocusClusterRef.current = null;
     didDragRef.current = false;
+    gestureClosedRef.current = false;
     setHighlightNodeIds([]);
     isPanningRef.current = true;
     panStartRef.current = { x: e.clientX, y: e.clientY };
@@ -1025,6 +1047,7 @@ export const App: React.FC = () => {
       if (!didDragRef.current) {
         if (Math.hypot(moveDx, moveDy) < CLICK_DRAG_THRESHOLD_PX) return;
         didDragRef.current = true;
+        cancelPendingClick();
         pendingInspectRef.current = null;
         pendingFocusClusterRef.current = null;
         recordHistory();
@@ -1058,8 +1081,16 @@ export const App: React.FC = () => {
   };
 
   const clearPointerInteraction = useCallback(() => {
-    const clusterId = !didDragRef.current ? pendingFocusClusterRef.current : null;
-    const inspectNode = !didDragRef.current ? pendingInspectRef.current : null;
+    // Canvas mouseup + window mouseup both fire — only handle the gesture once.
+    if (gestureClosedRef.current) return;
+    if (!isDraggingNodeRef.current && !isPanningRef.current && !isMinimapDraggingRef.current) {
+      return;
+    }
+    gestureClosedRef.current = true;
+
+    const wasDrag = didDragRef.current;
+    const clusterId = !wasDrag ? pendingFocusClusterRef.current : null;
+    const inspectNode = !wasDrag ? pendingInspectRef.current : null;
 
     pendingInspectRef.current = null;
     pendingFocusClusterRef.current = null;
@@ -1069,13 +1100,23 @@ export const App: React.FC = () => {
     isPanningRef.current = false;
     isMinimapDraggingRef.current = false;
 
-    if (clusterId) {
-      layoutFocusCluster(clusterId);
-    }
+    if (!clusterId && !inspectNode) return;
+
+    // Double-click: run immediately (cluster + inspect).
     if (inspectNode) {
+      cancelPendingClick();
+      layoutFocusCluster(clusterId || inspectNode.id);
       setSelectedNode(inspectNode);
+      return;
     }
-  }, [layoutFocusCluster]);
+
+    // Single-click: defer so a following double-click can cancel this.
+    cancelPendingClick();
+    clickTimerRef.current = window.setTimeout(() => {
+      clickTimerRef.current = null;
+      layoutFocusCluster(clusterId!);
+    }, DOUBLE_CLICK_DELAY_MS);
+  }, [layoutFocusCluster, cancelPendingClick]);
 
   const handleMouseUp = () => {
     clearPointerInteraction();
@@ -1089,8 +1130,9 @@ export const App: React.FC = () => {
     return () => {
       window.removeEventListener('mouseup', onPointerUp);
       window.removeEventListener('pointerup', onPointerUp);
+      cancelPendingClick();
     };
-  }, [clearPointerInteraction]);
+  }, [clearPointerInteraction, cancelPendingClick]);
 
   // Dynamic calculations
   const totalValue = nodes.reduce((sum, n) => sum + n.valueUsd, 0);

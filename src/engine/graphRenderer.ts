@@ -122,15 +122,15 @@ export class GraphRenderer {
     const nodeMap = new Map<string, CanvasNode>();
     nodes.forEach(n => nodeMap.set(n.id, n));
 
-    const hasIntentHighlight = highlightIds.length > 0;
-    const hasFocus = !!selectedNodeId;
+    // Spotlight only when an explicit cluster/intent highlight is active.
+    // focusedNodeId is always set — must NOT hide the rest of the graph by default.
+    const hasSpotlight = highlightIds.length > 0;
 
     type WireDraw = {
       wire: WireConnection;
       fromNode: CanvasNode;
       toNode: CanvasNode;
       emphasized: boolean;
-      active: boolean;
     };
 
     const prepared: WireDraw[] = [];
@@ -139,29 +139,21 @@ export class GraphRenderer {
       const toNode = nodeMap.get(wire.toId);
       if (!fromNode || !toNode) return;
 
-      const touchesFocus =
-        !!selectedNodeId &&
-        (wire.fromId === selectedNodeId || wire.toId === selectedNodeId);
-      const touchesIntent =
+      const touchesSpotlight =
         highlightIds.includes(wire.fromId) || highlightIds.includes(wire.toId);
 
-      let active = true;
-      let emphasized = false;
-      if (hasIntentHighlight) {
-        active = touchesIntent;
-        emphasized = touchesIntent;
-      } else if (hasFocus) {
-        active = true;
-        emphasized = touchesFocus;
-      }
-
-      prepared.push({ wire, fromNode, toNode, emphasized, active });
+      prepared.push({
+        wire,
+        fromNode,
+        toNode,
+        emphasized: hasSpotlight && touchesSpotlight,
+      });
     });
 
-    // Dim wires first, emphasized on top so focused links stay readable.
+    // Soft-dimmed wires first; emphasized cluster links drawn on top.
     prepared.sort((a, b) => Number(a.emphasized) - Number(b.emphasized));
 
-    prepared.forEach(({ wire, fromNode, toNode, emphasized, active }) => {
+    prepared.forEach(({ wire, fromNode, toNode, emphasized }) => {
       const fromCenter = {
         x: fromNode.x + fromNode.w / 2,
         y: fromNode.y + fromNode.h / 2,
@@ -187,17 +179,13 @@ export class GraphRenderer {
       ctx.save();
 
       const wireColor = wire.color || config.accent;
-      const dimmed = hasFocus && !emphasized && !hasIntentHighlight;
-      const buried = !active;
+      // All wires stay visible by default. Spotlight only soft-dims outsiders.
+      const softDim = hasSpotlight && !emphasized;
 
-      if (buried) {
-        ctx.globalAlpha = 0.08;
-        ctx.strokeStyle = isLight ? 'rgba(15, 23, 42, 0.2)' : 'rgba(255, 255, 255, 0.1)';
-        ctx.lineWidth = 1.0 * Math.max(0.5, sc);
-      } else if (dimmed) {
-        ctx.globalAlpha = isLight ? 0.22 : 0.18;
+      if (softDim) {
+        ctx.globalAlpha = isLight ? 0.35 : 0.3;
         ctx.strokeStyle = wireColor;
-        ctx.lineWidth = 1.4 * Math.max(0.5, sc);
+        ctx.lineWidth = 1.6 * Math.max(0.5, sc);
       } else {
         ctx.globalAlpha = 1;
         ctx.strokeStyle = wireColor;
@@ -214,9 +202,10 @@ export class GraphRenderer {
       ctx.stroke();
 
       // Endpoint ports — makes the connected windows obvious
-      if (!buried) {
-        const portR = (emphasized ? 4.2 : 3.2) * Math.max(0.55, sc);
+      {
+        const portR = (emphasized ? 4.2 : 3.0) * Math.max(0.55, sc);
         ctx.shadowBlur = emphasized ? 12 * sc : 0;
+        ctx.globalAlpha = softDim ? (isLight ? 0.4 : 0.35) : 1;
         ctx.fillStyle = wireColor;
         ctx.beginPath();
         ctx.arc(p1.x, p1.y, portR, 0, Math.PI * 2);
@@ -233,7 +222,7 @@ export class GraphRenderer {
         ctx.fill();
       }
 
-      if (active && !dimmed) {
+      if (!softDim) {
         const speed = isSimulating ? 1.4 : (emphasized ? 0.75 : 0.35);
         const numParticles = Math.max(3, Math.floor(dist / ((emphasized ? 50 : 90) * sc)));
         for (let i = 0; i < numParticles; i++) {
@@ -256,10 +245,9 @@ export class GraphRenderer {
         }
       }
 
-      // Labels: always for focused/intent wires; otherwise only when zoomed in
+      // Labels: cluster/intent wires always; otherwise when zoomed in
       const showLabel =
-        !!wire.label &&
-        (emphasized || (!hasFocus && !hasIntentHighlight && sc > 0.5));
+        !!wire.label && (emphasized || (!hasSpotlight && sc > 0.5));
       if (showLabel && wire.label) {
         const midT = 0.5;
         const u = 1 - midT;
