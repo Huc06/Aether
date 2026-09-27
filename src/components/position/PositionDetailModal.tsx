@@ -6,8 +6,10 @@ import {
   FileText 
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { DrawablyHighlight } from 'drawably/react';
 import { EmergencyExitDeck } from './EmergencyExitDeck';
 import { SolvencyGauge } from './SolvencyGauge';
+import { PositionMomentumChart } from './PositionMomentumChart';
 
 interface PositionDetailModalProps {
   node: CanvasNode | null;
@@ -147,11 +149,26 @@ export const PositionDetailModal: React.FC<PositionDetailModalProps> = ({
                   ${node.valueUsd.toLocaleString()}
                 </span>
                 {node.pnl24hUsd !== undefined && (
-                  <span className={`text-[11px] font-bold font-mono shrink-0 ${
-                    node.pnl24hUsd >= 0 ? (isLight ? 'text-emerald-700' : 'text-emerald-400') : (isLight ? 'text-rose-700' : 'text-rose-400')
-                  }`}>
-                    {node.pnl24hUsd >= 0 ? '+' : ''}${node.pnl24hUsd.toLocaleString()} ({node.pnlPercent}%)
-                  </span>
+                  node.pnl24hUsd < 0 && isCritical ? (
+                    <DrawablyHighlight
+                      seed={11}
+                      roughness={1}
+                      boil={0.25}
+                      stroke={isLight ? '#e11d48' : '#f43f5e'}
+                      fill={isLight ? 'rgba(225, 29, 72, 0.18)' : 'rgba(244, 63, 94, 0.18)'}
+                      className="inline-flex shrink-0"
+                    >
+                      <span className={`text-[11px] font-bold font-mono ${isLight ? 'text-rose-700' : 'text-rose-400'}`}>
+                        {node.pnl24hUsd >= 0 ? '+' : ''}${node.pnl24hUsd.toLocaleString()} ({node.pnlPercent}%)
+                      </span>
+                    </DrawablyHighlight>
+                  ) : (
+                    <span className={`text-[11px] font-bold font-mono shrink-0 ${
+                      node.pnl24hUsd >= 0 ? (isLight ? 'text-emerald-700' : 'text-emerald-400') : (isLight ? 'text-rose-700' : 'text-rose-400')
+                    }`}>
+                      {node.pnl24hUsd >= 0 ? '+' : ''}${node.pnl24hUsd.toLocaleString()} ({node.pnlPercent}%)
+                    </span>
+                  )
                 )}
               </div>
 
@@ -190,6 +207,10 @@ export const PositionDetailModal: React.FC<PositionDetailModalProps> = ({
               />
             )}
           </div>
+
+          {node.type === 'position' && (
+            <PositionMomentumChart node={node} isLight={isLight} />
+          )}
 
           {/* Strategy & Verification Profile */}
           <div className={`p-2.5 sm:p-3 rounded-xl border flex flex-col gap-1.5 transition-colors ${

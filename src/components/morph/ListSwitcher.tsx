@@ -10,6 +10,7 @@ import { ScrollRegion } from '../terminal/ScrollRegion';
 import { RowWindowFooter, useRowWindow } from '../terminal/RowWindow';
 import { DitherBadge, DitherDefs, type DitherStatus } from '../terminal/DitherPatterns';
 import { GraphMeter } from '../terminal/AsciiGraphs';
+import { DrawablyCircle } from 'drawably/react';
 
 export type PortfolioViewMode = 'canvas' | 'list' | 'exposure-grid';
 
@@ -34,6 +35,12 @@ function riskDither(level: RiskLevel): DitherStatus {
   if (level === 'safe') return 'safe';
   if (level === 'critical') return 'critical';
   return 'warn';
+}
+
+function hashId(id: string): number {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) | 0;
+  return Math.abs(h) % 997;
 }
 
 export const ListSwitcher: React.FC<ListSwitcherProps> = ({
@@ -303,9 +310,24 @@ export const ListSwitcher: React.FC<ListSwitcherProps> = ({
                       </div>
 
                       <div className="col-span-2 flex items-center justify-end gap-2">
-                        <DitherBadge status={riskDither(node.riskLevel)} idPrefix="ledger" isLight={isLight}>
-                          {RISK_LABEL[node.riskLevel]}
-                        </DitherBadge>
+                        {isCritical ? (
+                          <DrawablyCircle
+                            seed={hashId(node.id)}
+                            roughness={1.05}
+                            boil={0.3}
+                            stroke={isLight ? '#e11d48' : '#f43f5e'}
+                            width={1.5}
+                            className="inline-flex"
+                          >
+                            <DitherBadge status={riskDither(node.riskLevel)} idPrefix="ledger" isLight={isLight}>
+                              {RISK_LABEL[node.riskLevel]}
+                            </DitherBadge>
+                          </DrawablyCircle>
+                        ) : (
+                          <DitherBadge status={riskDither(node.riskLevel)} idPrefix="ledger" isLight={isLight}>
+                            {RISK_LABEL[node.riskLevel]}
+                          </DitherBadge>
+                        )}
                         <button
                           onClick={(e) => {
                             e.stopPropagation();

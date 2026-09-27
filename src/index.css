@@ -14,6 +14,11 @@
   --text-muted: #64748b;
   --font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --drawably-stroke: #38bdf8;
+  --drawably-fill: rgba(56, 189, 248, 0.12);
+  --drawably-error: #f43f5e;
+  --drawably-success: #10b981;
+  --drawably-paper: transparent;
 }
 
 body, html {
@@ -68,6 +73,11 @@ body, html {
   --panel-border: rgba(15, 23, 42, 0.14);
   --text-main: #0f172a;
   --text-muted: #64748b;
+  --drawably-stroke: #0f172a;
+  --drawably-fill: rgba(245, 158, 11, 0.22);
+  --drawably-error: #e11d48;
+  --drawably-success: #059669;
+  --drawably-paper: transparent;
 }
 
 .theme-light .glass-panel {
