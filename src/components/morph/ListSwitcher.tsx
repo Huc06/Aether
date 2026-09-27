@@ -327,8 +327,8 @@ export const ListSwitcher: React.FC<ListSwitcherProps> = ({
                       {/* Card layout: phone + tablet + laptop < xl */}
                       <div className="xl:hidden flex flex-col gap-3 p-4">
                         <div className="flex items-start justify-between gap-3 min-w-0">
-                          <div className="flex flex-col gap-1 min-w-0 flex-1">
-                            <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+                          <div className="flex flex-col gap-1 min-w-0 flex-1 overflow-hidden">
+                            <div className="flex flex-wrap items-center gap-1.5 min-w-0 max-w-full">
                               <span className={`font-extrabold text-base leading-snug break-words ${ink}`}>
                                 {node.title}
                               </span>
@@ -338,9 +338,9 @@ export const ListSwitcher: React.FC<ListSwitcherProps> = ({
                                   roughness={0.9}
                                   boil={0.2}
                                   fill={isLight ? 'rgba(245, 158, 11, 0.25)' : 'rgba(56, 189, 248, 0.2)'}
-                                  className="inline-flex shrink-0"
+                                  className="inline-flex shrink-0 max-w-[90px]"
                                 >
-                                  <span className={`text-[9px] font-bold font-mono ${isLight ? 'text-amber-950' : 'text-cyan-300'}`}>
+                                  <span className={`text-[9px] font-bold font-mono truncate ${isLight ? 'text-amber-950' : 'text-cyan-300'}`}>
                                     +SM ${Math.round(node.smartMoneyNetflow24h / 1000)}k
                                   </span>
                                 </DrawablyHighlight>
@@ -453,8 +453,8 @@ export const ListSwitcher: React.FC<ListSwitcherProps> = ({
                         style={{ gridTemplateColumns: TABLE_COLS }}
                       >
                         <div className="min-w-0 overflow-hidden">
-                          <div className="flex items-center gap-1.5 min-w-0">
-                            <div className={`font-extrabold truncate text-sm hover:text-amber-500 ${ink}`}>
+                          <div className="flex items-center gap-1.5 min-w-0 max-w-full overflow-hidden">
+                            <div className={`font-extrabold truncate text-sm hover:text-amber-500 min-w-0 flex-1 ${ink}`}>
                               {node.title}
                             </div>
                             {node.smartMoneyNetflow24h !== undefined && node.smartMoneyNetflow24h > 20000 && (
@@ -463,21 +463,21 @@ export const ListSwitcher: React.FC<ListSwitcherProps> = ({
                                 roughness={0.9}
                                 boil={0.2}
                                 fill={isLight ? 'rgba(245, 158, 11, 0.25)' : 'rgba(56, 189, 248, 0.2)'}
-                                className="inline-flex shrink-0"
+                                className="inline-flex shrink-0 max-w-[90px]"
                               >
-                                <span className={`text-[9px] font-bold font-mono ${isLight ? 'text-amber-950' : 'text-cyan-300'}`}>
+                                <span className={`text-[9px] font-bold font-mono truncate ${isLight ? 'text-amber-950' : 'text-cyan-300'}`}>
                                   +SM ${Math.round(node.smartMoneyNetflow24h / 1000)}k
                                 </span>
                               </DrawablyHighlight>
                             )}
                           </div>
-                          <div className={`text-xs truncate mt-0.5 ${soft}`}>
+                          <div className={`text-xs truncate max-w-full mt-0.5 ${soft}`}>
                             {node.strategy || node.category}
                           </div>
                         </div>
 
                         <div className="min-w-0 overflow-hidden flex flex-col gap-1 items-start">
-                          <span className={`px-2 py-0.5 rounded-none text-xs font-extrabold max-w-full truncate ${chip}`}>
+                          <span className={`px-2 py-0.5 rounded-none text-xs font-extrabold max-w-full truncate shrink-0 ${chip}`}>
                             {node.chain}
                           </span>
                           <span className={`text-xs font-semibold truncate max-w-full ${muted}`}>
