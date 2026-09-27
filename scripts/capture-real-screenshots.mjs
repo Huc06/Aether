@@ -47,10 +47,10 @@ const targets = [
     dest: path.join(screenshotsDir, '05-cctv-surveillance-matrix.png')
   },
   {
-    name: '06-clean-slate-light-mode.png',
-    url: 'http://localhost:4173/?theme=light',
+    name: '06-nansen-onchain-intelligence.png',
+    url: 'http://localhost:4173/?nansen=1',
     size: '1600,900',
-    dest: path.join(screenshotsDir, '06-clean-slate-light-mode.png')
+    dest: path.join(screenshotsDir, '06-nansen-onchain-intelligence.png')
   },
   {
     name: 'aether-banner.png',

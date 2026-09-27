@@ -138,9 +138,9 @@ Aether gives operators three complementary lenses into their portfolio, switchab
 |---|---|
 | <img src="docs/screenshots/03-dashed-frame-ledger.png" width="100%" /> | <img src="docs/screenshots/04-mev-emergency-unwind.png" width="100%" /> |
 
-| CCTV Surveillance Matrix (9-Channel Telemetry Wall) | Clean Slate Light Mode (High-Contrast Dual Theme) |
+| CCTV Surveillance Matrix (9-Channel Telemetry Wall) | Nansen Onchain Intelligence (Meridian API Gateway) |
 |---|---|
-| <img src="docs/screenshots/05-cctv-surveillance-matrix.png" width="100%" /> | <img src="docs/screenshots/06-clean-slate-light-mode.png" width="100%" /> |
+| <img src="docs/screenshots/05-cctv-surveillance-matrix.png" width="100%" /> | <img src="docs/screenshots/06-nansen-onchain-intelligence.png" width="100%" /> |
 
 ---
 
