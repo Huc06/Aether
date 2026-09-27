@@ -84,7 +84,15 @@ export const App: React.FC = () => {
     }
     return null;
   });
-  const [detailPhase, setDetailPhase] = useState<DetailPhase>('none');
+  const [detailPhase, setDetailPhase] = useState<DetailPhase>(() => {
+    const params = new URLSearchParams(window.location.search);
+    const nodeId = params.get('node');
+    if (nodeId) {
+      const found = nodes.find(n => n.id === nodeId || n.id.toLowerCase().includes(nodeId.toLowerCase()));
+      if (found) return initialPhaseForNode(found);
+    }
+    return 'none';
+  });
   const [confirmRouteIndex, setConfirmRouteIndex] = useState(0);
   const [confirmReturnPhase, setConfirmReturnPhase] = useState<'peek' | 'sheet' | 'inspect'>('inspect');
   const [viewMode, setViewMode] = useState<PortfolioViewMode>(() => {
@@ -244,6 +252,74 @@ export const App: React.FC = () => {
       window.removeEventListener('beforeunload', saveCamera);
     };
   }, []);
+
+  // If ?intent=1 was passed in URL on mount, activate overview camera
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('intent') === '1' || params.get('intent') === 'true') {
+      cameraRef.current.setOverview(true, config.overviewScale, config.normalScale, 0, 0);
+      setIsOverview(true);
+    }
+  }, [config.overviewScale, config.normalScale]);
+
+  // Synchronize URL query parameters with active UI state
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    
+    // View mode
+    if (viewMode === 'canvas') {
+      params.delete('view');
+    } else {
+      params.set('view', viewMode);
+    }
+
+    // Theme mode
+    if (config.themeMode === 'light') {
+      params.set('theme', 'light');
+    } else {
+      params.delete('theme');
+    }
+
+    // Modals / Panels
+    if (isIntentOpen) {
+      params.set('intent', '1');
+    } else {
+      params.delete('intent');
+    }
+
+    if (isNansenOpen) {
+      params.set('nansen', '1');
+    } else {
+      params.delete('nansen');
+    }
+
+    if (isTunerOpen) {
+      params.set('tuner', '1');
+    } else {
+      params.delete('tuner');
+    }
+
+    // Entity
+    if (activeNansenEntity) {
+      params.set('entity', activeNansenEntity.address || activeNansenEntity.label);
+    } else {
+      params.delete('entity');
+    }
+
+    // Selected node
+    if (selectedNode && detailPhase !== 'none') {
+      params.set('node', selectedNode.id);
+    } else {
+      params.delete('node');
+    }
+
+    const qs = params.toString();
+    const newUrl = qs ? `${window.location.pathname}?${qs}` : window.location.pathname;
+    const currentUrl = `${window.location.pathname}${window.location.search}`;
+    if (newUrl !== currentUrl) {
+      window.history.replaceState(null, '', newUrl);
+    }
+  }, [viewMode, config.themeMode, isIntentOpen, isNansenOpen, isTunerOpen, activeNansenEntity, selectedNode, detailPhase]);
 
   const recordHistory = useCallback(() => {
     historyRef.current.push(JSON.stringify(nodes));
