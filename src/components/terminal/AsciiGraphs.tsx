@@ -88,15 +88,15 @@ export const GraphMeter: React.FC<{
   const percentage = Math.round(clamped * 100);
 
   const meterContent = (
-    <div className="flex flex-col gap-1.5 w-full font-mono text-xs select-none">
+    <div className="flex flex-col gap-1.5 w-full font-mono text-sm select-none">
       {label && (
-        <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider">
-          <span className={isLight ? 'text-slate-700' : 'text-slate-300'}>{label}</span>
+        <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider">
+          <span className={isLight ? 'text-slate-800' : 'text-slate-200'}>{label}</span>
           <span className={isLight ? 'text-amber-700' : 'text-amber-400'}>{percentage}%</span>
         </div>
       )}
       <div className="flex items-center gap-2 w-full">
-        <span className={isLight ? 'text-slate-400' : 'text-slate-600'}>[</span>
+        <span className={isLight ? 'text-slate-500' : 'text-slate-500'}>[</span>
         <div className="flex-1 flex items-center justify-between tracking-tighter">
           {Array.from({ length: ticks }, (_, index) => (
             <span
@@ -111,13 +111,13 @@ export const GraphMeter: React.FC<{
             </span>
           ))}
         </div>
-        <span className={isLight ? 'text-slate-400' : 'text-slate-600'}>]</span>
+        <span className={isLight ? 'text-slate-500' : 'text-slate-500'}>]</span>
         <span className={`w-10 text-right font-bold tabular-nums ${isLight ? 'text-amber-700' : 'text-amber-400'}`}>
           {percentage}%
         </span>
       </div>
       {caption && (
-        <p className={`text-[10px] leading-tight mt-0.5 ${isLight ? 'text-slate-500' : 'text-slate-500'}`}>
+        <p className={`text-xs leading-snug mt-0.5 ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>
           {caption}
         </p>
       )}

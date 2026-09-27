@@ -19,7 +19,7 @@ interface MorphTabsProps<T extends string> {
 }
 
 const INK: Record<MorphTabTone, { light: [string, string]; dark: [string, string] }> = {
-  default: { light: ['#020617', '#1e293b'], dark: ['#ffffff', '#e2e8f0'] },
+  default: { light: ['#020617', '#334155'], dark: ['#ffffff', '#cbd5e1'] },
   safe: { light: ['#065f46', '#047857'], dark: ['#6ee7b7', '#34d399'] },
   warn: { light: ['#92400e', '#b45309'], dark: ['#fcd34d', '#fbbf24'] },
   critical: { light: ['#9f1239', '#be123c'], dark: ['#fda4af', '#fb7185'] },
@@ -44,7 +44,7 @@ export function MorphTabs<T extends string>({
   return (
     <div
       role="tablist"
-      className={`inline-flex items-center p-1 rounded-xl text-xs font-mono ${
+      className={`flex items-center gap-1 p-1 rounded-xl text-sm font-mono overflow-x-auto scroll-quiet max-w-full ${
         isLight ? 'bg-slate-200/90 border border-slate-300 shadow-sm' : 'bg-slate-950/80 border border-white/10'
       } ${className}`}
     >
@@ -59,7 +59,7 @@ export function MorphTabs<T extends string>({
             aria-selected={isActive}
             onClick={() => onChange(tab.id)}
             style={{ color: ink }}
-            className={`relative px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer border ${
+            className={`relative shrink-0 px-3 py-2 min-h-[40px] rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer border whitespace-nowrap ${
               isActive
                 ? (isLight
                   ? 'font-extrabold bg-white border-slate-300 shadow-sm'
@@ -74,10 +74,10 @@ export function MorphTabs<T extends string>({
             </span>
             {tab.badge !== undefined && (
               <span
-                className={`text-[10px] px-1.5 py-0.2 rounded font-mono ${
+                className={`text-xs px-1.5 py-0.5 rounded font-mono tabular-nums ${
                   isActive
                     ? 'bg-amber-500 text-black font-extrabold'
-                    : (isLight ? 'bg-slate-300 text-slate-800 font-bold' : 'bg-white/10 text-slate-100 font-bold')
+                    : (isLight ? 'bg-slate-300 text-slate-800 font-bold' : 'bg-white/15 text-slate-100 font-bold')
                 }`}
               >
                 {tab.badge}
