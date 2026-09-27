@@ -48,7 +48,7 @@ export const ViewModeDock: React.FC<ViewModeDockProps> = ({
             <button
               key={item.mode}
               onClick={() => onChangeViewMode(item.mode)}
-              className={`relative px-3.5 sm:px-4 py-2 rounded-xl text-xs font-sans font-bold flex items-center gap-2 transition-all cursor-pointer group ${
+              className={`relative px-3 sm:px-3.5 py-2 rounded-xl text-xs font-sans font-bold flex items-center gap-1.5 sm:gap-2 transition-all cursor-pointer group ${
                 isActive
                   ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/30 font-extrabold scale-105'
                   : (isLight 
@@ -61,6 +61,13 @@ export const ViewModeDock: React.FC<ViewModeDockProps> = ({
                 {item.icon}
               </span>
               <span className="hidden sm:inline">{item.label}</span>
+              <kbd className={`hidden md:inline text-[9px] px-1.5 py-0.5 rounded font-mono font-bold border ${
+                isActive
+                  ? 'bg-black/20 text-black border-black/25'
+                  : (isLight ? 'bg-slate-100 text-slate-700 border-slate-300' : 'bg-white/10 text-slate-300 border-white/15')
+              }`}>
+                {item.shortcut}
+              </kbd>
             </button>
           );
         })}
@@ -82,12 +89,14 @@ export const ViewModeDock: React.FC<ViewModeDockProps> = ({
             >
               <Search className={`w-3.5 h-3.5 ${isIntentOpen ? 'text-black' : (isLight ? 'text-amber-800' : 'text-amber-400')}`} />
               <span>Intent</span>
-              <kbd className={`hidden md:inline text-[9px] px-1.5 py-0.2 rounded font-mono font-bold border ${
+              <kbd className={`hidden md:inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded font-mono font-bold border ${
                 isIntentOpen 
-                  ? 'bg-black/20 text-black border-black/20' 
+                  ? 'bg-black/20 text-black border-black/25' 
                   : (isLight ? 'bg-white text-amber-900 border-amber-300' : 'bg-black/40 text-amber-300 border-amber-500/30')
               }`}>
-                4
+                <span>4</span>
+                <span className="opacity-40 font-normal">·</span>
+                <span>⌘K</span>
               </kbd>
             </button>
           </>
