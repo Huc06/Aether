@@ -445,17 +445,22 @@ export const App: React.FC = () => {
     setHighlightNodeIds([...relatedIds]);
     setFocusedNodeId(centerId);
 
-    const fitScale = Math.min(
-      config.normalScale,
-      Math.max(0.42, Math.min(1100 / (radius * 2.6 + center.w), 0.85))
+    // Initial camera: will be refined once nodes settle; Shift+F re-fits tighter.
+    const roughSpan = radius * 2.2 + Math.max(center.w, center.h);
+    const canvas = canvasRef.current;
+    const screenW = canvas?.clientWidth || window.innerWidth;
+    const screenH = canvas?.clientHeight || window.innerHeight;
+    const initScale = Math.max(
+      0.35,
+      Math.min(2.2, Math.min((screenW - 48) / roughSpan, (screenH - 80) / roughSpan) * 1.12)
     );
-    cameraRef.current.flyTo(cx, cy, fitScale);
+    cameraRef.current.flyTo(cx, cy, initScale);
     showToast(
       neighbors.length > 0
         ? `Focus: ${center.title} + ${neighbors.length} linked (Shift+F fit · Ctrl+Z undo · Esc clear dim)`
         : `Focus: ${center.title} (Shift+F fit · no linked windows)`
     );
-  }, [nodes, wires, recordHistory, showToast, config.normalScale]);
+  }, [nodes, wires, recordHistory, showToast]);
 
   // Fit current focus cluster (or focused node + linked) to the live viewport
   const fitFocusClusterToScreen = useCallback(() => {
@@ -494,14 +499,15 @@ export const App: React.FC = () => {
     const canvas = canvasRef.current;
     const screenW = canvas?.clientWidth || window.innerWidth;
     const screenH = canvas?.clientHeight || window.innerHeight;
-    // Leave room for TopBar + ViewModeDock
-    const padX = 96;
-    const padY = 140;
+    // Tight chrome padding — fill most of the viewport
+    const padX = 36;
+    const padY = 64;
+    const FILL = 1.15;
     const fitScale = Math.max(
-      0.22,
+      0.3,
       Math.min(
-        1.35,
-        Math.min((screenW - padX) / worldW, (screenH - padY) / worldH)
+        2.4,
+        Math.min((screenW - padX) / worldW, (screenH - padY) / worldH) * FILL
       )
     );
 
